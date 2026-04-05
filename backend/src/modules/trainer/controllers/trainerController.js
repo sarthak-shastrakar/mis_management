@@ -1,68 +1,121 @@
 const Trainer = require('../models/trainerModel');
+const Attendance = require('../../attendance/models/attendanceModel');
 const crypto = require('crypto');
 
-// @desc    Add new trainer
-// @route   POST /api/v1/trainer/add-trainer
+// @desc    Add new trainer (Manager fills basic info only)
+// @route   POST /api/v1/manager/trainers/add
 // @access  Private (Manager/Admin Only)
 exports.addNewTrainer = async (req, res) => {
   try {
-    const { fullName, mobileNumber, assignedProject, state, district } = req.body;
+    // Manager fills fields as per the UI Mockup + new MIS requirements:
+    // Full Name, Trainer ID, Mobile Number, Assign Project, State, District, Account Role, Staff ID
+    const { 
+      fullName, 
+      trainerId: manualTrainerId, 
+      mobileNumber, 
+      assignedProject, 
+      state, 
+      district,
+      accountRole,
+      alternativeMobileNumber,
+      alternativeEmail,
+      panCardNumber,
+      totStatus,
+      totLevel,
+      residentCity,
+      joiningLocation
+    } = req.body;
 
-    // 1. Check if trainer already exists by mobile
-    let trainerExist = await Trainer.findOne({ mobileNumber });
+    if (!fullName || !mobileNumber || !state || !district) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide fullName, mobileNumber, state, and district',
+      });
+    }
+
+    // 1. Check duplicate mobile
+    const trainerExist = await Trainer.findOne({ mobileNumber });
     if (trainerExist) {
       return res.status(400).json({ success: false, message: 'Mobile number already exists' });
     }
 
-    // 2. Generate and verify Trainer ID
-    const trainerCount = await Trainer.countDocuments();
-    let trainerId = `T-${(trainerCount + 1001).toString()}`;
-    
-    // Safety check for trainerId uniqueness
-    let idExists = await Trainer.findOne({ trainerId });
-    if (idExists) {
-        // Fallback or increment if colliding
-        trainerId = `T-${(trainerCount + 1002).toString()}`;
+    // 2. Handle Trainer ID / Staff ID
+    let trainerId = manualTrainerId;
+    if (!trainerId) {
+      // Auto-generate if not provided by manager
+      const trainerCount = await Trainer.countDocuments();
+      const trainerSeq = trainerCount + 1001;
+      trainerId = `T-${trainerSeq}`;
+      
+      const idExists = await Trainer.findOne({ trainerId });
+      if (idExists) trainerId = `T-${trainerSeq + 1}`;
+    } else {
+      // Check if manual ID exists
+      const idExists = await Trainer.findOne({ trainerId });
+      if (idExists) {
+        return res.status(400).json({ success: false, message: 'Trainer ID already exists' });
+      }
     }
-    
-    // 3. Username: tr_ + last 4 digits of mobile
-    let username = `tr_${mobileNumber.slice(-4)}`;
-    
-    // Safety check for username uniqueness (handle collisions)
-    let usernameExists = await Trainer.findOne({ username });
-    if (usernameExists) {
-        // If collision, append a random letter
-        username = `${username}_${crypto.randomBytes(1).toString('hex')}`;
+
+    // 3. Username: Derive from Trainer ID (e.g., T-1434 -> tr_1434)
+    let username;
+    if (trainerId.includes('-')) {
+      const parts = trainerId.split('-');
+      username = `tr_${parts[parts.length - 1]}`;
+    } else {
+      username = `tr_${trainerId.replace(/\D/g, '') || Math.floor(1000 + Math.random() * 9000)}`;
     }
-    
-    // 4. Password: Random 8 characters
+
+    // Check if username exists
+    const userExists = await Trainer.findOne({ username });
+    if (userExists) {
+      username = `${username}_${Math.floor(10 + Math.random() * 90)}`;
+    }
+
+    // 4. Password: 8 random characters as shown in mockup
     const password = crypto.randomBytes(4).toString('hex');
 
-    // Create trainer
+    // 5. Create trainer
     const trainer = await Trainer.create({
       fullName,
       mobileNumber,
       trainerId,
-      assignedProject,
+      staffId: trainerId, // Synced
+      assignedProject: assignedProject || 'None',
       state,
       district,
       username,
       password,
-      plainPassword: password, // Store plain password for manager display
+      plainPassword: password, // For manual sharing by manager
+      reportingManager: req.user.id, // Auto-set reporting manager
+      
+      // New MIS Fields
+      accountRole: accountRole || 'trainer',
+      alternativeMobileNumber,
+      alternativeEmail,
+      panCardNumber,
+      totStatus,
+      totLevel,
+      residentCity,
+      joiningLocation
     });
 
     res.status(201).json({
       success: true,
+      message: 'Staff member created successfully.',
       data: {
         _id: trainer._id,
         trainerId: trainer.trainerId,
-        username: trainer.username,
-        password: password, // Raw password for UI feedback
+        staffId: trainer.staffId,
         fullName: trainer.fullName,
+        accountRole: trainer.accountRole,
+        username: trainer.username,
+        tempPassword: password,
+        isFirstLogin: true,
+        isProfileComplete: false,
       },
     });
   } catch (err) {
-    // Handle Mongoose duplicate key error specifically
     if (err.code === 11000) {
       const field = Object.keys(err.keyPattern)[0];
       return res.status(400).json({
@@ -70,135 +123,114 @@ exports.addNewTrainer = async (req, res) => {
         message: `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`,
       });
     }
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
 // @desc    Get all trainers
-// @route   GET /api/v1/trainer/trainers
+// @route   GET /api/v1/manager/trainers
 // @access  Private (Manager/Admin Only)
 exports.getAllTrainers = async (req, res) => {
   try {
-    const trainers = await Trainer.find().sort({ createdAt: -1 });
+    const trainers = await Trainer.find().sort({ createdAt: -1 }).lean();
+    
+    // Add real stats for each trainer
+    for (const trainer of trainers) {
+      const attendanceCount = await Attendance.countDocuments({ 
+        trainerId: trainer._id,
+        status: { $in: ['present', 'approved'] } 
+      });
+      trainer.totalUploads = attendanceCount;
+      // Simple attendance rate Calculation: (uploads / days since joined)
+      const diffTime = Math.abs(new Date() - new Date(trainer.createdAt));
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+      trainer.attendanceRate = Math.min(100, Math.round((attendanceCount / diffDays) * 100));
+    }
 
-    res.status(200).json({
-      success: true,
-      count: trainers.length,
-      data: trainers,
-    });
+    res.status(200).json({ success: true, count: trainers.length, data: trainers });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
 // @desc    Get single trainer
-// @route   GET /api/v1/trainer/trainers/:id
+// @route   GET /api/v1/manager/trainers/:id
 // @access  Private (Manager/Admin Only)
 exports.getTrainer = async (req, res) => {
   try {
-    const trainer = await Trainer.findById(req.params.id);
-
+    const trainer = await Trainer.findById(req.params.id).lean();
     if (!trainer) {
       return res.status(404).json({ success: false, message: 'Trainer not found' });
     }
 
-    res.status(200).json({
-      success: true,
-      data: trainer,
+    // Add real stats for this specific trainer
+    const attendanceCount = await Attendance.countDocuments({ 
+      trainerId: trainer._id,
+      status: { $in: ['present', 'approved'] } 
     });
+    
+    trainer.totalUploads = attendanceCount;
+    // Calculation: (Total Uploads / Days since creation) * 100
+    const diffTime = Math.abs(new Date() - new Date(trainer.createdAt));
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+    trainer.attendanceRate = Math.min(100, Math.round((attendanceCount / diffDays) * 100));
+
+    res.status(200).json({ success: true, data: trainer });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
 // @desc    Update trainer
-// @route   PUT /api/v1/trainer/trainers/:id
+// @route   PUT /api/v1/manager/trainers/:id
 // @access  Private (Manager/Admin Only)
 exports.updateTrainer = async (req, res) => {
   try {
     const { fullName, mobileNumber, assignedProject, state, district, status, password } = req.body;
 
     let trainer = await Trainer.findById(req.params.id);
+    if (!trainer) return res.status(404).json({ success: false, message: 'Trainer not found' });
 
-    if (!trainer) {
-      return res.status(404).json({ success: false, message: 'Trainer not found' });
-    }
-
-    // Check mobile uniqueness if changed
     if (mobileNumber && mobileNumber !== trainer.mobileNumber) {
       const existing = await Trainer.findOne({ mobileNumber });
-      if (existing) {
-        return res.status(400).json({ success: false, message: 'Mobile number already in use' });
-      }
+      if (existing) return res.status(400).json({ success: false, message: 'Mobile number already in use' });
       trainer.mobileNumber = mobileNumber;
       trainer.username = `tr_${mobileNumber.slice(-4)}`;
     }
 
-    // Update fields
-    if (fullName) trainer.fullName = fullName;
-    if (assignedProject) trainer.assignedProject = assignedProject;
-    if (state) trainer.state = state;
-    if (district) trainer.district = district;
-    if (status) trainer.status = status;
-    
-    // Handle password update
+    if (fullName)        trainer.fullName        = fullName;
+    if (assignedProject) trainer.assignedProject  = assignedProject;
+    if (state)           trainer.state           = state;
+    if (district)        trainer.district        = district;
+    if (status)          trainer.status          = status;
+
     if (password) {
-      trainer.password = password;
+      trainer.password      = password;
       trainer.plainPassword = password;
     }
 
     await trainer.save();
-
-    res.status(200).json({
-      success: true,
-      data: trainer,
-    });
+    res.status(200).json({ success: true, data: trainer });
   } catch (err) {
     if (err.code === 11000) {
       const field = Object.keys(err.keyPattern)[0];
-      return res.status(400).json({
-        success: false,
-        message: `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`,
-      });
+      return res.status(400).json({ success: false, message: `${field.charAt(0).toUpperCase() + field.slice(1)} already exists` });
     }
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(500).json({ success: false, message: err.message });
   }
 };
 
 // @desc    Delete trainer
-// @route   DELETE /api/v1/trainer/trainers/:id
+// @route   DELETE /api/v1/manager/trainers/:id
 // @access  Private (Manager/Admin Only)
 exports.deleteTrainer = async (req, res) => {
   try {
     const trainer = await Trainer.findById(req.params.id);
-
-    if (!trainer) {
-      return res.status(404).json({ success: false, message: 'Trainer not found' });
-    }
+    if (!trainer) return res.status(404).json({ success: false, message: 'Trainer not found' });
 
     await Trainer.findByIdAndDelete(req.params.id);
-
-    res.status(200).json({
-      success: true,
-      message: 'Trainer deleted successfully',
-      data: {},
-    });
+    res.status(200).json({ success: true, message: 'Trainer deleted successfully', data: {} });
   } catch (err) {
-    res.status(500).json({
-      success: false,
-      message: err.message,
-    });
+    res.status(500).json({ success: false, message: err.message });
   }
 };

@@ -1,8 +1,77 @@
 const express = require('express');
-const { login } = require('../controllers/managerController');
+const {
+  login,
+  getMe,
+  updateProfile,
+  updatePassword,
+  assignTrainer,
+  sendNotification,
+  getPendingAttendances,
+  approveAttendance,
+  rejectAttendance,
+  getDashboard,
+  getAssignedProjects,
+} = require('../controllers/managerController');
+
+const {
+  addNewTrainer,
+  getAllTrainers,
+  getTrainer,
+  updateTrainer,
+  deleteTrainer,
+} = require('../../trainer/controllers/trainerController');
+
+const { protect, managerOnly } = require('../../../middlewares/authMiddleware');
 
 const router = express.Router();
 
+// ─────────────────────────────────────────────
+// Public
+// ─────────────────────────────────────────────
 router.post('/login', login);
 
+// ─────────────────────────────────────────────
+// Dashboard
+// ─────────────────────────────────────────────
+router.get('/dashboard', protect, managerOnly, getDashboard);
+router.get('/my-projects', protect, getAssignedProjects);
+
+// ─────────────────────────────────────────────
+// Manager Profile
+// ─────────────────────────────────────────────
+router.get('/me', protect, managerOnly, getMe);
+router.put('/update-profile', protect, managerOnly, updateProfile);
+router.put('/update-password', protect, managerOnly, updatePassword);
+
+
+// ─────────────────────────────────────────────
+// Trainer Management (by Manager)
+// ─────────────────────────────────────────────
+router.post('/trainers/add', protect, managerOnly, addNewTrainer);
+router.get('/trainers', protect, managerOnly, getAllTrainers);
+
+router
+  .route('/trainers/:id')
+  .get(protect, managerOnly, getTrainer)
+  .post(protect, managerOnly, updateTrainer)
+  .delete(protect, managerOnly, deleteTrainer);
+
+// ─────────────────────────────────────────────
+// Assign Trainer to Project
+// ─────────────────────────────────────────────
+router.post('/assign-trainer', protect, managerOnly, assignTrainer);
+
+// ─────────────────────────────────────────────
+// Notification
+// ─────────────────────────────────────────────
+router.post('/send-notification', protect, managerOnly, sendNotification);
+
+// ─────────────────────────────────────────────
+// Attendance Approvals
+// ─────────────────────────────────────────────
+router.get('/attendance/pending', protect, managerOnly, getPendingAttendances);
+router.put('/attendance/:id/approve', protect, managerOnly, approveAttendance);
+router.put('/attendance/:id/reject', protect, managerOnly, rejectAttendance);
+
 module.exports = router;
+

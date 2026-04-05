@@ -1,38 +1,40 @@
 const jwt = require('jsonwebtoken');
 const Admin = require('../modules/admin/models/adminModel');
 const Manager = require('../modules/manager/models/managerModel');
+const Trainer = require('../modules/trainer/models/trainerModel');
 
-// Protect routes
-exports.protect = async (req, res, next) => {
+// ─────────────────────────────────────────────────────────────
+// Authentication Middleware
+// ─────────────────────────────────────────────────────────────
+
+const protect = async (req, res, next) => {
   let token;
 
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
   ) {
-    // Set token from Bearer token in header
     token = req.headers.authorization.split(' ')[1];
   }
 
-  // Make sure token exists
   if (!token) {
     return res.status(401).json({ success: false, message: 'Not authorized to access this route' });
   }
 
   try {
-    // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Check for Admin
+    // Check Admin → Manager → Trainer in order
     let user = await Admin.findById(decoded.id);
-    
-    // If not Admin, check for Manager
-    if (!user) {
-      user = await Manager.findById(decoded.id);
-    }
+    if (!user) user = await Manager.findById(decoded.id);
+    if (!user) user = await Trainer.findById(decoded.id);
 
     if (!user) {
-      return res.status(401).json({ success: false, message: 'User not found' });
+      return res.status(401).json({ success: false, message: 'User not found or token invalid' });
+    }
+
+    if (user.status === 'inactive') {
+      return res.status(403).json({ success: false, message: 'Your account is deactivated. Contact admin.' });
     }
 
     req.user = user;
@@ -40,4 +42,26 @@ exports.protect = async (req, res, next) => {
   } catch (err) {
     return res.status(401).json({ success: false, message: 'Not authorized to access this route' });
   }
+};
+
+const adminOnly = (req, res, next) => {
+  if (req.user && req.user.role === 'admin') {
+    next();
+  } else {
+    return res.status(403).json({ success: false, message: 'Access denied: Admin only' });
+  }
+};
+
+const managerOnly = (req, res, next) => {
+  if (req.user && (req.user.role === 'manager' || req.user.role === 'admin')) {
+    next();
+  } else {
+    return res.status(403).json({ success: false, message: 'Access denied: Manager only' });
+  }
+};
+
+module.exports = {
+  protect,
+  adminOnly,
+  managerOnly
 };
