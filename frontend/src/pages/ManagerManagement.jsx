@@ -257,7 +257,8 @@ const ManagerManagement = () => {
                >
                   <span className="group-hover:rotate-90 transition-transform block">✕</span>
                </button>
-                <div className="overflow-y-auto flex-1 custom-scrollbar">
+            </div>
+            <div className="overflow-y-auto flex-1 custom-scrollbar">
                 {isCreated ? (
                     /* SUCCESS / CREDENTIALS VIEW */
                     <div className="p-12 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
