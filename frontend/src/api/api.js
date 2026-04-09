@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // Get base URL from environment or fallback to Localhost
-const API_URL = 'http://localhost:5005/api/v1';
+// Get base URL from environment or fallback to relative path
+const API_URL = '/api/v1';
 
 const API = axios.create({
   baseURL: API_URL,

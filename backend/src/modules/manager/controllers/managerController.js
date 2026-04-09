@@ -1,7 +1,6 @@
 const Manager = require('../models/managerModel');
 const Trainer = require('../../trainer/models/trainerModel');
 const Attendance = require('../../attendance/models/attendanceModel');
-const sendEmail = require('../../../utils/sendEmail');
 const jwt = require('jsonwebtoken');
 
 // ─────────────────────────────────────────────
@@ -188,7 +187,6 @@ exports.sendNotification = async (req, res, next) => {
     // WhatsApp: Future scope via Twilio/WA Business API — placeholder below.
 
     // Placeholder: log notification (real email requires trainer email field)
-    // await sendEmail({ to: trainer.email, subject, text: message });
 
     // For now — log it as a record
     res.status(200).json({
