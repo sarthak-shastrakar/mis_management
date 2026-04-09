@@ -33,8 +33,8 @@ const Field = ({ label, value, editMode, onChange, type = 'text', options }) => 
   }
   return (
     <div>
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</p>
-      <p className="text-sm font-bold text-slate-800">{value || '—'}</p>
+      <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mb-1">{label}</p>
+      <p className="text-sm font-bold text-slate-900">{value || '—'}</p>
     </div>
   );
 };
@@ -98,7 +98,7 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
     <div className="flex flex-col items-center justify-center h-60 text-center">
        <p className="text-4xl mb-4">🚫</p>
        <p className="text-sm font-black text-slate-400 uppercase tracking-widest">Target Project Not Found</p>
-       <button onClick={onBack} className="mt-4 px-6 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest">Return to Base</button>
+       <button onClick={onBack} className="mt-4 px-6 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest">Back to Page</button>
     </div>
   );
 
@@ -107,11 +107,11 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
       {/* Top Bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <button onClick={onBack} className="w-12 h-12 flex items-center justify-center bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all text-slate-600 font-bold text-xl shadow-sm group">
-            <span className="group-hover:rotate-90 transition-transform">✕</span>
+          <button onClick={onBack} className="w-12 h-12 flex items-center justify-center bg-white border border-slate-200 rounded-2xl transition-all text-slate-600 font-bold text-xl shadow-sm">
+            <span>✕</span>
           </button>
           <div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mb-1">{project.workOrderNo || 'NO-WO-ID'}</p>
+            <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.4em] mb-1">{project.workOrderNo || 'NO-WO-ID'}</p>
             <h2 className="text-3xl font-black text-slate-900 tracking-tight">{project.name}</h2>
           </div>
         </div>
@@ -181,15 +181,15 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
         <div className="flex gap-12">
           <div className="text-center">
             <p className="text-4xl font-black text-slate-900 tracking-tighter">0</p>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Trainers</p>
+            <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mt-1">Trainers</p>
           </div>
           <div className="text-center">
             <p className="text-4xl font-black text-slate-900 tracking-tighter">{project.allocatedTarget || 0}</p>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Target</p>
+            <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mt-1">Target</p>
           </div>
-          <div className="text-center border-l border-slate-100 pl-12">
-            <p className="text-4xl font-black text-blue-600 tracking-tighter">0</p>
-            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mt-1">Graduated</p>
+          <div className="text-center">
+            <p className="text-4xl font-black text-slate-900 tracking-tighter">{project.allocatedTarget || 0}</p>
+            <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mt-1">Target</p>
           </div>
         </div>
       </div>
@@ -220,7 +220,6 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
                <Field label="Assessment Fee Payer" value={project.assessmentFeesPaidBy} editMode={editMode} options={['None', 'SBSS', 'District', 'Block', 'State']} onChange={v => setProject({...project, assessmentFeesPaidBy: v})} />
                <Field label="Assessment Status" value={project.assessmentStatus} editMode={editMode} options={['None', 'Batch Enroll', 'Batch Assign', 'Batch Schedule', 'Result Declare', 'Result Yet to declare']} onChange={v => setProject({...project, assessmentStatus: v})} />
                <Field label="Assessment Date" value={project.assessmentDate?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({...project, assessmentDate: v})} />
-               <Field label="Pass Out Count" value={project.totalPassOut} editMode={editMode} type="number" onChange={v => setProject({...project, totalPassOut: v})} />
 
                <Field label="2nd Installment" value={project.installment2Status} editMode={editMode} options={['None', 'Bill Submitted', 'Bill Under Process', 'Payment received']} onChange={v => setProject({...project, installment2Status: v})} />
                <Field label="Installment 2 Date" value={project.installment2Date?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({...project, installment2Date: v})} />
@@ -257,8 +256,8 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
         {/* Side Panel */}
         <div className="space-y-8">
           {/* Manager Info */}
-          <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.07] transition-all transform group-hover:scale-110">
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-[0.03] transition-all transform">
                <span className="text-8xl">👔</span>
             </div>
             <h3 className="text-base font-black text-slate-900 mb-6 pb-4 border-b border-slate-50">Assigned Manager</h3>

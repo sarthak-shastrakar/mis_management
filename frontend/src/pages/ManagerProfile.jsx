@@ -60,86 +60,65 @@ const ManagerProfile = () => {
 
             {/* Information Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Core Performance Stats */}
+                <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm space-y-8 md:col-span-2">
+                    <h3 className="text-xs font-black text-slate-700 uppercase tracking-[0.2em] ml-1">Administrative Performance</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                        <div className="p-8 bg-blue-50 rounded-3xl border border-blue-100 flex flex-col items-center text-center">
+                            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2">Total Assignments</p>
+                            <p className="text-4xl font-black text-blue-700">{manager.assignedProjects?.length || 0}</p>
+                            <p className="text-[9px] font-bold text-blue-400 mt-1">Active Projects</p>
+                        </div>
+                        <div className="p-8 bg-emerald-50 rounded-3xl border border-emerald-100 flex flex-col items-center text-center">
+                            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2">Personnel Assets</p>
+                            <p className="text-4xl font-black text-emerald-700">{manager.totalTrainersCreated || 0}</p>
+                            <p className="text-[9px] font-bold text-emerald-400 mt-1">Trainers Created</p>
+                        </div>
+                        <div className="p-8 bg-indigo-50 rounded-3xl border border-indigo-100 flex flex-col items-center text-center">
+                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2">Deployment Base</p>
+                            <p className="text-xl font-black text-indigo-700 leading-tight mt-2">{manager.district}</p>
+                            <p className="text-[9px] font-bold text-indigo-400 mt-1">{manager.state}</p>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Contact Information */}
                 <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm space-y-8">
-                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Connect Channels</h3>
+                    <h3 className="text-xs font-black text-slate-700 uppercase tracking-[0.2em] ml-1">Connect Channels</h3>
                     <div className="space-y-6">
-                        <div className="flex items-center gap-5 group">
-                            <div className="w-12 h-12 bg-slate-50 group-hover:bg-blue-50 rounded-2xl flex items-center justify-center text-xl transition-colors">📱</div>
+                        <div className="flex items-center gap-5">
+                            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-xl transition-colors">📱</div>
                             <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Mobile Contact</p>
+                                <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mb-0.5">Mobile Contact</p>
                                 <p className="font-bold text-slate-900">{manager.mobileNumber}</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-5 group">
-                            <div className="w-12 h-12 bg-slate-50 group-hover:bg-blue-50 rounded-2xl flex items-center justify-center text-xl transition-colors">✉️</div>
+                        <div className="flex items-center gap-5">
+                            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-xl transition-colors">✉️</div>
                             <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Corporate Email</p>
+                                <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mb-0.5">Corporate Email</p>
                                 <p className="font-bold text-slate-900">{manager.emailAddress || 'Not Provided'}</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Territory Information */}
+                {/* Security Access Nodes */}
                 <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm space-y-8">
-                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Territory Coverage</h3>
+                    <h3 className="text-xs font-black text-slate-700 uppercase tracking-[0.2em] ml-1">System Security Profile</h3>
                     <div className="space-y-6">
-                        <div className="flex items-center gap-5 group">
-                            <div className="w-12 h-12 bg-slate-50 group-hover:bg-blue-50 rounded-2xl flex items-center justify-center text-xl transition-colors">🗺️</div>
+                        <div className="flex items-center gap-5">
+                            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-xl transition-colors">🆔</div>
                             <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Base Territory</p>
-                                <p className="font-bold text-slate-900">{manager.state}</p>
+                                <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mb-0.5">Terminal Username</p>
+                                <p className="font-bold text-slate-900">{manager.username}</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-5 group">
-                            <div className="w-12 h-12 bg-slate-50 group-hover:bg-blue-50 rounded-2xl flex items-center justify-center text-xl transition-colors">📍</div>
+                        <div className="flex items-center gap-5">
+                            <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-xl transition-colors">🔑</div>
                             <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Administrative District</p>
-                                <p className="font-bold text-slate-900">{manager.district}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Security & Access */}
-                <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm space-y-8 md:col-span-2">
-                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-1">System Security Profile</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="p-8 bg-slate-50 rounded-3xl border border-slate-100 relative group overflow-hidden">
-                            <div className="relative z-10 flex justify-between items-center">
-                                <div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Terminal Username</p>
-                                    <p className="text-xl font-black text-slate-900">{manager.username}</p>
-                                </div>
-                                <button 
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(manager.username);
-                                        alert('Username copied!');
-                                    }}
-                                    className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                    📋
-                                </button>
-                            </div>
-                        </div>
-                        <div className="p-8 bg-slate-50 rounded-3xl border border-slate-100 relative group overflow-hidden">
-                            <div className="relative z-10 flex justify-between items-center">
-                                <div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">System Access Key</p>
-                                    <div className="flex items-center gap-2">
-                                        <p className="text-xl font-black text-slate-900">{manager.plainPassword || '••••••••'}</p>
-                                    </div>
-                                </div>
-                                <button 
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(manager.plainPassword);
-                                        alert('Password copied!');
-                                    }}
-                                    className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                    📋
-                                </button>
+                                <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mb-0.5">Access Passkey</p>
+                                <p className="font-bold text-slate-900 uppercase tracking-widest text-xs">{manager.plainPassword || '••••••••'}</p>
                             </div>
                         </div>
                     </div>
@@ -148,23 +127,24 @@ const ManagerProfile = () => {
                 {/* Assigned Projects */}
                 <div className="bg-white rounded-[3rem] p-10 border border-slate-100 shadow-sm md:col-span-2">
                     <div className="flex items-center justify-between mb-8">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Current Active Portfolio</h3>
-                        <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase">{manager.assignedProjects?.length || 0} Projects</span>
+                        <div className="flex items-center gap-3">
+                            <span className="w-1.5 h-6 bg-blue-600 rounded-full"></span>
+                            <h3 className="text-lg font-black text-slate-900">Current Active Portfolio</h3>
+                        </div>
+                        <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-blue-100">{manager.assignedProjects?.length || 0} Assets</span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {manager.assignedProjects?.map(prj => (
-                            <div key={prj._id} className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4 hover:bg-white hover:shadow-md transition-all">
-                                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-blue-600 font-bold shadow-sm">
+                            <div key={prj._id} className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4 transition-all">
+                                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-slate-900 font-bold shadow-sm border border-slate-100 transition-all">
                                     {prj.name.charAt(0)}
                                 </div>
                                 <span className="font-bold text-slate-900 truncate">{prj.name}</span>
                             </div>
                         ))}
-                        {(!manager.assignedProjects || manager.assignedProjects.length === 0) && (
-                            <p className="col-span-full text-center py-10 text-slate-400 font-bold italic text-xs uppercase tracking-widest">No active projects assigned</p>
-                        )}
                     </div>
                 </div>
+
             </div>
         </div>
     );

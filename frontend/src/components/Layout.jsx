@@ -38,7 +38,7 @@ const Layout = ({ currentRole, currentUser, userStatus, setUserStatus, onLogout,
   }
 
   return (
-    <div className="flex bg-slate-50 dark:bg-slate-950 min-h-screen">
+    <div className="flex bg-slate-50 min-h-screen">
       {/* Sidebar - Fixed */}
       <Sidebar
         currentRole={currentRole}
@@ -67,7 +67,6 @@ const Layout = ({ currentRole, currentUser, userStatus, setUserStatus, onLogout,
             {activePage === 'attendance' && <AttendanceManagement currentRole={currentRole} currentUser={currentUser} />}
             {activePage === 'mark-attendance' && <MarkAttendance currentRole={currentRole} currentUser={currentUser} />}
             {activePage === 'my-history' && <TrainerHistory currentRole={currentRole} currentUser={currentUser} />}
-            {activePage === 'beneficiaries' && <BeneficiaryManagement currentRole={currentRole} currentUser={currentUser} />}
             {activePage === 'profile' && (
               currentRole === 'manager' ? <ManagerProfile /> : <TrainerProfile />
             )}
@@ -86,11 +85,11 @@ const Layout = ({ currentRole, currentUser, userStatus, setUserStatus, onLogout,
                 onBack={() => handleNavigate('trainers')}
               />
             )}
-            {!['dashboard', 'projects', 'managers', 'trainers', 'attendance', 'project-detail', 'trainer-detail', 'beneficiaries', 'profile'].includes(activePage) && (
-              <div className="flex flex-col items-center justify-center h-[60vh] text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl bg-white dark:bg-slate-900 shadow-sm">
-                <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-3xl mb-4">📁</div>
-                <h3 className="text-xl font-bold mb-2 text-slate-900 dark:text-white">Coming Soon</h3>
-                <p className="text-slate-500 dark:text-slate-400">This module is under development.</p>
+            {!['dashboard', 'projects', 'managers', 'trainers', 'attendance', 'project-detail', 'trainer-detail', 'profile', 'mark-attendance', 'my-history'].includes(activePage) && (
+              <div className="flex flex-col items-center justify-center h-[60vh] text-center border-2 border-dashed border-slate-200 rounded-3xl bg-white shadow-sm">
+                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-3xl mb-4">📁</div>
+                <h3 className="text-xl font-bold mb-2 text-slate-900">Coming Soon</h3>
+                <p className="text-slate-500">This module is under development.</p>
               </div>
             )}
           </div>
@@ -99,5 +98,6 @@ const Layout = ({ currentRole, currentUser, userStatus, setUserStatus, onLogout,
     </div>
   );
 };
+
 
 export default Layout;

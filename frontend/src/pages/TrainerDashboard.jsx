@@ -11,21 +11,22 @@ const TrainerDashboard = () => {
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-2">
-        <h2 className="text-3xl font-black text-white">Welcome, Trainer</h2>
-        <p className="text-slate-500 font-medium text-sm">Dashboard Overview</p>
+        <h2 className="text-3xl font-black text-slate-900">Welcome, Trainer</h2>
+        <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Terminal Dashboard Overview</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((s) => (
-          <div key={s.label} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm">
+          <div key={s.label} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm transition-all hover:shadow-md">
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl mb-4 ${s.color}`}>
               {s.icon}
             </div>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">{s.label}</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white">{s.value}</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{s.label}</p>
+            <p className="text-2xl font-black text-slate-900">{s.value}</p>
           </div>
         ))}
       </div>
+
 
       {/* Announcements or Project Info */}
       <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[2rem] p-10 text-white shadow-xl shadow-blue-500/20">

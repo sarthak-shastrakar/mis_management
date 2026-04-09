@@ -38,7 +38,7 @@ const TrainerModal = ({ trainer, onClose, onSave, projects }) => {
   };
 
   const toggleProject = (id) => {
-    setSelectedProjects(prev => 
+    setSelectedProjects(prev =>
       prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
     );
   };
@@ -58,65 +58,65 @@ const TrainerModal = ({ trainer, onClose, onSave, projects }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
               <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Full Name</label>
-              <input 
-                required 
+              <input
+                required
                 placeholder="Enter staff full name"
-                value={formData.fullName} 
-                onChange={e => setFormData({...formData, fullName: e.target.value})} 
-                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" 
+                value={formData.fullName}
+                onChange={e => setFormData({ ...formData, fullName: e.target.value })}
+                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
               />
             </div>
-            
+
             <div>
               <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Trainer ID / Staff ID</label>
-              <input 
-                required 
+              <input
+                required
                 placeholder="T-XXXX"
-                value={formData.trainerId} 
-                onChange={e => setFormData({...formData, trainerId: e.target.value})} 
-                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" 
+                value={formData.trainerId}
+                onChange={e => setFormData({ ...formData, trainerId: e.target.value })}
+                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
               />
             </div>
-            
+
             <div>
               <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Mobile Number</label>
-              <input 
-                required 
+              <input
+                required
                 maxLength="10"
                 placeholder="10-digit number"
-                value={formData.mobileNumber} 
-                onChange={e => setFormData({...formData, mobileNumber: e.target.value})} 
-                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" 
+                value={formData.mobileNumber}
+                onChange={e => setFormData({ ...formData, mobileNumber: e.target.value })}
+                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
               />
             </div>
 
             <div>
               <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">State</label>
-              <input 
-                required 
+              <input
+                required
                 placeholder="Work territory state"
-                value={formData.state} 
-                onChange={e => setFormData({...formData, state: e.target.value})} 
-                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" 
+                value={formData.state}
+                onChange={e => setFormData({ ...formData, state: e.target.value })}
+                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
               />
             </div>
 
             <div>
               <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">District / Taluka</label>
-              <input 
-                required 
+              <input
+                required
                 placeholder="Assigned district"
-                value={formData.district} 
-                onChange={e => setFormData({...formData, district: e.target.value})} 
-                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" 
+                value={formData.district}
+                onChange={e => setFormData({ ...formData, district: e.target.value })}
+                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
               />
             </div>
 
             <div className="md:col-span-2">
               <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Account Role</label>
-              <select 
-                value={formData.accountRole || 'trainer'} 
-                onChange={e => setFormData({...formData, accountRole: e.target.value})} 
+              <select
+                value={formData.accountRole || 'trainer'}
+                onChange={e => setFormData({ ...formData, accountRole: e.target.value })}
                 className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
               >
                 <option value="trainer">Trainer</option>
@@ -167,6 +167,7 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'grid'
   const [projectsList, setProjectsList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [successData, setSuccessData] = useState(null);
 
   useEffect(() => {
     fetchTrainers();
@@ -179,7 +180,7 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
       // Role-based endpoint delivery
       const endpoint = currentRole === 'admin' ? '/admin/trainers' : '/manager/trainers';
       const response = await API.get(endpoint);
-      
+
       if (response.data.success) {
         setTrainersList(response.data.data.map(t => ({
           ...t,
@@ -255,13 +256,25 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
     try {
       if (t.id) {
         const response = await API.put(`/manager/trainers/${t.id}`, t);
-        if (response.data.success) fetchTrainers();
+        if (response.data.success) {
+          fetchTrainers();
+          return true;
+        }
       } else {
         const response = await API.post('/manager/trainers/add', t);
-        if (response.data.success) fetchTrainers();
+        if (response.data.success) {
+          setSuccessData({
+            username: response.data.data.username,
+            password: response.data.data.tempPassword,
+            fullName: response.data.data.fullName
+          });
+          fetchTrainers();
+          return true;
+        }
       }
     } catch (err) {
       alert(err.response?.data?.message || 'Staff authentication record failed to save');
+      return false;
     }
   };
 
@@ -271,7 +284,8 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
         <TrainerModal
           trainer={editTrainer}
           projects={projectsList}
-          onClose={() => { setShowModal(false); setEditTrainer(null); }}
+          successData={successData}
+          onClose={() => { setShowModal(false); setEditTrainer(null); setSuccessData(null); }}
           onSave={handleSaveTrainer}
         />
       )}
@@ -294,7 +308,7 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
             onClick={() => setShowModal(true)}
             className="group flex items-center gap-3 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-2xl shadow-indigo-500/30 transition-all active:scale-95 text-xs uppercase tracking-[0.2em]"
           >
-            <span className="text-xl group-hover:rotate-90 transition-transform">＋</span> Add Personnel
+            <span className="text-xl group-hover:rotate-90 transition-transform">＋</span> Add Trainer
           </button>
         </div>
       </div>
@@ -312,7 +326,7 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
           />
         </div>
         <div className="flex gap-2 flex-wrap items-center">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Quick Filter:</span>
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Quick Filter:</span>
           {statuses.map(s => (
             <button
               key={s}
@@ -331,10 +345,10 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
           { label: 'Network Size', value: trainersList.length, icon: '💼', color: 'text-indigo-600 bg-indigo-50 border-indigo-100' },
           { label: 'Active Field', value: trainersList.filter(t => t.status === 'Active').length, icon: '📡', color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
         ].map((s) => (
-          <div key={s.label} className={`bg-white rounded-[2rem] border ${s.color} p-8 flex items-center gap-6 shadow-sm hover:shadow-md transition-shadow`}>
+          <div key={s.label} className={`bg-white rounded-[2rem] border ${s.color} p-8 flex items-center gap-6 shadow-sm transition-shadow`}>
             <div className="w-20 h-20 rounded-2xl bg-white border border-inherit flex items-center justify-center text-3xl shadow-sm">{s.icon}</div>
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{s.label}</p>
+              <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em] mb-1">{s.label}</p>
               <p className="text-4xl font-black text-slate-900 tracking-tight">{s.value}</p>
             </div>
           </div>
@@ -357,21 +371,21 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
                 {filtered.map((t, i) => (
                   <tr
                     key={t._id}
-                    className="border-b border-slate-50 hover:bg-slate-50/80 transition-colors group cursor-default"
+                    className="border-b border-slate-50 transition-colors cursor-default"
                   >
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-white font-black text-base shadow-lg group-hover:scale-110 transition-transform`}>
+                        <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-white font-black text-base shadow-lg transition-transform`}>
                           {t.name.charAt(0)}
                         </div>
                         <div>
-                           <p className="font-black text-slate-800 text-sm group-hover:text-indigo-600 transition-colors tracking-tight">{t.name}</p>
-                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.accountRole || 'Staff'}</p>
+                          <p className="font-black text-slate-900 text-sm transition-colors tracking-tight">{t.name}</p>
+                          <p className="text-[10px] font-bold text-slate-700 uppercase tracking-widest">{t.accountRole || 'Staff'}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-8 py-6">
-                        <span className="text-[11px] font-black text-indigo-600 bg-white px-3 py-1.5 rounded-lg border border-indigo-100 tracking-widest shadow-sm shadow-indigo-500/5">{t.trainerId}</span>
+                      <span className="text-[11px] font-black text-indigo-600 bg-white px-3 py-1.5 rounded-lg border border-indigo-100 tracking-widest shadow-sm shadow-indigo-500/5">{t.trainerId}</span>
                     </td>
                     <td className="px-8 py-6 text-sm font-bold text-slate-600">{t.mobile}</td>
                     <td className="px-8 py-6">
@@ -386,8 +400,8 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
                     <td className="px-8 py-6">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between text-[10px] font-black text-slate-500 uppercase tracking-tighter">
-                            <span>Engagement</span>
-                            <span className="text-indigo-600">{t.attendance}%</span>
+                          <span>Engagement</span>
+                          <span className="text-indigo-600">{t.attendance}%</span>
                         </div>
                         <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
                           <div
@@ -431,12 +445,12 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
         ) : (
           <div className="p-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 bg-slate-50/30">
             {filtered.map((t, i) => (
-              <div key={t.trainerId} className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 hover:shadow-2xl hover:-translate-y-2 transition-all group overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700 opacity-50"></div>
-                
+              <div key={t.trainerId} className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 transition-all overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-16 -mt-16 transition-transform duration-700 opacity-50"></div>
+
                 <div className="flex items-start justify-between mb-8 relative z-10">
                   <div className="flex items-center gap-5">
-                    <div className={`w-16 h-16 rounded-[1.5rem] bg-gradient-to-br ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-white font-black text-2xl shadow-xl group-hover:rotate-6 transition-transform`}>
+                    <div className={`w-16 h-16 rounded-[1.5rem] bg-gradient-to-br ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-white font-black text-2xl shadow-xl transition-transform`}>
                       {t.name.charAt(0)}
                     </div>
                     <div>
@@ -448,25 +462,25 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
 
                 <div className="grid grid-cols-2 gap-6 mb-8 relative z-10 border-b border-slate-50 pb-8">
                   <div className="space-y-1">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Mobile Link</p>
-                    <p className="text-sm font-bold text-slate-700">{t.mobile}</p>
+                    <p className="text-[9px] font-black text-slate-700 uppercase tracking-widest">Mobile Link</p>
+                    <p className="text-sm font-bold text-slate-900">{t.mobile}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Operational Role</p>
-                    <p className="text-sm font-bold text-slate-700">{t.accountRole || 'Staff'}</p>
+                    <p className="text-[9px] font-black text-slate-700 uppercase tracking-widest">Operational Role</p>
+                    <p className="text-sm font-bold text-slate-900">{t.accountRole || 'Staff'}</p>
                   </div>
                 </div>
 
                 <div className="space-y-6 relative z-10">
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Engagement Matrix</span>
-                            <span className="text-[10px] font-black text-indigo-600">{t.attendance}%</span>
-                        </div>
-                        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
-                            <div className={`h-full rounded-full shadow-lg ${t.attendance >= 80 ? 'bg-emerald-500' : t.attendance >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${t.attendance}%` }}></div>
-                        </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Engagement Matrix</span>
+                      <span className="text-[10px] font-black text-indigo-600">{t.attendance}%</span>
                     </div>
+                    <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                      <div className={`h-full rounded-full shadow-lg ${t.attendance >= 80 ? 'bg-emerald-500' : t.attendance >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${t.attendance}%` }}></div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="mt-8 flex gap-3 relative z-10">
@@ -483,18 +497,18 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
             ))}
           </div>
         )}
-        
+
         {loading && trainersList.length === 0 && (
           <div className="py-32 flex flex-col items-center justify-center text-center">
-             <div className="w-16 h-16 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin mb-6"></div>
-             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">Syncing Database Cluster...</p>
+            <div className="w-16 h-16 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin mb-6"></div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">Syncing Database Cluster...</p>
           </div>
         )}
-        
+
         {!loading && filtered.length === 0 && (
           <div className="py-32 flex flex-col items-center justify-center text-center">
-             <div className="text-6xl mb-6 opacity-20 filter grayscale">📁</div>
-             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">No personnel matching criteria found in sector</p>
+            <div className="text-6xl mb-6 opacity-20 filter grayscale">📁</div>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">No personnel matching criteria found in sector</p>
           </div>
         )}
       </div>

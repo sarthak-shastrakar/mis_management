@@ -257,132 +257,182 @@ const ManagerManagement = () => {
                >
                   <span className="group-hover:rotate-90 transition-transform block">✕</span>
                </button>
-            </div>
-
-            {/* SCROLLABLE FORM BODY */}
-            <div className="overflow-y-auto flex-1 custom-scrollbar">
-               <form onSubmit={handleCreateManager} className="p-12 space-y-8 bg-white">
-                  <div className="grid grid-cols-2 gap-8">
-                     <div className="col-span-2">
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Official Full Name</label>
-                        <input required disabled={viewOnly} value={managerForm.fullName} onChange={e => setManagerForm({...managerForm, fullName: e.target.value})} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none disabled:opacity-70" placeholder="Identity Verification Name" />
-                     </div>
-                     
-                     <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Corporate Email</label>
-                        <input required disabled={viewOnly} type="email" value={managerForm.emailAddress} onChange={e => setManagerForm({...managerForm, emailAddress: e.target.value})} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none disabled:opacity-70" placeholder="work@domain.com" />
-                     </div>
-                     
-                     <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Secure Contact</label>
-                        <input required disabled={viewOnly} type="tel" value={managerForm.mobileNumber} onChange={e => setManagerForm({...managerForm, mobileNumber: e.target.value})} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none disabled:opacity-70" placeholder="Primary Mobile Node" />
-                     </div>
-    
-                     <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Territory Selection</label>
-                        <select required disabled={viewOnly} value={managerForm.state} onChange={e => setManagerForm({...managerForm, state: e.target.value})} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] font-black text-slate-900 outline-none uppercase tracking-widest cursor-pointer disabled:opacity-70">
-                           <option value="">Select State</option>
-                           {['Maharashtra', 'Gujarat', 'Madhya Pradesh', 'Rajasthan', 'Karnataka'].map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                     </div>
-    
-                     <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Administrative District</label>
-                        <input required disabled={viewOnly} value={managerForm.district} onChange={e => setManagerForm({...managerForm, district: e.target.value})} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all disabled:opacity-70" placeholder="e.g. Nashik" />
-                     </div>
-
-                     <div className="col-span-2">
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Strategic Project Assignments</label>
-                        <div className="grid grid-cols-2 gap-4 p-6 bg-slate-50 border border-slate-200 rounded-[2rem] max-h-48 overflow-y-auto custom-scrollbar">
-                           {projectsList.map(prj => (
-                           <label key={prj._id} className="flex items-center gap-3 cursor-pointer group">
-                              <div className="relative flex items-center justify-center">
-                                 <input 
-                                 type="checkbox" 
-                                 checked={managerForm.assignedProjects.includes(prj._id)}
-                                 onChange={(e) => {
-                                    const updated = e.target.checked 
-                                       ? [...managerForm.assignedProjects, prj._id]
-                                       : managerForm.assignedProjects.filter(id => id !== prj._id);
-                                    setManagerForm({ ...managerForm, assignedProjects: updated });
-                                 }}
-                                 className="peer appearance-none w-6 h-6 border-2 border-slate-200 rounded-lg checked:bg-blue-600 checked:border-blue-600 transition-all cursor-pointer disabled:opacity-50" 
-                                 disabled={viewOnly}
-                                 />
-                                 <div className="absolute text-white text-[10px] font-black opacity-0 peer-checked:opacity-100 pointer-events-none">✓</div>
-                              </div>
-                              <span className="text-[11px] font-black text-slate-600 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{prj.name}</span>
-                           </label>
-                           ))}
-                           {projectsList.length === 0 && <p className="col-span-2 text-center text-slate-400 font-bold text-[10px] uppercase py-4">No active projects available</p>}
+                <div className="overflow-y-auto flex-1 custom-scrollbar">
+                {isCreated ? (
+                    /* SUCCESS / CREDENTIALS VIEW */
+                    <div className="p-12 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="flex flex-col items-center text-center space-y-4 py-6">
+                            <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-[2.5rem] flex items-center justify-center text-4xl shadow-xl shadow-emerald-500/10">
+                                ✓
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-black text-slate-900">Provisioning Complete</h3>
+                                <p className="text-sm text-slate-500 font-bold mt-1 uppercase tracking-widest">Administrative Access Credentials Generated</p>
+                            </div>
                         </div>
-                     </div>
-                  </div>
 
-                  {(isCreated || editingId) && (
-                     <div className="space-y-4">
-                        <div className="p-8 bg-slate-900 rounded-[2.5rem] border border-slate-800 flex items-center justify-between shadow-sm relative overflow-hidden group">
-                           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                           <div className="flex-1 relative z-10">
-                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Terminal Username</p>
-                              <p className="text-lg font-black text-white">{managerForm.username}</p>
-                           </div>
-                           <div className="flex-1 text-right border-l border-slate-700 pl-8 relative z-10">
-                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">System Access Key</p>
-                              <p className="text-lg font-black text-white">{managerForm.password}</p>
-                           </div>
-                        </div>
-                        
-                        <div className="flex gap-4">
-                           <button 
-                              type="button" 
-                              onClick={() => {
-                                 const text = `MIS Management - Manager Credentials\n\nUsername: ${managerForm.username}\nPassword: ${managerForm.password}\nLogin URL: ${window.location.origin}/login`;
-                                 navigator.clipboard.writeText(text);
-                                 alert('📋 Credentials copied to clipboard!');
-                              }}
-                              className="flex-1 h-12 bg-slate-100 text-slate-900 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-200 transition-all border border-slate-200"
-                           >
-                              Copy Details
-                           </button>
-                           <button 
-                              type="button" 
-                              onClick={async () => {
-                                 const shareData = {
-                                 title: 'MIS Manager Credentials',
-                                 text: `Hello ${managerForm.fullName},\n\nYour Manager account credentials:\n\nUsername: ${managerForm.username}\nPassword: ${managerForm.password}\n\nLogin URL: ${window.location.origin}/login`,
-                                 };
-                                 
-                                 if (navigator.share) {
-                                 try {
-                                    await navigator.share(shareData);
-                                 } catch (err) {
-                                    console.log('Share failed', err);
-                                 }
-                                 } else {
-                                 const message = encodeURIComponent(shareData.text);
-                                 window.open(`https://wa.me/${managerForm.mobileNumber}?text=${message}`, '_blank');
-                                 }
-                              }}
-                              className="flex-1 h-12 bg-blue-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
-                           >
-                              🔗 Universal Share
-                           </button>
-                        </div>
-                     </div>
-                  )}
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-2 gap-6">
+                                <div className="p-8 bg-slate-900 rounded-[2.5rem] relative overflow-hidden group border border-slate-800">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-2 relative z-10">Terminal ID</p>
+                                    <p className="text-2xl font-black text-white relative z-10">{managerForm.username}</p>
+                                    <div className="absolute top-0 right-0 p-6 opacity-10 text-white text-3xl">👤</div>
+                                </div>
+                                <div className="p-8 bg-blue-900 rounded-[2.5rem] relative overflow-hidden group border border-blue-800">
+                                    <p className="text-[10px] font-black text-blue-300 uppercase tracking-[0.3em] mb-2 relative z-10">Access Key</p>
+                                    <p className="text-2xl font-black text-white relative z-10">{managerForm.password}</p>
+                                    <div className="absolute top-0 right-0 p-6 opacity-10 text-white text-3xl">🔑</div>
+                                </div>
+                            </div>
 
-                  <div className="flex gap-6 pt-6">
-                     <button type="button" onClick={() => setShowModal(false)} className="flex-1 h-16 rounded-2xl bg-slate-100 font-black text-slate-500 text-[11px] uppercase tracking-[0.3em] hover:bg-slate-200 transition-all">
-                        {viewOnly ? 'Close' : 'Abort'}
-                     </button>
-                     {!viewOnly && (
-                     <button type="submit" className={`flex-[2] h-16 rounded-2xl font-black text-white text-[11px] uppercase tracking-[0.3em] shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98] ${isCreated ? 'bg-emerald-600 shadow-emerald-500/20' : 'bg-blue-600 shadow-blue-500/20'}`}>
-                        {isCreated ? '✓ Account Synchronized' : editingId ? 'Update Terminal Access' : 'Authorize Account Installation'}
-                     </button>
-                     )}
-                  </div>
-               </form>
+                            <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200">
+                                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Identity Profile Sync</h4>
+                                <div className="grid grid-cols-2 gap-8">
+                                    <div>
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Full Name</p>
+                                        <p className="font-extrabold text-slate-900">{managerForm.fullName}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Mobile Node</p>
+                                        <p className="font-extrabold text-slate-900">{managerForm.mobileNumber}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Assigned Base</p>
+                                        <p className="font-extrabold text-slate-900">{managerForm.district}, {managerForm.state}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Assignments</p>
+                                        <p className="font-extrabold text-slate-900">{managerForm.assignedProjects.length} Projects</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-6">
+                            <button 
+                                onClick={() => {
+                                    const text = `MIS Management - Manager Credentials\n\nName: ${managerForm.fullName}\nUsername: ${managerForm.username}\nPassword: ${managerForm.password}\nLogin: ${window.location.origin}/login`;
+                                    navigator.clipboard.writeText(text);
+                                    alert('📋 Details locked to clipboard!');
+                                }}
+                                className="flex-1 h-16 bg-white border border-slate-200 text-slate-900 font-black rounded-2xl text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-slate-50 transition-all shadow-sm"
+                            >
+                                📋 Copy Terminal Data
+                            </button>
+                            <button 
+                                onClick={async () => {
+                                    const shareText = `Hello ${managerForm.fullName},\n\nYour Manager account credentials:\n\nUsername: ${managerForm.username}\nPassword: ${managerForm.password}\n\nLogin URL: ${window.location.origin}/login`;
+                                    if (navigator.share) {
+                                        try { await navigator.share({ title: 'Manager Credentials', text: shareText }); } 
+                                        catch (err) { console.log(err); }
+                                    } else {
+                                        window.open(`https://wa.me/${managerForm.mobileNumber}?text=${encodeURIComponent(shareText)}`, '_blank');
+                                    }
+                                }}
+                                className="flex-1 h-16 bg-blue-600 text-white font-black rounded-2xl text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-blue-700 transition-all shadow-2xl shadow-blue-500/20"
+                            >
+                                🔗 Universal Share
+                            </button>
+                        </div>
+
+                        <button 
+                            onClick={() => { setShowModal(false); resetForm(); fetchManagers(); }} 
+                            className="w-full h-14 text-slate-400 font-black text-[10px] uppercase tracking-[0.4em] hover:text-slate-600 transition-all"
+                        >
+                            Return to Directive Dashboard
+                        </button>
+                    </div>
+                ) : (
+                    /* FORM VIEW */
+                    <form onSubmit={handleCreateManager} className="p-12 space-y-8 bg-white">
+                        <div className="grid grid-cols-2 gap-8">
+                            <div className="col-span-2">
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Official Full Name</label>
+                                <input required disabled={viewOnly} value={managerForm.fullName} onChange={e => setManagerForm({...managerForm, fullName: e.target.value})} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none disabled:opacity-70" placeholder="Identity Verification Name" />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Corporate Email</label>
+                                <input required disabled={viewOnly} type="email" value={managerForm.emailAddress} onChange={e => setManagerForm({...managerForm, emailAddress: e.target.value})} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none disabled:opacity-70" placeholder="work@domain.com" />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Secure Contact</label>
+                                <input required disabled={viewOnly} type="tel" value={managerForm.mobileNumber} onChange={e => setManagerForm({...managerForm, mobileNumber: e.target.value})} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none disabled:opacity-70" placeholder="Primary Mobile Node" />
+                            </div>
+            
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Territory Selection</label>
+                                <select required disabled={viewOnly} value={managerForm.state} onChange={e => setManagerForm({...managerForm, state: e.target.value})} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] font-black text-slate-900 outline-none uppercase tracking-widest cursor-pointer disabled:opacity-70">
+                                <option value="">Select State</option>
+                                <option value="Maharashtra">Maharashtra</option>
+                                <option value="Gujarat">Gujarat</option>
+                                <option value="Madhya Pradesh">Madhya Pradesh</option>
+                                <option value="Rajasthan">Rajasthan</option>
+                                <option value="Karnataka">Karnataka</option>
+                                </select>
+                            </div>
+            
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Administrative District</label>
+                                <input required disabled={viewOnly} value={managerForm.district} onChange={e => setManagerForm({...managerForm, district: e.target.value})} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all disabled:opacity-70" placeholder="e.g. Nashik" />
+                            </div>
+
+                            <div className="col-span-2">
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Strategic Project Assignments</label>
+                                <div className="grid grid-cols-2 gap-4 p-6 bg-slate-50 border border-slate-200 rounded-[2rem] max-h-48 overflow-y-auto custom-scrollbar">
+                                {projectsList.map(prj => (
+                                <label key={prj._id} className="flex items-center gap-3 cursor-pointer group">
+                                    <div className="relative flex items-center justify-center">
+                                        <input 
+                                        type="checkbox" 
+                                        checked={managerForm.assignedProjects.includes(prj._id)}
+                                        onChange={(e) => {
+                                            const updated = e.target.checked 
+                                                ? [...managerForm.assignedProjects, prj._id]
+                                                : managerForm.assignedProjects.filter(id => id !== prj._id);
+                                            setManagerForm({ ...managerForm, assignedProjects: updated });
+                                        }}
+                                        className="peer appearance-none w-6 h-6 border-2 border-slate-200 rounded-lg checked:bg-blue-600 checked:border-blue-600 transition-all cursor-pointer disabled:opacity-50" 
+                                        disabled={viewOnly}
+                                        />
+                                        <div className="absolute text-white text-[10px] font-black opacity-0 peer-checked:opacity-100 pointer-events-none">✓</div>
+                                    </div>
+                                    <span className="text-[11px] font-black text-slate-600 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{prj.name}</span>
+                                </label>
+                                ))}
+                                {projectsList.length === 0 && <p className="col-span-2 text-center text-slate-400 font-bold text-[10px] uppercase py-4">No active projects available</p>}
+                                </div>
+                            </div>
+                        </div>
+
+                        {editingId && (
+                            <div className="space-y-4">
+                                <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-200 flex items-center justify-between shadow-sm">
+                                    <div className="flex-1">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Terminal Username</p>
+                                        <p className="text-lg font-black text-slate-900">{managerForm.username}</p>
+                                    </div>
+                                    <div className="flex-1 text-right border-l border-slate-200 pl-8">
+                                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Passkey Node</p>
+                                        <p className="text-lg font-black text-slate-900">{managerForm.password}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex gap-6 pt-6">
+                            <button type="button" onClick={() => setShowModal(false)} className="flex-1 h-16 rounded-2xl bg-slate-100 font-black text-slate-500 text-[11px] uppercase tracking-[0.3em] hover:bg-slate-200 transition-all">
+                                {viewOnly ? 'Terminate View' : 'Abort Directive'}
+                            </button>
+                            {!viewOnly && (
+                            <button type="submit" className="flex-[2] h-16 rounded-2xl font-black text-white text-[11px] uppercase tracking-[0.3em] shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98] bg-blue-600 shadow-blue-500/20">
+                                {editingId ? 'Update Terminal Access' : 'Authorize Account Installation'}
+                            </button>
+                            )}
+                        </div>
+                    </form>
+                )}
             </div>
           </div>
         </div>

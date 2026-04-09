@@ -89,7 +89,6 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
          allocatedTarget: formData.allocatedTarget ? Number(formData.allocatedTarget) : undefined,
          totalProjectCost: formData.totalProjectCost ? Number(formData.totalProjectCost) : undefined,
          trainingCostPerHour: formData.trainingCostPerHour ? Number(formData.trainingCostPerHour) : undefined,
-         totalPassOut: formData.totalPassOut ? Number(formData.totalPassOut) : 0,
          maxDemonstrators: formData.maxDemonstrators ? Number(formData.maxDemonstrators) : 1
       };
       
@@ -142,7 +141,6 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
       assessmentFeesPaidBy: 'None',
       assessmentStatus: 'None',
       assessmentDate: '',
-      totalPassOut: '0',
       installment2Status: 'None',
       installment2Date: '',
       maxDemonstrators: '1',
@@ -170,7 +168,6 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
       assessmentFeesPaidBy: prj.assessmentFeesPaidBy || 'None',
       assessmentStatus: prj.assessmentStatus || 'None',
       assessmentDate: prj.assessmentDate ? prj.assessmentDate.split('T')[0] : '',
-      totalPassOut: prj.totalPassOut || '0',
       installment2Status: prj.installment2Status || 'None',
       installment2Date: prj.installment2Date ? prj.installment2Date.split('T')[0] : '',
       maxDemonstrators: prj.maxDemonstrators || '1',
