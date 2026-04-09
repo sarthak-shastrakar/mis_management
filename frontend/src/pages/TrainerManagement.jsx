@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { trainersData as trainers } from '../data/mockData';
+import React, { useState, useEffect } from 'react';
+import API from '../api/api';
 
 const statusColors = {
   Active: 'bg-emerald-100 text-emerald-700',
@@ -16,127 +16,140 @@ const avatarColors = [
   'from-cyan-500 to-blue-600',
 ];
 
-const TrainerModal = ({ trainer, onClose, onSave }) => {
-  const [trainerForm, setTrainerForm] = useState(trainer || {
-    username: `tr_${Math.floor(1000 + Math.random() * 9000)}`,
-    password: Math.random().toString(36).slice(-8)
+const TrainerModal = ({ trainer, onClose, onSave, projects }) => {
+  const [selectedProjects, setSelectedProjects] = useState(trainer ? trainer.projects.map(p => p._id || p) : []);
+  const [formData, setFormData] = useState({
+    fullName: trainer ? trainer.name : '',
+    trainerId: trainer ? trainer.trainerId : '',
+    mobileNumber: trainer ? trainer.mobile : '',
+    state: trainer ? trainer.state : '',
+    district: trainer ? trainer.location || trainer.district : '',
+    accountRole: trainer ? trainer.accountRole : 'trainer',
   });
-  const [isCreated, setIsCreated] = useState(false);
 
   const handleSave = (e) => {
     e.preventDefault();
-    if (trainer) {
-      const formData = new FormData(e.target);
-      onSave({
-        ...trainer,
-        name: formData.get('name'),
-        trainerId: formData.get('trainerId'),
-        mobile: formData.get('mobile'),
-        project: formData.get('project'),
-        state: formData.get('state'),
-        location: formData.get('location')
-      });
-      onClose();
-    } else {
-      if (isCreated) {
-        setIsCreated(false);
-        setTrainerForm({
-          username: `tr_${Math.floor(1000 + Math.random() * 9000)}`,
-          password: Math.random().toString(36).slice(-8)
-        });
-        e.target.reset();
-      } else {
-        const formData = new FormData(e.target);
-        onSave({
-          name: formData.get('name'),
-          trainerId: formData.get('trainerId'),
-          mobile: formData.get('mobile'),
-          project: formData.get('project'),
-          state: formData.get('state'),
-          location: formData.get('location'),
-          status: 'Pending',
-          attendance: 0,
-          uploads: 0,
-          profileComplete: false
-        });
-        setIsCreated(true);
-      }
-    }
+    onSave({
+      ...formData,
+      assignedProjects: selectedProjects,
+      id: trainer?._id
+    });
+    onClose();
   };
 
-  const copyCredentials = () => {
-    navigator.clipboard.writeText(`Username: ${trainerForm.username}\nPassword: ${trainerForm.password}`);
-    alert('Credentials copied to clipboard!');
+  const toggleProject = (id) => {
+    setSelectedProjects(prev => 
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+    );
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden overflow-y-auto max-h-[90vh]">
         <div className="bg-gradient-to-r from-indigo-600 to-purple-700 p-8 text-white">
           <div className="flex justify-between items-start">
-            <div>
-              <p className="text-xs font-bold text-indigo-200 uppercase tracking-widest mb-2">{trainer ? trainer.trainerId : 'NEW TRAINER'}</p>
-              <h2 className="text-2xl font-black">{trainer ? 'Edit Trainer' : 'Add New Trainer'}</h2>
-            </div>
-            <button onClick={onClose} className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-colors">✕</button>
+            <h2 className="text-2xl font-black">{trainer ? 'Edit Trainer' : 'Add New Trainer'}</h2>
+            <button onClick={onClose} className="w-12 h-12 bg-white/10 hover:bg-rose-600 rounded-2xl flex items-center justify-center transition-all text-xl group shadow-lg">
+              <span className="group-hover:rotate-90 transition-transform">✕</span>
+            </button>
           </div>
         </div>
-        <form onSubmit={handleSave}>
-          <div className="p-8 grid grid-cols-2 gap-6">
-            {[
-              { label: 'Full Name', placeholder: 'Trainer full name', key: 'name', full: true },
-              { label: 'Trainer ID', placeholder: 'e.g. T-1009', key: 'trainerId' },
-              { label: 'Mobile Number', placeholder: '10-digit mobile', key: 'mobile' },
-              { label: 'Assign Project', placeholder: 'Select Project', key: 'project', type: 'select', options: ['Rural Housing Phase II', 'Smart Training MIS 2026', 'District Monitoring System', 'Urban Welfare Drive'] },
-              { label: 'State', placeholder: 'Select State', key: 'state', type: 'select', options: ['Maharashtra', 'Gujarat', 'Madhya Pradesh', 'Kerala'] },
-              { label: 'District', placeholder: 'City/District', key: 'location' },
-            ].map((field) => (
-              <div key={field.label} className={field.full ? 'col-span-2' : ''}>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">{field.label}</label>
-                {field.type === 'select' ? (
-                  <select name={field.key} required defaultValue="" className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all appearance-none cursor-pointer">
-                    <option value="" disabled>{field.placeholder}</option>
-                    {field.options.map(o => <option key={o}>{o}</option>)}
-                  </select>
-                ) : (
-                  <input
-                    required
-                    name={field.key}
-                    type="text"
-                    defaultValue={trainer ? trainer[field.key] : ''}
-                    placeholder={field.placeholder}
-                    className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 focus:border-indigo-400 transition-all"
-                  />
-                )}
-              </div>
-            ))}
+        <form onSubmit={handleSave} className="p-8 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="md:col-span-2">
+              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Full Name</label>
+              <input 
+                required 
+                placeholder="Enter staff full name"
+                value={formData.fullName} 
+                onChange={e => setFormData({...formData, fullName: e.target.value})} 
+                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" 
+              />
+            </div>
+            
+            <div>
+              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Trainer ID / Staff ID</label>
+              <input 
+                required 
+                placeholder="T-XXXX"
+                value={formData.trainerId} 
+                onChange={e => setFormData({...formData, trainerId: e.target.value})} 
+                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" 
+              />
+            </div>
+            
+            <div>
+              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Mobile Number</label>
+              <input 
+                required 
+                maxLength="10"
+                placeholder="10-digit number"
+                value={formData.mobileNumber} 
+                onChange={e => setFormData({...formData, mobileNumber: e.target.value})} 
+                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" 
+              />
+            </div>
 
-            {!trainer && (
-              <div className="col-span-2 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl relative">
-                <div className="flex items-center justify-between mb-3">
-                  <label className="block text-xs font-black text-indigo-800 uppercase tracking-wider">Generated Credentials</label>
-                  <button onClick={copyCredentials} className="text-xs font-bold text-indigo-600 bg-white px-3 py-1.5 rounded-lg border border-indigo-200 hover:bg-indigo-100 transition-all">Copy</button>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-bold text-indigo-500 uppercase tracking-wider mb-1">Username</label>
-                    <input readOnly value={trainerForm.username} className="w-full h-10 px-3 bg-white border border-indigo-200 rounded-lg text-sm font-black text-slate-800 focus:outline-none" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-indigo-500 uppercase tracking-wider mb-1">Password</label>
-                    <input readOnly value={trainerForm.password} className="w-full h-10 px-3 bg-white border border-indigo-200 rounded-lg text-sm font-black text-slate-800 focus:outline-none" />
-                  </div>
-                </div>
-              </div>
-            )}
+            <div>
+              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">State</label>
+              <input 
+                required 
+                placeholder="Work territory state"
+                value={formData.state} 
+                onChange={e => setFormData({...formData, state: e.target.value})} 
+                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" 
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">District / Taluka</label>
+              <input 
+                required 
+                placeholder="Assigned district"
+                value={formData.district} 
+                onChange={e => setFormData({...formData, district: e.target.value})} 
+                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all" 
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Account Role</label>
+              <select 
+                value={formData.accountRole || 'trainer'} 
+                onChange={e => setFormData({...formData, accountRole: e.target.value})} 
+                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
+              >
+                <option value="trainer">Trainer</option>
+                <option value="demonstrator">Demonstrator</option>
+                <option value="supervisor">Supervisor</option>
+              </select>
+            </div>
           </div>
 
-          <div className="px-8 pb-8 flex gap-4">
-            <button type="button" onClick={onClose} className="flex-1 h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 font-bold text-slate-700 text-sm transition-colors">
-              {(!trainer && isCreated) ? 'Close' : 'Cancel'}
-            </button>
-            <button type="submit" className={`flex-1 h-12 rounded-2xl font-bold text-white text-sm transition-colors shadow-lg ${!trainer && isCreated ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/20'}`}>
-              {trainer ? 'Save Changes' : (isCreated ? '✅ Click to Add Another' : 'Create Trainer')}
+          <div>
+            <label className="block text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4">Assign Active Project(s)</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-52 overflow-y-auto p-5 bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-800 rounded-[2rem] custom-scrollbar">
+              {projects.map(p => (
+                <label key={p._id} className={`flex items-center gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedProjects.includes(p._id) ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 hover:border-indigo-200'}`}>
+                  <input type="checkbox" checked={selectedProjects.includes(p._id)} onChange={() => toggleProject(p._id)} className="hidden" />
+                  <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${selectedProjects.includes(p._id) ? 'bg-white border-white' : 'border-slate-300'}`}>
+                    {selectedProjects.includes(p._id) && <span className="text-indigo-600 text-[10px]">✓</span>}
+                  </div>
+                  <span className="text-xs font-black uppercase tracking-tighter">{p.name}</span>
+                </label>
+              ))}
+              {projects.length === 0 && (
+                <div className="col-span-2 py-6 text-center">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest italic">No active projects available</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex gap-4 pt-6">
+            <button type="button" onClick={onClose} className="flex-1 h-16 rounded-[2rem] bg-slate-100 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition-colors">Cancel</button>
+            <button type="submit" className="flex-1 h-16 rounded-[2rem] bg-indigo-600 text-white font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-indigo-500/30 hover:bg-indigo-700 transition-all active:scale-[0.98]">
+              {trainer ? 'Update Profile' : 'Authenticate Staff'}
             </button>
           </div>
         </form>
@@ -145,81 +158,166 @@ const TrainerModal = ({ trainer, onClose, onSave }) => {
   );
 };
 
-const TrainerManagement = ({ onNavigate }) => {
-  const [trainersList, setTrainersList] = useState(trainers);
+const TrainerManagement = ({ onNavigate, currentRole }) => {
+  const [trainersList, setTrainersList] = useState([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showModal, setShowModal] = useState(false);
   const [editTrainer, setEditTrainer] = useState(null);
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'grid'
+  const [projectsList, setProjectsList] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTrainers();
+    fetchProjects();
+  }, []);
+
+  const fetchTrainers = async () => {
+    setLoading(true);
+    try {
+      // Role-based endpoint delivery
+      const endpoint = currentRole === 'admin' ? '/admin/trainers' : '/manager/trainers';
+      const response = await API.get(endpoint);
+      
+      if (response.data.success) {
+        setTrainersList(response.data.data.map(t => ({
+          ...t,
+          name: t.fullName,
+          mobile: t.mobileNumber,
+          projects: t.assignedProjects || [],
+          location: t.district || t.joiningLocation || 'N/A',
+          status: t.status ? t.status.charAt(0).toUpperCase() + t.status.slice(1) : 'Active',
+          profileComplete: t.isProfileComplete,
+          attendance: t.attendanceRate || 0,
+          uploads: t.totalUploads || 0
+        })));
+      }
+    } catch (err) {
+      console.error('Data retrieval failed:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchProjects = async () => {
+    try {
+      const endpoint = currentRole === 'admin' ? '/admin/projects' : '/manager/my-projects';
+      const response = await API.get(endpoint);
+      if (response.data.success) {
+        setProjectsList(response.data.data);
+      }
+    } catch (err) {
+      console.error('Project linkage failed:', err);
+    }
+  };
+
+  const handleDeleteTrainer = async (id) => {
+    if (window.confirm('Are you sure you want to remove this staff member from the database?')) {
+      try {
+        const endpoint = currentRole === 'admin' ? `/admin/trainers/${id}` : `/manager/trainers/${id}`;
+        const response = await API.delete(endpoint);
+        if (response.data.success) {
+          fetchTrainers();
+        }
+      } catch (err) {
+        alert(err.response?.data?.message || 'Deletion failed');
+      }
+    }
+  };
+
+  const handleToggleStatus = async (id, currentStatus) => {
+    try {
+      const newStatus = currentStatus === 'Active' ? 'inactive' : 'active';
+      const endpoint = currentRole === 'admin' ? `/admin/trainers/${id}/status` : `/manager/trainers/${id}/status`;
+      const response = await API.patch(endpoint, { status: newStatus });
+      if (response.data.success) {
+        fetchTrainers();
+      }
+    } catch (err) {
+      alert('Status update protocol failed');
+    }
+  };
 
   const statuses = ['All', 'Active', 'Inactive', 'Pending'];
 
   const filtered = trainersList.filter(t => {
+    const searchStr = search.toLowerCase();
     const matchSearch =
-      t.name.toLowerCase().includes(search.toLowerCase()) ||
-      t.trainerId.toLowerCase().includes(search.toLowerCase()) ||
-      t.project.toLowerCase().includes(search.toLowerCase()) ||
-      t.mobile.includes(search);
+      t.name.toLowerCase().includes(searchStr) ||
+      (t.trainerId && t.trainerId.toLowerCase().includes(searchStr)) ||
+      (t.mobile && t.mobile.includes(searchStr));
     const matchStatus = statusFilter === 'All' || t.status === statusFilter;
     return matchSearch && matchStatus;
   });
 
+  const handleSaveTrainer = async (t) => {
+    try {
+      if (t.id) {
+        const response = await API.put(`/manager/trainers/${t.id}`, t);
+        if (response.data.success) fetchTrainers();
+      } else {
+        const response = await API.post('/manager/trainers/add', t);
+        if (response.data.success) fetchTrainers();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Staff authentication record failed to save');
+    }
+  };
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in duration-700">
       {(showModal || editTrainer) && (
         <TrainerModal
           trainer={editTrainer}
+          projects={projectsList}
           onClose={() => { setShowModal(false); setEditTrainer(null); }}
-          onSave={(t) => {
-            if (editTrainer) {
-              setTrainersList(prev => prev.map(pt => pt.trainerId === t.trainerId ? t : pt));
-            } else {
-              setTrainersList(prev => [t, ...prev]);
-            }
-          }}
+          onSave={handleSaveTrainer}
         />
       )}
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+      {/* Header - Premium Light Theme */}
+      <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between">
         <div>
-          <h3 className="text-2xl font-black text-white">Trainer Database</h3>
-          <p className="text-sm text-slate-500 font-medium mt-1">{filtered.length} trainers found</p>
+          <h3 className="text-4xl font-black text-slate-900 tracking-tight">Staff Directory</h3>
+          <p className="text-sm text-slate-500 font-bold uppercase tracking-[0.2em] mt-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-2 animate-pulse"></span>
+            System Inventory: {filtered.length} Authenticated Personnel
+          </p>
         </div>
-        <div className="flex items-center gap-3">
-          {/* View Toggle */}
-          <div className="bg-slate-100 rounded-xl p-1 flex gap-1">
-            <button onClick={() => setViewMode('table')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'table' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>☰ Table</button>
-            <button onClick={() => setViewMode('grid')} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${viewMode === 'grid' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500'}`}>⊞ Grid</button>
+        <div className="flex items-center gap-4">
+          <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-1.5 flex gap-1">
+            <button onClick={() => setViewMode('table')} className={`px-5 py-2.5 rounded-xl text-xs font-black tracking-widest transition-all ${viewMode === 'table' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}>TABLE</button>
+            <button onClick={() => setViewMode('grid')} className={`px-5 py-2.5 rounded-xl text-xs font-black tracking-widest transition-all ${viewMode === 'grid' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}>GRID</button>
           </div>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-3 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-lg shadow-indigo-500/20 transition-all text-sm"
+            className="group flex items-center gap-3 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-2xl shadow-indigo-500/30 transition-all active:scale-95 text-xs uppercase tracking-[0.2em]"
           >
-            <span className="text-lg">+</span> Add Trainer
+            <span className="text-xl group-hover:rotate-90 transition-transform">＋</span> Add Personnel
           </button>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 p-6 flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+      {/* Professional Filters - Unified Light Mode */}
+      <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm flex flex-col lg:flex-row gap-6">
+        <div className="relative flex-1 group">
+          <span className="absolute left-6 top-1/2 -translate-y-1/2 text-xl opacity-40 group-focus-within:opacity-100 transition-opacity">🔍</span>
           <input
             type="text"
-            placeholder="Search by name, ID, mobile, project..."
+            placeholder="Search by name, ID, mobile, or project index..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full h-11 pl-11 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all"
+            className="w-full h-14 pl-16 pr-6 bg-slate-50 border border-slate-200 rounded-[1.25rem] text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-white transition-all shadow-sm shadow-indigo-500/5"
           />
         </div>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap items-center">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Quick Filter:</span>
           {statuses.map(s => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${statusFilter === s ? 'bg-indigo-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+              className={`px-5 py-2.5 rounded-xl text-[10px] font-black tracking-[0.1em] transition-all uppercase ${statusFilter === s ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-white border border-slate-100 text-slate-500 hover:bg-slate-50 shadow-sm'}`}
             >
               {s}
             </button>
@@ -227,172 +325,179 @@ const TrainerManagement = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Insight Tiles - Clean Minimalist */}
+      <div className="grid grid-cols-2 lg:grid-cols-2 gap-6">
         {[
-          { label: 'Total Trainers', value: trainersList.length, icon: '👥', color: 'text-indigo-600 bg-indigo-50' },
-          { label: 'Active', value: trainersList.filter(t => t.status === 'Active').length, icon: '✅', color: 'text-emerald-600 bg-emerald-50' },
-          { label: 'Profile Incomplete', value: trainersList.filter(t => !t.profileComplete).length, icon: '⚠️', color: 'text-amber-600 bg-amber-50' },
-          { label: 'Pending', value: trainersList.filter(t => t.status === 'Pending').length, icon: '🕐', color: 'text-slate-600 bg-slate-50' },
+          { label: 'Network Size', value: trainersList.length, icon: '💼', color: 'text-indigo-600 bg-indigo-50 border-indigo-100' },
+          { label: 'Active Field', value: trainersList.filter(t => t.status === 'Active').length, icon: '📡', color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
         ].map((s) => (
-          <div key={s.label} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 p-6 flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl ${s.color}`}>{s.icon}</div>
+          <div key={s.label} className={`bg-white rounded-[2rem] border ${s.color} p-8 flex items-center gap-6 shadow-sm hover:shadow-md transition-shadow`}>
+            <div className="w-20 h-20 rounded-2xl bg-white border border-inherit flex items-center justify-center text-3xl shadow-sm">{s.icon}</div>
             <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{s.label}</p>
-              <p className="text-3xl font-black text-slate-900">{s.value}</p>
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">{s.label}</p>
+              <p className="text-4xl font-black text-slate-900 tracking-tight">{s.value}</p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Table View */}
-      {viewMode === 'table' && (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+      {/* Data Presentation Layer */}
+      <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.06)] overflow-hidden">
+        {viewMode === 'table' ? (
           <div className="overflow-x-auto">
-            <table className="w-full text-left">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-100">
-                  {['Trainer', 'Trainer ID', 'Mobile', 'Project', 'Location', 'Attendance', 'Uploads', 'Profile', 'Actions'].map(h => (
-                    <th key={h} className="px-6 py-4 text-xs font-black uppercase tracking-wider text-slate-400">{h}</th>
+                <tr className="bg-slate-50/50 border-b border-slate-100">
+                  {['Personnel Profile', 'System ID', 'Mobile Contact', 'Assignments', 'Stats', 'Profile Integrity', 'Operational Actions'].map(h => (
+                    <th key={h} className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((t, i) => (
                   <tr
-                    key={t.trainerId}
-                    onClick={() => onNavigate && onNavigate('trainer-detail', { trainerId: t.trainerId })}
-                    className="border-b border-slate-50 hover:bg-slate-50/70 transition-colors cursor-pointer"
+                    key={t._id}
+                    className="border-b border-slate-50 hover:bg-slate-50/80 transition-colors group cursor-default"
                   >
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-white font-black text-sm shadow-md`}>
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-white font-black text-base shadow-lg group-hover:scale-110 transition-transform`}>
                           {t.name.charAt(0)}
                         </div>
-                        <p className="font-black text-slate-900 text-sm">{t.name}</p>
+                        <div>
+                           <p className="font-black text-slate-800 text-sm group-hover:text-indigo-600 transition-colors tracking-tight">{t.name}</p>
+                           <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{t.accountRole || 'Staff'}</p>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-6 py-5 text-xs font-bold text-indigo-500">{t.trainerId}</td>
-                    <td className="px-6 py-5 text-sm font-medium text-slate-600">{t.mobile}</td>
-                    <td className="px-6 py-5 text-sm font-medium text-slate-600 max-w-[160px]">
-                      <span className="line-clamp-2">{t.project}</span>
+                    <td className="px-8 py-6">
+                        <span className="text-[11px] font-black text-indigo-600 bg-white px-3 py-1.5 rounded-lg border border-indigo-100 tracking-widest shadow-sm shadow-indigo-500/5">{t.trainerId}</span>
                     </td>
-                    <td className="px-6 py-5 text-sm font-medium text-slate-500">{t.location}</td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-2">
-                        <div className="w-16 h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <td className="px-8 py-6 text-sm font-bold text-slate-600">{t.mobile}</td>
+                    <td className="px-8 py-6">
+                      <div className="flex flex-wrap gap-1.5 max-w-[220px]">
+                        {t.projects && t.projects.length > 0 ? t.projects.map((p, idx) => (
+                          <span key={idx} className="px-3 py-1 bg-white border border-slate-200 text-slate-700 rounded-lg text-[9px] font-black uppercase tracking-tighter shadow-sm">
+                            {typeof p === 'object' ? p.name : p}
+                          </span>
+                        )) : <span className="text-slate-300 italic text-[10px] font-bold tracking-widest uppercase">NOT ASSIGNED</span>}
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-[10px] font-black text-slate-500 uppercase tracking-tighter">
+                            <span>Engagement</span>
+                            <span className="text-indigo-600">{t.attendance}%</span>
+                        </div>
+                        <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full ${t.attendance >= 80 ? 'bg-emerald-500' : t.attendance >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`}
+                            className={`h-full rounded-full ${t.attendance >= 80 ? 'bg-emerald-500' : t.attendance >= 50 ? 'bg-indigo-500' : 'bg-rose-500'}`}
                             style={{ width: `${t.attendance}%` }}
                           ></div>
                         </div>
-                        <span className="text-xs font-black text-slate-700">{t.attendance}%</span>
+                        <p className="text-[9px] font-black text-slate-400 text-right uppercase tracking-tighter">{t.uploads} Uploads</p>
                       </div>
                     </td>
-                    <td className="px-6 py-5 text-sm font-bold text-slate-700 text-center">{t.uploads}</td>
-                    <td className="px-6 py-5">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${t.profileComplete ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
-                        {t.profileComplete ? '✓ Done' : '✗ Pending'}
+                    <td className="px-8 py-6">
+                      <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${t.profileComplete ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${t.profileComplete ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`}></span>
+                        {t.profileComplete ? 'Verified' : 'Pending KYC'}
                       </span>
                     </td>
-                    <td className="px-6 py-5" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-8 py-6">
                       <div className="flex gap-2">
                         <button
-                          onClick={() => onNavigate && onNavigate('trainer-detail', { trainerId: t.trainerId, editMode: true })}
-                          className="px-3 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-bold rounded-lg transition-colors"
-                        >
-                          Edit
-                        </button>
+                          onClick={() => onNavigate && onNavigate('trainer-detail', { trainerId: t._id })}
+                          className="w-10 h-10 bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-600 rounded-xl flex items-center justify-center transition-all shadow-sm"
+                          title="View Intelligence"
+                        >👁️</button>
                         <button
-                          onClick={() => onNavigate && onNavigate('trainer-detail', { trainerId: t.trainerId })}
-                          className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-bold rounded-lg transition-colors"
-                        >
-                          View
-                        </button>
+                          onClick={() => onNavigate && onNavigate('trainer-detail', { trainerId: t._id, editMode: true })}
+                          className="w-10 h-10 bg-slate-100 hover:bg-amber-500 hover:text-white text-slate-600 rounded-xl flex items-center justify-center transition-all shadow-sm"
+                          title="Modify Record"
+                        >✏️</button>
+                        <button
+                          onClick={() => handleDeleteTrainer(t._id)}
+                          className="w-10 h-10 bg-slate-100 hover:bg-rose-600 hover:text-white text-slate-600 rounded-xl flex items-center justify-center transition-all shadow-sm"
+                          title="Purge Profile"
+                        >🗑️</button>
                       </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            {filtered.length === 0 && (
-              <div className="py-20 text-center text-slate-400 font-medium">No trainers found matching your search.</div>
-            )}
           </div>
-        </div>
-      )}
-
-      {/* Grid View */}
-      {viewMode === 'grid' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filtered.map((t, i) => (
-            <div key={t.trainerId} className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 shadow-sm p-8 hover:shadow-lg hover:-translate-y-1 transition-all group">
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex items-center gap-4">
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-white font-black text-xl shadow-lg`}>
-                    {t.name.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="font-black text-slate-900">{t.name}</p>
-                    <p className="text-xs font-bold text-indigo-500">{t.trainerId}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-3 mb-6">
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <span>📱</span><span className="font-medium">{t.mobile}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <span>📂</span><span className="font-medium line-clamp-1">{t.project}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                  <span>📍</span><span className="font-medium">{t.location}</span>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
-                <div>
-                  <p className="text-xs text-slate-400 font-bold mb-1">Attendance</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${t.attendance >= 80 ? 'bg-emerald-500' : t.attendance >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`}
-                        style={{ width: `${t.attendance}%` }}
-                      ></div>
+        ) : (
+          <div className="p-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 bg-slate-50/30">
+            {filtered.map((t, i) => (
+              <div key={t.trainerId} className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 hover:shadow-2xl hover:-translate-y-2 transition-all group overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700 opacity-50"></div>
+                
+                <div className="flex items-start justify-between mb-8 relative z-10">
+                  <div className="flex items-center gap-5">
+                    <div className={`w-16 h-16 rounded-[1.5rem] bg-gradient-to-br ${avatarColors[i % avatarColors.length]} flex items-center justify-center text-white font-black text-2xl shadow-xl group-hover:rotate-6 transition-transform`}>
+                      {t.name.charAt(0)}
                     </div>
-                    <span className="text-xs font-black">{t.attendance}%</span>
+                    <div>
+                      <p className="font-black text-slate-900 text-lg line-clamp-1">{t.name}</p>
+                      <p className="text-xs font-black text-indigo-500 uppercase tracking-[0.15em]">{t.trainerId}</p>
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <p className="text-xs text-slate-400 font-bold mb-1">Uploads</p>
-                  <p className="text-lg font-black text-slate-900">{t.uploads}</p>
+
+                <div className="grid grid-cols-2 gap-6 mb-8 relative z-10 border-b border-slate-50 pb-8">
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Mobile Link</p>
+                    <p className="text-sm font-bold text-slate-700">{t.mobile}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Operational Role</p>
+                    <p className="text-sm font-bold text-slate-700">{t.accountRole || 'Staff'}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-6 relative z-10">
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Engagement Matrix</span>
+                            <span className="text-[10px] font-black text-indigo-600">{t.attendance}%</span>
+                        </div>
+                        <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                            <div className={`h-full rounded-full shadow-lg ${t.attendance >= 80 ? 'bg-emerald-500' : t.attendance >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${t.attendance}%` }}></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-8 flex gap-3 relative z-10">
+                  <button
+                    onClick={() => onNavigate && onNavigate('trainer-detail', { trainerId: t.trainerId })}
+                    className="flex-1 py-4 bg-slate-900 hover:bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-slate-900/10 transition-all active:scale-95"
+                  >View Intelligence</button>
+                  <button
+                    onClick={() => handleDeleteTrainer(t._id)}
+                    className="w-14 h-14 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 rounded-2xl flex items-center justify-center transition-all border border-rose-100"
+                  >🗑️</button>
                 </div>
               </div>
-              {!t.profileComplete && (
-                <div className="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-100">
-                  <p className="text-xs font-bold text-amber-700">⚠️ Profile completion pending</p>
-                </div>
-              )}
-              <div className="mt-4 flex gap-3">
-                <button
-                  onClick={(e) => { e.stopPropagation(); onNavigate && onNavigate('trainer-detail', { trainerId: t.trainerId, editMode: true }); }}
-                  className="flex-1 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 text-xs font-bold rounded-xl transition-colors"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); onNavigate && onNavigate('trainer-detail', { trainerId: t.trainerId }); }}
-                  className="flex-1 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-bold rounded-xl transition-colors"
-                >
-                  View Profile
-                </button>
-              </div>
-            </div>
-          ))}
-          {filtered.length === 0 && (
-            <div className="col-span-3 py-20 text-center text-slate-400 font-medium">No trainers found.</div>
-          )}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+        
+        {loading && trainersList.length === 0 && (
+          <div className="py-32 flex flex-col items-center justify-center text-center">
+             <div className="w-16 h-16 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin mb-6"></div>
+             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">Syncing Database Cluster...</p>
+          </div>
+        )}
+        
+        {!loading && filtered.length === 0 && (
+          <div className="py-32 flex flex-col items-center justify-center text-center">
+             <div className="text-6xl mb-6 opacity-20 filter grayscale">📁</div>
+             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">No personnel matching criteria found in sector</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

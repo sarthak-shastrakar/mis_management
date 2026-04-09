@@ -17,7 +17,7 @@ exports.login = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Please provide username and password' });
     }
 
-    const manager = await Manager.findOne({ username }).select('+password');
+    const manager = await Manager.findOne({ username }).select('+password').populate('assignedProjects', 'name');
 
     if (!manager) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
@@ -45,7 +45,7 @@ exports.login = async (req, res, next) => {
 // ─────────────────────────────────────────────
 exports.getMe = async (req, res, next) => {
   try {
-    const manager = await Manager.findById(req.user.id);
+    const manager = await Manager.findById(req.user.id).populate('assignedProjects', 'name');
     if (!manager) return res.status(404).json({ success: false, message: 'Manager not found' });
 
     res.status(200).json({ success: true, data: manager });
@@ -63,7 +63,7 @@ exports.updateProfile = async (req, res, next) => {
   try {
     const { fullName, emailAddress, state, district } = req.body;
 
-    const manager = await Manager.findById(req.user.id);
+    const manager = await Manager.findById(req.user.id).populate('assignedProjects', 'name');
     if (!manager) return res.status(404).json({ success: false, message: 'Manager not found' });
 
     if (fullName) manager.fullName = fullName;
@@ -123,10 +123,10 @@ exports.updatePassword = async (req, res, next) => {
 // ─────────────────────────────────────────────
 exports.assignTrainer = async (req, res, next) => {
   try {
-    const { trainerId, projectName } = req.body;
+    const { trainerId, projectIds } = req.body;
 
-    if (!trainerId || !projectName) {
-      return res.status(400).json({ success: false, message: 'Please provide trainerId and projectName' });
+    if (!trainerId || !projectIds || !Array.isArray(projectIds)) {
+      return res.status(400).json({ success: false, message: 'Please provide trainerId and an array of projectIds' });
     }
 
     const trainer = await Trainer.findById(trainerId);
@@ -136,16 +136,16 @@ exports.assignTrainer = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Cannot assign project to an inactive trainer' });
     }
 
-    trainer.assignedProject = projectName;
+    trainer.assignedProjects = projectIds;
     await trainer.save();
 
     res.status(200).json({
       success: true,
-      message: `Trainer "${trainer.fullName}" (${trainer.trainerId}) assigned to project "${projectName}"`,
+      message: `Trainer "${trainer.fullName}" updated with assigned projects`,
       data: {
         trainerId: trainer.trainerId,
         fullName: trainer.fullName,
-        assignedProject: trainer.assignedProject,
+        assignedProjects: trainer.assignedProjects,
       },
     });
   } catch (err) {
@@ -208,7 +208,7 @@ exports.sendNotification = async (req, res, next) => {
 exports.getPendingAttendances = async (req, res, next) => {
   try {
     const pendingList = await Attendance.find({ status: 'pending_approval' })
-      .populate('trainerId', 'fullName trainerId mobileNumber assignedProject')
+      .populate('trainerId', 'fullName trainerId mobileNumber assignedProjects')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -325,12 +325,13 @@ exports.rejectAttendance = async (req, res, next) => {
 // ─────────────────────────────────────────────
 exports.getDashboard = async (req, res, next) => {
   try {
-    const manager = await Manager.findById(req.user.id);
+    // Populate assignedProjects FULLY to get location and progressStatus
+    const manager = await Manager.findById(req.user.id).populate('assignedProjects');
     if (!manager) return res.status(404).json({ success: false, message: 'Manager not found' });
 
     // ── 1. Assigned Projects Status ─────────────────────────
-    const Project = require('../../project/models/projectModel');
-    const projects = await Project.find({ manager: req.user.id });
+    // Using manager.assignedProjects as source of truth for visibility
+    const projects = manager.assignedProjects || [];
 
     const today = new Date().toISOString().split('T')[0];
     const todayAttendance = await Attendance.find({
@@ -345,24 +346,27 @@ exports.getDashboard = async (req, res, next) => {
     });
 
     const assignedProjectsStatus = await Promise.all(projects.map(async (prj) => {
-      const trainersCount = await Trainer.countDocuments({ assignedProject: prj.name });
-      const presentToday = todayProjectAttendance[prj.name] || 0;
+      const trainersCount = await Trainer.countDocuments({ assignedProjects: prj._id });
+      const presentToday = todayProjectAttendance[prj._id] || todayProjectAttendance[prj.name] || 0;
       const percentage = trainersCount > 0 ? Math.round((presentToday / trainersCount) * 100) : 0;
 
       return {
+        projectId: prj._id, // Critical for "View Detail" button
         projectName: prj.name,
-        location: `${prj.location.district}, ${prj.location.state}`,
+        location: prj.location ? `${prj.location.district}, ${prj.location.state}` : 'N/A',
         totalTrainers: trainersCount,
         presentToday,
-        completionPercentage: percentage,
-        healthStatus: percentage >= 70 ? 'HEALTHY' : 'ATTENTION NEEDED',
+        completionPercentage: prj.progressStatus || 0,
+        healthStatus: prj.progressStatus >= 70 ? 'HEALTHY' : 'ATTENTION NEEDED',
       };
     }));
 
     // ── 2. Approval Insights ─────────────────────────────────
-    const pendingApprovals = await Attendance.countDocuments({ status: 'pending_approval' });
+    const pendingCount = await Attendance.countDocuments({ 
+       status: 'pending_approval',
+       projectId: { $in: projects.map(p => p._id) } 
+    });
 
-    // Approved today by this manager
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date();
@@ -371,19 +375,19 @@ exports.getDashboard = async (req, res, next) => {
     const approvedToday = await Attendance.countDocuments({
       status: 'approved',
       approvedBy: req.user.id,
-      approvedAt: { $gte: startOfDay, $lte: endOfDay },
+      updatedAt: { $gte: startOfDay, $lte: endOfDay }
     });
 
     const approvalInsights = {
-      pendingApprovals,
-      approvedToday,
-      tip: 'Trainers with more than 8 days of missing attendance require manual verification before approving their late uploads.',
+      pendingCount,
+      approvedToday
     };
 
     // ── 3. Late Submission Approvals (> 5 days late) ─────────
     const lateSubmissions = await Attendance.find({
       status: 'pending_approval',
       daysLate: { $gt: 5 },
+      projectId: { $in: projects.map(p => p._id) }
     })
       .populate('trainerId', 'fullName trainerId mobileNumber assignedProject district')
       .sort({ daysLate: -1 }); // most late first
@@ -409,7 +413,10 @@ exports.getDashboard = async (req, res, next) => {
         manager: {
           name: manager.fullName,
           managerId: manager.managerId,
-          assignedProject: manager.assignedProject,
+          assignedProjects: manager.assignedProjects ? manager.assignedProjects.map(p => ({
+            id: p._id,
+            name: p.name
+          })) : [],
         },
         assignedProjectsStatus,
         approvalInsights,
@@ -424,31 +431,154 @@ exports.getDashboard = async (req, res, next) => {
   }
 };
 
+// @desc    Setup Project Details (Manager One-Time)
+// @route   PUT /api/v1/manager/projects/:id/setup
+// @access  Private (Manager only)
+exports.setupProjectDetails = async (req, res, next) => {
+  try {
+    const Project = require('../../project/models/projectModel');
+    let project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+
+    // Verify ownership
+    if (project.manager.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Not authorized to setup this project' });
+    }
+
+    // Check if already locked
+    if (project.isLocked) {
+      return res.status(400).json({ success: false, message: 'Project details are locked. Contact Admin for changes.' });
+    }
+
+    // Update fields
+    const {
+      projectCategory,
+      workOrderNo,
+      description,
+      allocatedTarget,
+      trainingHours,
+      trainingCostPerHour,
+      totalProjectCost,
+      installment1Status,
+      installment1Date,
+      assessmentFeesPaidBy,
+      assessmentStatus,
+      assessmentDate,
+      totalPassOut,
+      installment2Status,
+      installment2Date,
+      maxDemonstrators,
+      location,
+      projectAddress,
+      startDate,
+      endDate
+    } = req.body;
+
+    const updateData = {
+      projectCategory: projectCategory || project.projectCategory,
+      workOrderNo: workOrderNo || project.workOrderNo,
+      description: description || project.description,
+      allocatedTarget: allocatedTarget || project.allocatedTarget,
+      trainingHours: trainingHours || project.trainingHours,
+      trainingCostPerHour: trainingCostPerHour || project.trainingCostPerHour,
+      totalProjectCost: totalProjectCost || project.totalProjectCost,
+      installment1Status: installment1Status || project.installment1Status,
+      installment1Date: installment1Date || project.installment1Date,
+      assessmentFeesPaidBy: assessmentFeesPaidBy || project.assessmentFeesPaidBy,
+      assessmentStatus: assessmentStatus || project.assessmentStatus,
+      assessmentDate: assessmentDate || project.assessmentDate,
+      totalPassOut: totalPassOut !== undefined ? totalPassOut : project.totalPassOut,
+      installment2Status: installment2Status || project.installment2Status,
+      installment2Date: installment2Date || project.installment2Date,
+      maxDemonstrators: maxDemonstrators || project.maxDemonstrators,
+      location: location || project.location,
+      projectAddress: projectAddress || project.projectAddress,
+      startDate: startDate || project.startDate,
+      endDate: endDate || project.endDate,
+      isLocked: true // Lock after first setup
+    };
+
+    project = await Project.findByIdAndUpdate(req.params.id, updateData, {
+      new: true,
+      runValidators: false
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Project details submitted and locked successfully',
+      data: project
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // @desc    Get Projects Assigned to this Manager
 // @route   GET /api/v1/manager/my-projects
 // @access  Private (Manager only)
 exports.getAssignedProjects = async (req, res, next) => {
   try {
     const Project = require('../../project/models/projectModel');
-    let projects;
+    let rawProjects;
 
     if (req.user.role === 'trainer') {
-      const trainer = await Trainer.findById(req.user.id);
-      if (!trainer || !trainer.assignedProject || trainer.assignedProject === 'None') {
-        projects = [];
-      } else {
-        // Find project by name as assigned in Trainer's profile
-        projects = await Project.find({ name: trainer.assignedProject });
-      }
+      const trainer = await Trainer.findById(req.user.id).populate('assignedProjects');
+      rawProjects = (trainer && trainer.assignedProjects) ? trainer.assignedProjects : [];
     } else {
-      // Manager gets all projects assigned to them
-      projects = await Project.find({ manager: req.user.id });
+      // Find all projects where this manager is assigned
+      rawProjects = await Project.find({ manager: req.user.id });
     }
     
+    // Standardize the response format
+    const projects = rawProjects.map(p => ({
+      projectId: p._id,
+      name: p.name,
+      category: p.projectCategory,
+      workOrderNo: p.workOrderNo,
+      status: p.status,
+      address: p.projectAddress,
+      location: p.location,
+      startDate: p.startDate,
+      endDate: p.endDate,
+      progress: p.progressStatus,
+      isLocked: p.isLocked
+    }));
+
     res.status(200).json({
       success: true,
       count: projects.length,
       data: projects
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─────────────────────────────────────────────
+// @desc    Get detailed project info
+// @route   GET /api/v1/manager/projects/:id
+// @access  Private (Manager)
+// ─────────────────────────────────────────────
+exports.getProjectDetails = async (req, res, next) => {
+  try {
+    const Project = require('../../project/models/projectModel');
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+
+    // Security: Only allow if assigned to this manager
+    if (project.manager && project.manager.toString() !== req.user.id) {
+      return res.status(401).json({ success: false, message: 'Not authorized to view this project' });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: project
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -472,7 +602,7 @@ const sendTokenResponse = (manager, statusCode, res) => {
       username: manager.username,
       managerId: manager.managerId,
       role: manager.role,
-      assignedProject: manager.assignedProject,
+      assignedProjects: manager.assignedProjects,
     },
   });
 };

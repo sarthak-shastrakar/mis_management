@@ -30,10 +30,10 @@ const managerSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please add district'],
     },
-    assignedProject: {
-      type: String,
-      default: 'None',
-    },
+    assignedProjects: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Project',
+    }],
     status: {
       type: String,
       enum: ['active', 'inactive'],

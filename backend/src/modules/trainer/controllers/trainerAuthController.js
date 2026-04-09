@@ -48,9 +48,7 @@ exports.trainerLogin = async (req, res) => {
       // isFirstLogin = true  → force to /set-password
       // isProfileComplete = false → force to /complete-profile
       // both false → go to dashboard
-      nextStep: trainer.isFirstLogin
-        ? 'SET_PASSWORD'
-        : !trainer.isProfileComplete
+      nextStep: !trainer.isProfileComplete
         ? 'COMPLETE_PROFILE'
         : 'DASHBOARD',
     });
@@ -59,50 +57,6 @@ exports.trainerLogin = async (req, res) => {
   }
 };
 
-// ─────────────────────────────────────────────────────────────
-// @desc    Trainer sets new password on first login (mandatory)
-// @route   PUT /api/v1/trainer/auth/set-password
-// @access  Private (Trainer - isFirstLogin only)
-// ─────────────────────────────────────────────────────────────
-exports.setFirstPassword = async (req, res) => {
-  try {
-    const { newPassword, confirmPassword } = req.body;
-
-    if (!newPassword || !confirmPassword) {
-      return res.status(400).json({ success: false, message: 'Please provide newPassword and confirmPassword' });
-    }
-
-    if (newPassword !== confirmPassword) {
-      return res.status(400).json({ success: false, message: 'Passwords do not match' });
-    }
-
-    if (newPassword.length < 6) {
-      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
-    }
-
-    const trainer = await Trainer.findById(req.user.id).select('+password');
-    if (!trainer) return res.status(404).json({ success: false, message: 'Trainer not found' });
-
-    if (!trainer.isFirstLogin) {
-      return res.status(400).json({ success: false, message: 'Password already set. Use update-password instead.' });
-    }
-
-    // Set new password — pre-save hook will hash it
-    trainer.password = newPassword;
-    trainer.plainPassword = newPassword;  // store plain text as requested by user
-    trainer.isFirstLogin = false;  // mark first login done
-
-    await trainer.save();
-
-    res.status(200).json({
-      success: true,
-      message: 'Password set successfully. Please complete your profile.',
-      nextStep: 'COMPLETE_PROFILE',
-    });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
 
 // ─────────────────────────────────────────────────────────────
 // @desc    Trainer completes profile (mandatory before dashboard)
@@ -112,37 +66,32 @@ exports.setFirstPassword = async (req, res) => {
 exports.completeProfile = async (req, res) => {
   try {
     const {
-      email,
-      alternativeMobileNumber,
-      alternativeEmail,
-      dateOfBirth,
       gender,
-      address,
+      state,
+      district,
+      city,
+      taluka,
       pincode,
       aadharNumber,
-      panCardNumber,
       bankName,
       accountNumber,
-      totStatus,
-      totLevel,
-      residentCity,
-      joiningLocation,
-      qualification,
-      taluka,
+      ifscCode,
+      address,
     } = req.body;
 
-    // All fields are required for profile completion
+    // All fields are required for profile completion based on new UI
     const missingFields = [];
-    if (!email)         missingFields.push('email');
-    if (!dateOfBirth)   missingFields.push('dateOfBirth');
     if (!gender)        missingFields.push('gender');
-    if (!address)       missingFields.push('address');
+    if (!state)         missingFields.push('state');
+    if (!district)      missingFields.push('district');
+    if (!city)          missingFields.push('city');
+    if (!taluka)        missingFields.push('taluka');
     if (!pincode)       missingFields.push('pincode');
     if (!aadharNumber)  missingFields.push('aadharNumber');
     if (!bankName)      missingFields.push('bankName');
     if (!accountNumber) missingFields.push('accountNumber');
-    if (!qualification) missingFields.push('qualification');
-    if (!taluka)        missingFields.push('taluka');
+    if (!ifscCode)      missingFields.push('ifscCode');
+    if (!address)       missingFields.push('address');
 
     if (missingFields.length > 0) {
       return res.status(400).json({
@@ -155,48 +104,28 @@ exports.completeProfile = async (req, res) => {
     const trainer = await Trainer.findById(req.user.id);
     if (!trainer) return res.status(404).json({ success: false, message: 'Trainer not found' });
 
-    if (trainer.isFirstLogin) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please set your new password first before completing profile',
-        nextStep: 'SET_PASSWORD',
-      });
-    }
-
     if (trainer.isProfileComplete) {
-      return res.status(400).json({ success: false, message: 'Profile is already complete. Use update-profile to make changes.' });
+      return res.status(400).json({ success: false, message: 'Profile is already complete.' });
     }
 
     // Check Aadhar uniqueness
     const aadharExists = await Trainer.findOne({ aadharNumber, _id: { $ne: req.user.id } });
     if (aadharExists) {
-      return res.status(400).json({ success: false, message: 'Aadhar number already registered with another trainer' });
+      return res.status(400).json({ success: false, message: 'Aadhar number already registered' });
     }
 
-    // Check email uniqueness
-    const emailExists = await Trainer.findOne({ email, _id: { $ne: req.user.id } });
-    if (emailExists) {
-      return res.status(400).json({ success: false, message: 'Email already in use by another trainer' });
-    }
-
-    // Fill all profile fields
-    trainer.email = email;
-    trainer.alternativeMobileNumber = alternativeMobileNumber;
-    trainer.alternativeEmail = alternativeEmail;
-    trainer.dateOfBirth = dateOfBirth;
+    // Fill profile fields
     trainer.gender = gender;
-    trainer.address = address;
+    trainer.state = state;
+    trainer.district = district;
+    trainer.city = city;
+    trainer.taluka = taluka;
     trainer.pincode = pincode;
     trainer.aadharNumber = aadharNumber;
-    trainer.panCardNumber = panCardNumber;
     trainer.bankName = bankName;
     trainer.accountNumber = accountNumber;
-    trainer.totStatus = totStatus;
-    trainer.totLevel = totLevel;
-    trainer.residentCity = residentCity;
-    trainer.joiningLocation = joiningLocation;
-    trainer.qualification = qualification;
-    trainer.taluka = taluka;
+    trainer.ifscCode = ifscCode;
+    trainer.address = address;
 
     // Handle profile photo from body (if Cloudinary URL was uploaded)
     if (req.body.profilePhoto) {

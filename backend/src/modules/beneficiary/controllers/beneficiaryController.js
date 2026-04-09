@@ -43,6 +43,45 @@ exports.createBeneficiary = async (req, res) => {
 };
 
 // ─────────────────────────────────────────────────────────────
+// @desc    Batch create beneficiaries (Upload List)
+// @route   POST /api/v1/beneficiaries/batch
+// @access  Private (Manager/Admin)
+// ─────────────────────────────────────────────────────────────
+exports.batchCreateBeneficiaries = async (req, res) => {
+  try {
+    const { beneficiaries, projectId } = req.body;
+
+    if (!Array.isArray(beneficiaries) || beneficiaries.length === 0) {
+      return res.status(400).json({ success: false, message: 'Please provide an array of beneficiaries' });
+    }
+
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+
+    // Supplement each entry with project ID
+    const docs = beneficiaries.map(b => ({
+      ...b,
+      project: projectId,
+      assignedStaff: b.assignedStaffId || project.manager // Default to manager if staff not specified
+    }));
+
+    const result = await Beneficiary.insertMany(docs, { ordered: false });
+
+    res.status(201).json({
+      success: true,
+      count: result.length,
+      message: `${result.length} beneficiaries imported successfully`
+    });
+  } catch (err) {
+    res.status(400).json({ 
+      success: false, 
+      message: err.message.includes('E11000') ? 'Some Beneficiary IDs already exist' : err.message,
+      error: err 
+    });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
 // @desc    Upload Multiple House Monitoring Photos (4/day rule)
 // @route   POST /api/v1/beneficiaries/:id/monitoring/multi
 // @access  Private (Trainer/Staff)
@@ -248,6 +287,60 @@ exports.getBeneficiaries = async (req, res) => {
 
     const beneficiaries = await query.populate('assignedStaff', 'fullName staffId').populate('project', 'workOrderNo projectCategory');
     res.status(200).json({ success: true, count: beneficiaries.length, data: beneficiaries });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// @desc    Update Beneficiary details
+// @route   PUT /api/v1/beneficiaries/:id
+// @access  Private (Manager/Admin)
+// ─────────────────────────────────────────────────────────────
+exports.updateBeneficiary = async (req, res) => {
+  try {
+    const beneficiary = await Beneficiary.findById(req.params.id);
+    if (!beneficiary) return res.status(404).json({ success: false, message: 'Beneficiary not found' });
+
+    // Authorization check
+    if (req.user.role === 'manager' && beneficiary.project.toString()) {
+       const project = await Project.findById(beneficiary.project);
+       if (project.manager.toString() !== req.user.id) {
+         return res.status(403).json({ success: false, message: 'Not authorized to edit this beneficiary' });
+       }
+    }
+
+    const updated = await Beneficiary.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: false
+    });
+
+    res.status(200).json({ success: true, data: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// @desc    Delete Beneficiary
+// @route   DELETE /api/v1/beneficiaries/:id
+// @access  Private (Manager/Admin)
+// ─────────────────────────────────────────────────────────────
+exports.deleteBeneficiary = async (req, res) => {
+  try {
+    const beneficiary = await Beneficiary.findById(req.params.id);
+    if (!beneficiary) return res.status(404).json({ success: false, message: 'Beneficiary not found' });
+
+    // Authorization check for managers
+    if (req.user.role === 'manager') {
+       const project = await Project.findById(beneficiary.project);
+       if (project.manager.toString() !== req.user.id) {
+         return res.status(403).json({ success: false, message: 'Not authorized to delete this beneficiary' });
+       }
+    }
+
+    await Beneficiary.findByIdAndDelete(req.params.id);
+    res.status(200).json({ success: true, message: 'Beneficiary removed' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

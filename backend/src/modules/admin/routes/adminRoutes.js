@@ -19,6 +19,7 @@ const {
   getAllProjects,
   getProject,
   updateProject,
+  deleteProject,
   getPhotosByDate,
   getPhotosByTrainer,
   exchangeTrainerProject,
@@ -36,7 +37,6 @@ const router = express.Router();
 // ─────────────────────────────────────────────
 // Public routes
 // ─────────────────────────────────────────────
-router.post("/register", register);
 router.post("/login", login);
 
 // ─────────────────────────────────────────────
@@ -53,7 +53,8 @@ router.route("/projects")
 
 router.route("/projects/:id")
   .get(protect, adminOnly, getProject)
-  .put(protect, adminOnly, updateProject);
+  .put(protect, adminOnly, updateProject)
+  .delete(protect, adminOnly, deleteProject);
 
 // ─────────────────────────────────────────────
 // Manager CRUD

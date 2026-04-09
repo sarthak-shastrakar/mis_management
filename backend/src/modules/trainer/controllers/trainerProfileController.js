@@ -1,4 +1,5 @@
 const Trainer = require('../models/trainerModel');
+const Project = require('../../project/models/projectModel');
 
 // ─────────────────────────────────────────────────────────────
 // @desc    Get own profile
@@ -8,32 +9,42 @@ const Trainer = require('../models/trainerModel');
 exports.getMyProfile = async (req, res) => {
   try {
     const trainer = await Trainer.findById(req.user.id)
-      .populate('reportingManager', 'fullName role');
+      .populate('reportingManager', 'fullName role')
+      .populate('assignedProjects', 'name projectCategory projectId status');
 
     if (!trainer) {
       return res.status(404).json({ success: false, message: 'Trainer not found' });
     }
 
-    // Prepare response data with masking as per UI mockup
+    // Prepare response data with FULL details as per UI mockup for editing/viewing
     const profileData = {
       fullName: trainer.fullName,
       trainerId: trainer.trainerId,
       mobileNumber: trainer.mobileNumber,
       email: trainer.email,
-      location: trainer.district,
+      location: {
+        state: trainer.state,
+        district: trainer.district,
+        city: trainer.city || trainer.residentCity,
+        taluka: trainer.taluka,
+        pincode: trainer.pincode,
+        address: trainer.address,
+      },
       dateJoined: trainer.createdAt.toISOString().split('T')[0], // YYYY-MM-DD
-      address: trainer.address,
       status: trainer.status,
       assignedProject: trainer.assignedProject,
+      assignedProjects: trainer.assignedProjects,
       
-      // Masked Bank & Identity Details
-      aadharNumber: trainer.aadharNumber 
-        ? `****-****-${trainer.aadharNumber.slice(-4)}` 
-        : null,
+      // Personal Details
+      gender: trainer.gender,
+      aadharNumber: trainer.aadharNumber,
+      panCardNumber: trainer.panCardNumber,
+      dateOfBirth: trainer.dateOfBirth,
+      
+      // Banking Details
       bankName: trainer.bankName,
-      accountNumber: trainer.accountNumber 
-        ? `****${trainer.accountNumber.slice(-4)}` 
-        : null,
+      accountNumber: trainer.accountNumber,
+      ifscCode: trainer.ifscCode,
       
       // Reporting Manager
       reportingManager: trainer.reportingManager ? {
@@ -58,13 +69,40 @@ exports.getMyProfile = async (req, res) => {
 };
 
 // ─────────────────────────────────────────────────────────────
+// @desc    Get assigned projects for trainer
+// @route   GET /api/v1/trainer/projects
+// @access  Private (Trainer)
+// ─────────────────────────────────────────────────────────────
+exports.getAssignedProjects = async (req, res) => {
+  try {
+    const trainer = await Trainer.findById(req.user.id).populate('assignedProjects');
+    
+    if (!trainer) {
+      return res.status(404).json({ success: false, message: 'Trainer not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      count: trainer.assignedProjects.length,
+      data: trainer.assignedProjects
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
 // @desc    Update own profile (after profile is complete)
 // @route   PUT /api/v1/trainer/profile/update
 // @access  Private (Trainer - profile complete)
 // ─────────────────────────────────────────────────────────────
 exports.updateMyProfile = async (req, res) => {
   try {
-    const { email, dateOfBirth, gender, address, pincode, qualification, taluka, profilePhoto } = req.body;
+    const { 
+      email, dateOfBirth, gender, address, pincode, 
+      qualification, taluka, profilePhoto, city, 
+      state, district, bankName, accountNumber, ifscCode, aadharNumber 
+    } = req.body;
 
     const trainer = await Trainer.findById(req.user.id);
     if (!trainer) return res.status(404).json({ success: false, message: 'Trainer not found' });
@@ -76,14 +114,21 @@ exports.updateMyProfile = async (req, res) => {
       trainer.email = email;
     }
 
-    // Update allowed fields (trainer cannot change: mobile, aadhar, trainerId, assignedProject)
+    // Update fields allowed for trainer edit
     if (dateOfBirth) trainer.dateOfBirth   = dateOfBirth;
     if (gender)      trainer.gender        = gender;
     if (address)     trainer.address       = address;
     if (pincode)     trainer.pincode       = pincode;
     if (qualification) trainer.qualification = qualification;
     if (taluka)      trainer.taluka        = taluka;
-    if (profilePhoto) trainer.profilePhoto = profilePhoto;
+    if (city)        trainer.city          = city;
+    if (state)       trainer.state         = state;
+    if (district)    trainer.district      = district;
+    if (bankName)    trainer.bankName      = bankName;
+    if (accountNumber) trainer.accountNumber = accountNumber;
+    if (ifscCode)    trainer.ifscCode      = ifscCode;
+    if (aadharNumber) trainer.aadharNumber  = aadharNumber;
+    if (profilePhoto) trainer.profilePhoto  = profilePhoto;
 
     await trainer.save();
 
@@ -97,42 +142,43 @@ exports.updateMyProfile = async (req, res) => {
   }
 };
 
+
 // ─────────────────────────────────────────────────────────────
-// @desc    Update own password (after first login)
-// @route   PUT /api/v1/trainer/profile/update-password
-// @access  Private (Trainer - profile complete)
+// @desc    Get attendance history for a trainer
+// @route   GET /api/v1/trainer/attendance/history/:projectId
+// @access  Private (Trainer)
 // ─────────────────────────────────────────────────────────────
-exports.updatePassword = async (req, res) => {
+exports.getAttendanceHistory = async (req, res) => {
   try {
-    const { currentPassword, newPassword, confirmPassword } = req.body;
+    const { projectId } = req.params;
+    const trainerId = req.user.id;
+    const Attendance = require('../../attendance/models/attendanceModel');
 
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      return res.status(400).json({ success: false, message: 'Please provide currentPassword, newPassword, and confirmPassword' });
-    }
+    const rawHistory = await Attendance.find({
+      trainerId,
+      projectId
+    }).sort({ date: -1 });
 
-    if (newPassword !== confirmPassword) {
-      return res.status(400).json({ success: false, message: 'Passwords do not match' });
-    }
+    // Format for UI (Matches screenshot: Marked, Pending, etc.)
+    const history = rawHistory.map(entry => {
+      let displayStatus = 'Pending';
+      if (entry.status === 'approved' || entry.status === 'present') displayStatus = 'Marked';
+      if (entry.status === 'rejected') displayStatus = 'Rejected';
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ success: false, message: 'New password must be at least 6 characters' });
-    }
+      return {
+        id: entry._id,
+        date: entry.date, // Frontend will format to "DD MMM YYYY"
+        day: new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(entry.date),
+        status: displayStatus,
+        rawStatus: entry.status,
+        remarks: entry.remarks
+      };
+    });
 
-    if (currentPassword === newPassword) {
-      return res.status(400).json({ success: false, message: 'New password must be different from current password' });
-    }
-
-    const trainer = await Trainer.findById(req.user.id).select('+password');
-    if (!trainer) return res.status(404).json({ success: false, message: 'Trainer not found' });
-
-    const isMatch = await trainer.matchPassword(currentPassword);
-    if (!isMatch) return res.status(401).json({ success: false, message: 'Current password is incorrect' });
-
-    trainer.password = newPassword;
-    trainer.plainPassword = newPassword;
-    await trainer.save();
-
-    res.status(200).json({ success: true, message: 'Password updated successfully' });
+    res.status(200).json({
+      success: true,
+      data: history
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

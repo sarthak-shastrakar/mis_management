@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { attendanceData } from '../data/mockData';
+import React, { useState, useEffect } from 'react';
+import API from '../api/api';
 
 const statusColors = {
   'Present': 'bg-emerald-100 text-emerald-700',
@@ -8,12 +8,42 @@ const statusColors = {
 };
 
 const AttendanceManagement = () => {
-  const [dateFilter, setDateFilter] = useState('2024-03-28');
+  const [attendanceData, setAttendanceData] = useState([]);
+  const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAttendance();
+  }, [dateFilter]);
+
+  const fetchAttendance = async () => {
+    setLoading(true);
+    try {
+      // In production, you'd fetch all projects or selected ones
+      const response = await API.get('/attendance/all-projects'); 
+      if (response.data.success) {
+        setAttendanceData(response.data.data.map(r => ({
+          ...r,
+          trainerName: r.trainerId?.fullName || 'Unknown',
+          trainerIdCode: r.trainerId?.trainerId || 'N/A',
+          project: r.projectId,
+          time: new Date(r.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          location: `${r.location.latitude.toFixed(3)}, ${r.location.longitude.toFixed(3)}`,
+          status: r.status.charAt(0).toUpperCase() + r.status.slice(1),
+          photos: r.photos || []
+        })));
+      }
+    } catch (err) {
+      console.error('Attendance fetch failed', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filtered = attendanceData.filter(record => {
-    const matchDate = record.date === dateFilter;
+    const matchDate = record.date.startsWith(dateFilter);
     const matchSearch = record.trainerName.toLowerCase().includes(search.toLowerCase()) ||
       record.project.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'All' || record.status === statusFilter;
@@ -117,12 +147,22 @@ const AttendanceManagement = () => {
                 <tr key={record.id} className="border-b border-slate-50 transition-colors hover:bg-slate-50/50">
                   <td className="px-6 py-5">
                     <p className="font-black text-slate-900 text-sm">{record.trainerName}</p>
-                    <p className="text-[11px] font-bold text-blue-500 mt-0.5">{record.trainerId}</p>
+                    <p className="text-[11px] font-bold text-blue-500 mt-0.5">{record.trainerIdCode}</p>
                   </td>
                   <td className="px-6 py-5 text-sm font-semibold text-slate-600 max-w-[150px] truncate">{record.project}</td>
                   <td className="px-6 py-5 font-bold text-slate-800">{record.time}</td>
                   <td className="px-6 py-5 text-xs font-medium text-slate-500 max-w-[200px] truncate">{record.location}</td>
-                  <td className="px-6 py-5 text-xs font-bold text-slate-400">{record.type}</td>
+                  <td className="px-6 py-5">
+                    <div className="flex gap-2">
+                       {record.photos.map((u, i) => (
+                         <div key={i} className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 relative group">
+                            <img src={u} alt="Upload" className="w-full h-full object-cover" />
+                            <a href={u} target="_blank" download className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] text-white font-black transition-all">DL</a>
+                         </div>
+                       ))}
+                       {record.photos.length === 0 && <span className="text-slate-300 text-[10px] font-bold">No Photos</span>}
+                    </div>
+                  </td>
                   <td className="px-6 py-5">
                     <span className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider ${statusColors[record.status] || 'bg-slate-100 text-slate-600'}`}>
                       {record.status}

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { projectsData as projects } from '../data/mockData';
+import React, { useState, useEffect } from 'react';
+import API from '../api/api';
 
 const statusColors = {
   Active: 'bg-emerald-100 text-emerald-700',
@@ -15,201 +15,358 @@ const progressColors = {
   Completed: 'bg-slate-400',
 };
 
-const Modal = ({ project, onClose }) => (
-  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-    <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden">
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-8 text-white">
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-xs font-bold text-blue-200 uppercase tracking-widest mb-2">{project?.id || 'NEW PROJECT'}</p>
-            <h2 className="text-2xl font-black">{project ? 'Edit Project' : 'Create New Project'}</h2>
-          </div>
-          <button onClick={onClose} className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-colors text-lg">✕</button>
-        </div>
-      </div>
-      <div className="p-8 grid grid-cols-2 gap-6">
-        {[
-          { label: 'Project Name', placeholder: 'e.g. Rural Housing Phase III', full: true },
-          { label: 'Manager', placeholder: 'Assigned Manager Name' },
-          { label: 'State', placeholder: 'Select State', type: 'select', options: ['Maharashtra', 'Gujarat', 'Madhya Pradesh', 'Kerala'] },
-          { label: 'District', placeholder: 'e.g. Nagpur' },
-          { label: 'Budget', placeholder: '₹0.00' },
-          { label: 'Start Date', placeholder: '', type: 'date' },
-          { label: 'End Date', placeholder: '', type: 'date' },
-        ].map((field) => (
-          <div key={field.label} className={field.full ? 'col-span-2' : ''}>
-            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{field.label}</label>
-            {field.type === 'select' ? (
-              <select className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all appearance-none cursor-pointer">
-                <option value="" disabled selected>{field.placeholder}</option>
-                {field.options.map(o => <option key={o}>{o}</option>)}
-              </select>
-            ) : (
-              <input
-                type={field.type || 'text'}
-                defaultValue={project ? project[field.label.toLowerCase().replace(' ', '')] : ''}
-                placeholder={field.placeholder}
-                className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
-              />
-            )}
-          </div>
-        ))}
-        <div className="col-span-2">
-          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Status</label>
-          <select className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 transition-all appearance-none cursor-pointer">
-            {['Active', 'Ongoing', 'Delayed', 'Completed'].map(s => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-      <div className="px-8 pb-8 flex gap-4">
-        <button onClick={onClose} className="flex-1 h-12 rounded-2xl bg-slate-100 hover:bg-slate-200 font-bold text-slate-700 text-sm transition-colors">Cancel</button>
-        <button className="flex-1 h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 font-bold text-white text-sm transition-colors shadow-lg shadow-blue-500/20">
-          {project ? 'Save Changes' : 'Create Project'}
-        </button>
-      </div>
-    </div>
-  </div>
-);
-
-const ProjectManagement = ({ onNavigate }) => {
+const ProjectManagement = ({ onNavigate, currentRole }) => {
+  const [projectsList, setProjectsList] = useState([]);
+  const [managersList, setManagersList] = useState([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [showModal, setShowModal] = useState(false);
-  const [editProject, setEditProject] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const statuses = ['All', 'Active', 'Ongoing', 'Delayed', 'Completed'];
+  // For Project Creation Form
+  const [formData, setFormData] = useState({
+    name: '',
+    projectCategory: 'None',
+    workOrderNo: '',
+    allocatedTarget: '',
+    trainingHours: '120',
+    totalProjectCost: '', // In Lakhs
+    startDate: '',
+    endDate: '',
+    managerId: '',
+    description: '',
+    location: { state: 'Maharashtra', district: '', taluka: '', village: '' }
+  });
 
-  const filtered = projects.filter(p => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.id.toLowerCase().includes(search.toLowerCase()) || p.manager.toLowerCase().includes(search.toLowerCase());
+  const [editingId, setEditingId] = useState(null);
+
+  useEffect(() => {
+    fetchProjects();
+    if (currentRole === 'admin') {
+      fetchManagers();
+    }
+  }, [currentRole]);
+
+  const fetchProjects = async () => {
+    setLoading(true);
+    try {
+      const endpoint = currentRole === 'admin' ? '/admin/projects' : '/manager/my-projects';
+      const response = await API.get(endpoint);
+      if (response.data.success) {
+        setProjectsList(response.data.data.map(p => ({
+          ...p,
+          manager: p.managerName || p.managerPopulated?.fullName || 'Not Assigned',
+          displayLocation: p.displayLocation || (p.location ? `${p.location.district}, ${p.location.state}` : 'N/A'),
+          progress: p.progressStatus || 0,
+          status: p.statusDisplay || p.status || 'Active'
+        })));
+      }
+    } catch (err) {
+      console.error('Projects fetch failed', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchManagers = async () => {
+    try {
+      const response = await API.get('/admin/managers');
+      if (response.data.success) {
+        setManagersList(response.data.data);
+      }
+    } catch (err) {
+      console.error('Managers fetch failed', err);
+    }
+  };
+
+  const handleCreateProject = async (e) => {
+    e.preventDefault();
+    try {
+      let response;
+      const payload = {
+         ...formData,
+         trainingHours: formData.trainingHours ? Number(formData.trainingHours) : undefined,
+         allocatedTarget: formData.allocatedTarget ? Number(formData.allocatedTarget) : undefined,
+         totalProjectCost: formData.totalProjectCost ? Number(formData.totalProjectCost) : undefined,
+         trainingCostPerHour: formData.trainingCostPerHour ? Number(formData.trainingCostPerHour) : undefined,
+         totalPassOut: formData.totalPassOut ? Number(formData.totalPassOut) : 0,
+         maxDemonstrators: formData.maxDemonstrators ? Number(formData.maxDemonstrators) : 1
+      };
+      
+      if (editingId) {
+        response = await API.put(`/admin/projects/${editingId}`, payload);
+      } else {
+        response = await API.post('/admin/projects', payload);
+      }
+      
+      if (response.data.success) {
+        setShowModal(false);
+        setEditingId(null);
+        resetForm();
+        fetchProjects();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Action failed');
+    }
+  };
+
+  const handleDeleteProject = async (id) => {
+    if (window.confirm('CRITICAL ACTION: Are you absolutely sure you want to purge this initiative from the system? This cannot be undone.')) {
+      try {
+        const endpoint = currentRole === 'admin' ? `/admin/projects/${id}` : `/manager/projects/${id}`;
+        const response = await API.delete(endpoint);
+        if (response.data.success) {
+          fetchProjects();
+        }
+      } catch (err) {
+        alert(err.response?.data?.message || 'Delete protocol failed');
+      }
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      projectCategory: 'None',
+      workOrderNo: '',
+      allocatedTarget: '',
+      trainingHours: '120',
+      trainingCostPerHour: '38.5',
+      totalProjectCost: '',
+      startDate: '',
+      endDate: '',
+      managerId: '',
+      description: '',
+      installment1Status: 'None',
+      installment1Date: '',
+      assessmentFeesPaidBy: 'None',
+      assessmentStatus: 'None',
+      assessmentDate: '',
+      totalPassOut: '0',
+      installment2Status: 'None',
+      installment2Date: '',
+      maxDemonstrators: '1',
+      projectAddress: '',
+      location: { state: 'Maharashtra', district: '', taluka: '', village: '' }
+    });
+  };
+
+  const handleEditOpen = (prj) => {
+    setEditingId(prj._id);
+    setFormData({
+      name: prj.name,
+      projectCategory: prj.projectCategory || 'None',
+      workOrderNo: prj.workOrderNo,
+      allocatedTarget: prj.allocatedTarget,
+      trainingHours: prj.trainingHours,
+      trainingCostPerHour: prj.trainingCostPerHour || '38.5',
+      totalProjectCost: prj.totalProjectCost,
+      startDate: prj.startDate ? prj.startDate.split('T')[0] : '',
+      endDate: prj.endDate ? prj.endDate.split('T')[0] : '',
+      managerId: prj.managerPopulated?._id || prj.manager || '',
+      description: prj.description || '',
+      installment1Status: prj.installment1Status || 'None',
+      installment1Date: prj.installment1Date ? prj.installment1Date.split('T')[0] : '',
+      assessmentFeesPaidBy: prj.assessmentFeesPaidBy || 'None',
+      assessmentStatus: prj.assessmentStatus || 'None',
+      assessmentDate: prj.assessmentDate ? prj.assessmentDate.split('T')[0] : '',
+      totalPassOut: prj.totalPassOut || '0',
+      installment2Status: prj.installment2Status || 'None',
+      installment2Date: prj.installment2Date ? prj.installment2Date.split('T')[0] : '',
+      maxDemonstrators: prj.maxDemonstrators || '1',
+      projectAddress: prj.projectAddress || '',
+      location: prj.location || { state: 'Maharashtra', district: '', taluka: '', village: '' }
+    });
+    setShowModal(true);
+  };
+
+  const filtered = projectsList.filter(p => {
+    const searchStr = search.toLowerCase();
+    const matchSearch = p.name.toLowerCase().includes(searchStr) || (p.manager && p.manager.toLowerCase().includes(searchStr));
     const matchStatus = statusFilter === 'All' || p.status === statusFilter;
     return matchSearch && matchStatus;
   });
 
   return (
-    <div className="space-y-8">
-      {(showModal || editProject) && (
-        <Modal project={editProject} onClose={() => { setShowModal(false); setEditProject(null); }} />
-      )}
+    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      {/* Premium Create Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col border border-white">
+            <div className="px-10 py-8 bg-gradient-to-r from-blue-600 to-indigo-700 text-white flex justify-between items-center shrink-0 shadow-lg">
+              <div>
+                <h2 className="text-3xl font-black tracking-tight">{editingId ? 'Modify Initiative' : 'Launch New Initiative'}</h2>
+                <p className="text-blue-100/80 font-bold text-xs uppercase tracking-[0.2em] mt-1">Project Management Protocol</p>
+              </div>
+              <button type="button" onClick={() => setShowModal(false)} className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-center transition-all">
+                 <span className="text-2xl">✕</span>
+              </button>
+            </div>
 
-      {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div>
-          <h3 className="text-2xl text-white font-bold">All Projects</h3>
-          <p className="text-sm text-slate-500 font-medium mt-1">{filtered.length} projects found</p>
-        </div>
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center gap-3 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg shadow-blue-500/20 transition-all text-sm"
-        >
-          <span className="text-lg">+</span> Create Project
-        </button>
-      </div>
+            <form onSubmit={handleCreateProject} className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar bg-slate-50/20">
+              {/* Section 1: Core Info */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="w-2 h-7 bg-blue-600 rounded-full shadow-lg shadow-blue-500/20"></span>
+                  <h3 className="text-xl font-black text-slate-900">General Information</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="md:col-span-2">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Official Project Identity</label>
+                    <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 shadow-sm transition-all" placeholder="e.g. Skill Development Phase IV" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Assigned Category</label>
+                    <select value={formData.projectCategory} onChange={e => setFormData({...formData, projectCategory: e.target.value})} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm focus:ring-4 focus:ring-blue-500/5">
+                      <option value="PMAY-G STT Mode">PMAY-G STT Mode</option>
+                      <option value="PMAY-G RPL Mode">PMAY-G RPL Mode</option>
+                      <option value="MoRTH RPL">MoRTH RPL</option>
+                      <option value="BoCW RPL">BoCW RPL</option>
+                      <option value="None">None</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Official Work Order ID</label>
+                    <input value={formData.workOrderNo} onChange={e => setFormData({...formData, workOrderNo: e.target.value})} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" placeholder="e.g. WO-MSRLM-2026-001" />
+                  </div>
+                </div>
+              </div>
 
-      {/* Filters */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 p-6 flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
-          <input
-            type="text"
-            placeholder="Search by name, ID, manager..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="w-full h-11 pl-11 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all"
-          />
-        </div>
-        <div className="flex gap-2 flex-wrap">
-          {statuses.map(s => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${statusFilter === s ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      </div>
+              {/* Section 2: Logistics & Finance */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="w-2 h-7 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/20"></span>
+                  <h3 className="text-xl font-black text-slate-900">Logistics & Budgeting</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                   <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Target Volume</label>
+                      <input type="number" value={formData.allocatedTarget} onChange={e => setFormData({...formData, allocatedTarget: e.target.value})} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" placeholder="000" />
+                   </div>
+                   <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Curriculum Hours</label>
+                      <select value={formData.trainingHours} onChange={e => setFormData({...formData, trainingHours: e.target.value})} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm">
+                        {[360, 390, 72, 168, 120].map(h => <option key={h} value={h}>{h} Hours</option>)}
+                      </select>
+                   </div>
+                   <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Financial Cap (Lakhs)</label>
+                      <input type="number" step="0.01" value={formData.totalProjectCost} onChange={e => setFormData({...formData, totalProjectCost: e.target.value})} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" placeholder="e.g. 45.50" />
+                   </div>
+                   <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Deployment Date</label>
+                      <input type="date" value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" />
+                   </div>
+                   <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Termination Date</label>
+                      <input type="date" value={formData.endDate} onChange={e => setFormData({...formData, endDate: e.target.value})} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" />
+                   </div>
+                   {currentRole === 'admin' && (
+                     <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Project Command</label>
+                        <select value={formData.managerId} onChange={e => setFormData({...formData, managerId: e.target.value})} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 shadow-sm">
+                          <option value="">Select Sector Manager</option>
+                          {managersList.map(m => <option key={m._id} value={m._id}>{m.fullName}</option>)}
+                        </select>
+                     </div>
+                   )}
+                </div>
+              </div>
+            </form>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          { label: 'Total Projects', value: projects.length, icon: '📂', color: 'text-blue-600 bg-blue-50' },
-          { label: 'Active', value: projects.filter(p => p.status === 'Active').length, icon: '✅', color: 'text-emerald-600 bg-emerald-50' },
-          { label: 'Delayed', value: projects.filter(p => p.status === 'Delayed').length, icon: '⚠️', color: 'text-rose-600 bg-rose-50' },
-          { label: 'Completed', value: projects.filter(p => p.status === 'Completed').length, icon: '🏁', color: 'text-slate-600 bg-slate-50' },
-        ].map((s) => (
-          <div key={s.label} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 p-6 flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl ${s.color}`}>{s.icon}</div>
-            <div>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{s.label}</p>
-              <p className="text-3xl font-black text-slate-900">{s.value}</p>
+            <div className="px-10 py-8 bg-slate-50 border-t border-slate-100 flex gap-6 shrink-0">
+               <button type="button" onClick={() => setShowModal(false)} className="flex-1 h-14 rounded-2xl bg-white border border-slate-200 font-black text-slate-500 text-[10px] uppercase tracking-[0.2em] hover:bg-slate-50 transition-all">Discard Changes</button>
+               <button onClick={handleCreateProject} className="flex-2 h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 font-black text-white text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/30 transition-all hover:scale-[1.01] active:scale-95">
+                 {editingId ? 'Confirm System Update' : 'Initialize Project Protocol'}
+               </button>
             </div>
           </div>
-        ))}
+        </div>
+      )}
+
+      {/* Main Content Actions - Light Theme Header */}
+      <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between">
+        <div>
+          <h3 className="text-4xl text-slate-900 font-black tracking-tight">System Initiatives</h3>
+          <p className="text-slate-500 font-bold text-xs uppercase tracking-[0.2em] mt-2 italic shadow-inner bg-white/50 px-3 py-1 rounded-lg inline-block">Inventory Access Code: {filtered.length} Active Records</p>
+        </div>
+        <div className="flex gap-4 w-full sm:w-auto">
+          <div className="relative group flex-1 sm:w-80">
+             <input value={search} onChange={e => setSearch(e.target.value)} className="w-full h-14 pl-14 pr-6 bg-white border border-slate-200 rounded-2xl text-slate-700 placeholder:text-slate-400 font-bold focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 shadow-sm transition-all shadow-blue-500/5" placeholder="Search parameters..." />
+             <span className="absolute left-6 top-1/2 -translate-y-1/2 text-xl opacity-40">🔍</span>
+          </div>
+          {currentRole === 'admin' && (
+            <button onClick={() => { resetForm(); setEditingId(null); setShowModal(true); }} className="h-14 px-8 bg-slate-900 text-white font-black rounded-2xl shadow-2xl shadow-black/20 hover:bg-black transition-all hover:scale-105 active:scale-95 text-[10px] uppercase tracking-widest shrink-0">＋ New Initiative</button>
+          )}
+        </div>
       </div>
 
-      {/* Projects Table */}
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] border border-slate-200/60 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-100">
-                {['Project', 'Manager', 'Location', 'Trainers', 'Timeline', 'Progress', 'Actions'].map(h => (
-                  <th key={h} className="px-6 py-4 text-xs font-black uppercase tracking-wider text-slate-400">{h}</th>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                {['Initiative Matrix', 'Command Access', 'Focus Territory', 'System Status', 'Operational Actions'].map(h => (
+                  <th key={h} className="px-10 py-7 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.map((prj) => (
-                <tr
-                  key={prj.id}
-                  onClick={() => onNavigate && onNavigate('project-detail', { projectId: prj.id })}
-                  className="border-b border-slate-50 hover:bg-slate-50/70 transition-colors group cursor-pointer"
-                >
-                  <td className="px-6 py-5">
-                    <p className="font-black text-slate-900 text-sm">{prj.name}</p>
-                    <p className="text-[11px] font-bold text-blue-500 mt-0.5">{prj.id}</p>
-                  </td>
-                  <td className="px-6 py-5 text-sm font-semibold text-slate-600">{prj.manager}</td>
-                  <td className="px-6 py-5 text-sm font-medium text-slate-500">{prj.location}</td>
-                  <td className="px-6 py-5 text-sm font-bold text-slate-700 text-center">{prj.trainers}</td>
-                  <td className="px-6 py-5 text-xs text-slate-500 font-medium">
-                    <p>{prj.startDate}</p>
-                    <p className="text-slate-400">→ {prj.endDate}</p>
-                  </td>
-                  <td className="px-6 py-5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-20 h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div className={`h-full ${progressColors[prj.status]} rounded-full`} style={{ width: `${prj.progress}%` }}></div>
+              {loading ? (
+                <tr>
+                   <td colSpan="5" className="py-24 text-center">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-10 h-10 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin"></div>
+                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Retrieving Real-time Telemetry...</p>
                       </div>
-                      <span className="text-xs font-black text-slate-600">{prj.progress}%</span>
+                   </td>
+                </tr>
+              ) : filtered.length === 0 ? (
+                <tr>
+                   <td colSpan="5" className="py-24 text-center">
+                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">No matching initiatives detected</p>
+                   </td>
+                </tr>
+              ) : filtered.map((prj) => (
+                <tr key={prj._id} className="border-b border-slate-100 hover:bg-slate-50/80 transition-all group">
+                  <td className="px-10 py-8">
+                    <div>
+                        <p className="font-black text-slate-800 group-hover:text-blue-600 transition-colors text-base tracking-tight">{prj.name}</p>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1.5 flex items-center gap-2">
+                           <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                           {prj.projectCategory || 'General Mode'}
+                        </p>
                     </div>
                   </td>
-                  <td className="px-6 py-5" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => onNavigate && onNavigate('project-detail', { projectId: prj.id, editMode: true })}
-                        className="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-lg transition-colors"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => onNavigate && onNavigate('project-detail', { projectId: prj.id })}
-                        className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-600 text-xs font-bold rounded-lg transition-colors"
-                      >
-                        View
-                      </button>
+                  <td className="px-10 py-8">
+                     <div className="flex items-center gap-3">
+                        <div className={`w-3.5 h-3.5 rounded-full border-2 border-white ${prj.manager === 'Not Assigned' ? 'bg-slate-200' : 'bg-emerald-500 shadow-lg shadow-emerald-500/20'}`}></div>
+                        <span className="text-sm font-bold text-slate-700">{currentRole === 'manager' ? 'Assigned to You' : (prj.manager || 'Unassigned')}</span>
+                     </div>
+                  </td>
+                  <td className="px-10 py-8">
+                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] px-3.5 py-1.5 bg-white rounded-xl border border-slate-200 shadow-sm">{prj.displayLocation}</span>
+                  </td>
+                  <td className="px-10 py-8">
+                     <span className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest ${prj.status === 'Active' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}>
+                        {prj.status}
+                     </span>
+                  </td>
+                  <td className="px-10 py-8">
+                    <div className="flex items-center gap-2">
+                       <button onClick={() => onNavigate('project-detail', { projectId: prj._id })} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all shadow-sm group/btn" title="View Intelligence">
+                          <span className="group-hover/btn:scale-125 transition-transform">👁️</span>
+                       </button>
+                       {currentRole === 'admin' && (
+                         <button onClick={() => handleEditOpen(prj)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="Modify Record">✏️</button>
+                       )}
+                       <button onClick={() => handleDeleteProject(prj._id)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm" title="Purge initiative">🗑️</button>
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          {filtered.length === 0 && (
-            <div className="py-20 text-center text-slate-400 font-medium">No projects found matching your filters.</div>
-          )}
         </div>
       </div>
     </div>

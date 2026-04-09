@@ -7,18 +7,23 @@ const {
   requireProfileComplete,
 } = require("../middlewares/trainerMiddleware");
 
-const { uploadStaffPhoto } = require("../../../utils/cloudinary");
 const {
   trainerLogin,
-  setFirstPassword,
   completeProfile,
 } = require("../controllers/trainerAuthController");
+
+const { 
+  submitAttendance,
+  submitBulkRequest,
+  getBulkRequests
+} = require("../../attendance/controllers/attendanceController");
 
 // Profile Controllers
 const {
   getMyProfile,
   updateMyProfile,
-  updatePassword,
+  getAttendanceHistory,
+  getAssignedProjects,
 } = require("../controllers/trainerProfileController");
 
 // Manager-side Trainer CRUD (used in manager routes — kept here for reference)
@@ -40,19 +45,20 @@ router.post("/auth/login", trainerLogin);
 //                 completion NOT required yet
 //                 (These are the onboarding steps)
 // ─────────────────────────────────────────────────────────────
-router.put("/auth/set-password", protect, trainerOnly, setFirstPassword);
-router.put("/auth/complete-profile", protect, trainerOnly, completeProfile);
+router.post("/auth/complete-profile", protect, trainerOnly, completeProfile);
 
-// Selfie Upload (Can be done during onboarding)
+const { uploadHousePhoto } = require("../../../utils/cloudinary");
+// Mark Attendance (Choose project -> Date -> Media -> Submit)
 router.post(
-  "/profile/photo-upload",
+  "/attendance/submit",
   protect,
   trainerOnly,
-  uploadStaffPhoto.single("photo"),
-  (req, res) => {
-    if (!req.file) return res.status(400).json({ success: false, message: "Please upload a photo" });
-    res.status(200).json({ success: true, url: req.file.path });
-  }
+  requireProfileComplete,
+  uploadHousePhoto.fields([
+    { name: 'photos', maxCount: 4 },
+    { name: 'videos', maxCount: 2 }
+  ]),
+  submitAttendance
 );
 
 // ─────────────────────────────────────────────────────────────
@@ -63,22 +69,42 @@ router.get(
   "/profile/me",
   protect,
   trainerOnly,
-  requireProfileComplete,
   getMyProfile,
 );
-router.put(
+router.get(
+  "/projects",
+  protect,
+  trainerOnly,
+  requireProfileComplete,
+  getAssignedProjects,
+);
+router.post(
   "/profile/update",
   protect,
   trainerOnly,
   requireProfileComplete,
   updateMyProfile,
 );
-router.put(
-  "/profile/update-password",
+router.get(
+  "/attendance/history/:projectId",
   protect,
   trainerOnly,
   requireProfileComplete,
-  updatePassword,
+  getAttendanceHistory,
+);
+router.post(
+  "/attendance/bulk-request",
+  protect,
+  trainerOnly,
+  requireProfileComplete,
+  submitBulkRequest
+);
+router.get(
+  "/attendance/requests",
+  protect,
+  trainerOnly,
+  requireProfileComplete,
+  getBulkRequests
 );
 
 module.exports = router;

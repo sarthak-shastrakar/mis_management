@@ -21,7 +21,7 @@ const projectSchema = new mongoose.Schema(
       type: String,
     },
     sanctionOrderUrl: {
-      type: String, // Cloudinary URL for PDF/JPG
+      type: String, // Cloudinary URL for PDG/JPG
     },
     allocatedTarget: {
       type: Number,
@@ -35,16 +35,17 @@ const projectSchema = new mongoose.Schema(
     trainingCostPerHour: {
       type: Number,
       enum: [38.5, 46.5, 53.5],
-      required: [true, 'Please select training cost per hour'],
+      default: 38.5
     },
     totalProjectCost: {
       type: Number,
+      default: 0
     },
     
     // ── Installment 1 ────────────────────────────────────────
     installment1Status: {
       type: String,
-      enum: ['Bill Submitted', 'Bill Under Process', 'Payment Received', 'None'],
+      enum: ['Bill Submitted', 'Bill Under Process', 'Payment received', 'None'],
       default: 'None',
     },
     installment1Date: {
@@ -80,7 +81,7 @@ const projectSchema = new mongoose.Schema(
     // ── Installment 2 ────────────────────────────────────────
     installment2Status: {
       type: String,
-      enum: ['Bill Submitted', 'Bill Under Process', 'Payment Received', 'None'],
+      enum: ['Bill Submitted', 'Bill Under Process', 'Payment received', 'None'],
       default: 'None',
     },
     installment2Date: {
@@ -135,6 +136,10 @@ const projectSchema = new mongoose.Schema(
       enum: ['active', 'closed'],
       default: 'active',
     },
+    projectId: {
+      type: String,
+      unique: true
+    }
   },
   {
     timestamps: true,

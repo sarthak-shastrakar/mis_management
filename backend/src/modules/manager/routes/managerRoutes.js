@@ -11,6 +11,8 @@ const {
   rejectAttendance,
   getDashboard,
   getAssignedProjects,
+  setupProjectDetails,
+  getProjectDetails,
 } = require('../controllers/managerController');
 
 const {
@@ -35,6 +37,7 @@ router.post('/login', login);
 // ─────────────────────────────────────────────
 router.get('/dashboard', protect, managerOnly, getDashboard);
 router.get('/my-projects', protect, getAssignedProjects);
+router.get('/projects/:id', protect, managerOnly, getProjectDetails);
 
 // ─────────────────────────────────────────────
 // Manager Profile
@@ -53,8 +56,13 @@ router.get('/trainers', protect, managerOnly, getAllTrainers);
 router
   .route('/trainers/:id')
   .get(protect, managerOnly, getTrainer)
-  .post(protect, managerOnly, updateTrainer)
+  .put(protect, managerOnly, updateTrainer)
   .delete(protect, managerOnly, deleteTrainer);
+
+// ─────────────────────────────────────────────
+// Project Setup (Manager One-Time)
+// ─────────────────────────────────────────────
+router.put('/projects/:id/setup', protect, managerOnly, setupProjectDetails);
 
 // ─────────────────────────────────────────────
 // Assign Trainer to Project

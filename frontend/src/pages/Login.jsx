@@ -1,109 +1,146 @@
 import React, { useState } from 'react';
+import API from '../api/api';
 
-const Login = ({ onLogin, managersList }) => {
+const Login = ({ onLogin, onSwitchToRegister }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (username === 'admin' && password === 'admin123') {
-      onLogin('admin', null);
-    } else {
-      const foundManager = managersList.find(m => m.username === username && m.password === password);
-      if (foundManager) {
-        onLogin('manager', foundManager);
+    setLoading(true);
+    setError('');
+
+    const trimmedUsername = username.trim();
+
+    try {
+      let response;
+      let role = '';
+
+      if (trimmedUsername === 'admin' || trimmedUsername === '@admin' || !trimmedUsername.includes('_')) {
+        response = await API.post('/admin/login', { username: trimmedUsername, password });
+        role = 'admin';
+      } else if (trimmedUsername.startsWith('mgr_')) {
+        response = await API.post('/manager/login', { username: trimmedUsername, password });
+        role = 'manager';
+      } else if (trimmedUsername.startsWith('tr_')) {
+        response = await API.post('/trainer/auth/login', { username: trimmedUsername, password });
+        role = 'trainer';
       } else {
-        setError('Invalid username or password. Are you a Manager? Ask your Admin for your credentials.');
+        throw new Error('Invalid format. Use "admin", "mgr_xxx", or "tr_xxx"');
       }
+
+      if (response.data.success) {
+        localStorage.setItem('token', response.data.token);
+        const userData = response.data.admin || response.data.manager || response.data.trainer;
+        const nextStep = response.data.nextStep || 'DASHBOARD';
+        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('userStatus', nextStep);
+        onLogin(role, userData, nextStep);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || 'Login failed.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex text-slate-900 bg-slate-50 dark:bg-slate-950 font-sans">
-      {/* Left/Top Section: Branding */}
-      <div className="hidden lg:flex flex-col w-1/2 p-12 bg-gradient-to-br from-blue-700 to-indigo-900 text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4"></div>
-        
-        <div className="relative z-10 flex flex-col h-full justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-white text-blue-700 rounded-2xl flex items-center justify-center text-3xl font-black shadow-xl">
-              M
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight">Gov Monitor</h1>
-              <p className="text-sm text-blue-200 font-bold uppercase tracking-widest">MIS System</p>
-            </div>
-          </div>
-          
-          <div className="mb-20">
-            <h2 className="text-5xl font-black mb-6 leading-tight">Monitor Field Operations with Precision</h2>
-            <p className="text-lg text-blue-100 font-medium max-w-lg leading-relaxed">
-              Log in to track ground reality, manage training teams, and verify geo-tagged daily attendance effortlessly.
-            </p>
-          </div>
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6 font-sans">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-100/40 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-100/40 rounded-full blur-[120px]"></div>
       </div>
 
-      {/* Right/Bottom Section: Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white dark:bg-slate-950 dark:text-white relative">
-        <div className="w-full max-w-md space-y-8 relative z-10">
-          <div className="text-center lg:text-left">
-            <h2 className="text-3xl font-black mb-2 text-slate-900 dark:text-white">Welcome Back</h2>
-            <p className="text-slate-500 dark:text-slate-400 font-medium">Please sign in to your dashboard</p>
+      <div className="max-w-[1000px] w-full grid lg:grid-cols-2 bg-white rounded-[2.5rem] shadow-[0_25px_60px_rgba(0,0,0,0.08)] border border-white overflow-hidden relative z-10 transition-all duration-700 hover:shadow-2xl">
+        <div className="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-blue-600 to-indigo-700 text-white">
+          <div>
+            <div className="flex items-center gap-3 mb-10">
+              <div className="w-10 h-10 bg-white text-blue-600 rounded-xl flex items-center justify-center font-black text-xl">M</div>
+              <span className="text-xl font-bold tracking-tight">Gov Monitor</span>
+            </div>
+            <h1 className="text-4xl font-black leading-tight mb-6">Real-time Field Operations Intelligence</h1>
+            <p className="text-blue-50 text-lg font-medium leading-relaxed opacity-90">
+              Access the master dashboard for verifying geo-tagged activities and managing high-level monitoring workflows.
+            </p>
+          </div>
+          <div className="pt-10 border-t border-white/10 uppercase tracking-[0.2em] text-[10px] font-black opacity-60">
+            Secure Infrastructure • V3.2.0
+          </div>
+        </div>
+
+        <div className="p-10 lg:p-16 flex flex-col justify-center bg-white/80 backdrop-blur-xl">
+          <div className="mb-10 text-center lg:text-left">
+            <h2 className="text-3xl font-black text-slate-900 mb-2">Sign In</h2>
+            <p className="text-slate-500 font-semibold text-sm">Please log in to your administrative panel.</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <div className="p-4 bg-rose-50 text-rose-600 border border-rose-200 rounded-xl text-sm font-bold flex items-center gap-3">
+              <div className="p-4 bg-rose-50 border border-rose-100 text-rose-600 text-[10px] font-black uppercase tracking-wider rounded-2xl flex items-center gap-3 animate-pulse">
                 <span>⚠️</span> {error}
               </div>
             )}
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-black text-slate-600 uppercase tracking-wider mb-2">Username</label>
+
+            <div className="space-y-5">
+              <div className="group">
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Identity ID</label>
                 <input
                   type="text"
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="e.g. admin"
-                  className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  placeholder="admin / mgr_ / tr_"
+                  className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all hover:bg-white"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-black text-slate-600 uppercase tracking-wider mb-2">Password</label>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-sm font-medium text-slate-900 dark:text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                />
-              </div>
-            </div>
 
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-                <span className="text-sm font-bold text-slate-500 group-hover:text-slate-700 transition-colors">Remember me</span>
-              </label>
+              <div className="group">
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Access Key</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full h-14 pl-6 pr-14 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all hover:bg-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-slate-400 hover:text-blue-600 transition-colors"
+                  >
+                    {showPassword ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
 
             <button
               type="submit"
-              className="w-full h-14 flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-black uppercase tracking-wider shadow-xl shadow-blue-500/30 transition-all hover:-translate-y-0.5"
+              disabled={loading}
+              className={`w-full h-14 bg-slate-900 hover:bg-black text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-900/10 transition-all hover:scale-[1.01] active:scale-[0.98] disabled:bg-slate-300 disabled:shadow-none`}
             >
-              Sign In to MIS
+              {loading ? 'Authenticating...' : 'Enter System'}
             </button>
           </form>
 
-          <div className="pt-8 text-center text-xs font-bold text-slate-400 border-t border-slate-100 dark:border-slate-800 mt-8">
-            <p>Admin Login: <span className="text-blue-500">admin</span> / <span className="text-blue-500">admin123</span></p>
-            <p className="mt-1">Manager Login: Ask admin for credentials or try <span className="text-blue-500">mgr_1001</span> / <span className="text-blue-500">password123</span></p>
+          <div className="mt-12 flex items-center justify-center">
+            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+              Prod Release v3.0 • Authorized Access Only
+            </span>
           </div>
         </div>
       </div>

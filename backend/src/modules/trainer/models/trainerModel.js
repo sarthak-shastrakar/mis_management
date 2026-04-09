@@ -23,10 +23,12 @@ const trainerSchema = new mongoose.Schema(
       type: String,
       unique: true,
     },
-    assignedProject: {
-      type: String,
-      default: 'None',
-    },
+    assignedProjects: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Project',
+      }
+    ],
     state: {
       type: String,
       required: [true, 'Please add state'],
@@ -127,6 +129,10 @@ const trainerSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    ifscCode: {
+      type: String,
+      default: null,
+    },
 
     // ── ToT (Training of Trainers) Details ────────────────────
     totStatus: {
@@ -161,9 +167,23 @@ const trainerSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    city: {
+      type: String,
+      default: null,
+    },
 
     // ── Management & Metrics ──────────────────────────────────
     reportingManager: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Manager',
+      default: null,
+    },
+    assignedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Manager',
+      default: null,
+    },
+    createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Manager',
       default: null,

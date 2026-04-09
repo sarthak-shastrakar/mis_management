@@ -21,6 +21,11 @@ const attendanceSchema = new mongoose.Schema(
         required: true,
       }
     ],
+    videos: [
+      {
+        type: String, // Cloudinary URLs
+      }
+    ],
     location: {
       latitude: Number,
       longitude: Number,
