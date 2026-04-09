@@ -71,7 +71,7 @@ const trainerSchema = new mongoose.Schema(
     // ── First Login & Profile Completion Flags ───────────────
     isFirstLogin: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     isProfileComplete: {
       type: Boolean,

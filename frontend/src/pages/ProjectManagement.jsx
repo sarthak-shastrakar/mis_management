@@ -84,20 +84,20 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
     try {
       let response;
       const payload = {
-         ...formData,
-         trainingHours: formData.trainingHours ? Number(formData.trainingHours) : undefined,
-         allocatedTarget: formData.allocatedTarget ? Number(formData.allocatedTarget) : undefined,
-         totalProjectCost: formData.totalProjectCost ? Number(formData.totalProjectCost) : undefined,
-         trainingCostPerHour: formData.trainingCostPerHour ? Number(formData.trainingCostPerHour) : undefined,
-         maxDemonstrators: formData.maxDemonstrators ? Number(formData.maxDemonstrators) : 1
+        ...formData,
+        trainingHours: formData.trainingHours ? Number(formData.trainingHours) : undefined,
+        allocatedTarget: formData.allocatedTarget ? Number(formData.allocatedTarget) : undefined,
+        totalProjectCost: formData.totalProjectCost ? Number(formData.totalProjectCost) : undefined,
+        trainingCostPerHour: formData.trainingCostPerHour ? Number(formData.trainingCostPerHour) : undefined,
+        maxDemonstrators: formData.maxDemonstrators ? Number(formData.maxDemonstrators) : 1
       };
-      
+
       if (editingId) {
         response = await API.put(`/admin/projects/${editingId}`, payload);
       } else {
         response = await API.post('/admin/projects', payload);
       }
-      
+
       if (response.data.success) {
         setShowModal(false);
         setEditingId(null);
@@ -196,7 +196,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                 <p className="text-blue-100/80 font-bold text-xs uppercase tracking-[0.2em] mt-1">Project Management Protocol</p>
               </div>
               <button type="button" onClick={() => setShowModal(false)} className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-center transition-all">
-                 <span className="text-2xl">✕</span>
+                <span className="text-2xl">✕</span>
               </button>
             </div>
 
@@ -210,11 +210,11 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="md:col-span-2">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Official Project Identity</label>
-                    <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 shadow-sm transition-all" placeholder="e.g. Skill Development Phase IV" />
+                    <input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 shadow-sm transition-all" placeholder="e.g. Skill Development Phase IV" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Assigned Category</label>
-                    <select value={formData.projectCategory} onChange={e => setFormData({...formData, projectCategory: e.target.value})} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm focus:ring-4 focus:ring-blue-500/5">
+                    <select value={formData.projectCategory} onChange={e => setFormData({ ...formData, projectCategory: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm focus:ring-4 focus:ring-blue-500/5">
                       <option value="PMAY-G STT Mode">PMAY-G STT Mode</option>
                       <option value="PMAY-G RPL Mode">PMAY-G RPL Mode</option>
                       <option value="MoRTH RPL">MoRTH RPL</option>
@@ -224,7 +224,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                   </div>
                   <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Official Work Order ID</label>
-                    <input value={formData.workOrderNo} onChange={e => setFormData({...formData, workOrderNo: e.target.value})} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" placeholder="e.g. WO-MSRLM-2026-001" />
+                    <input value={formData.workOrderNo} onChange={e => setFormData({ ...formData, workOrderNo: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" placeholder="e.g. WO-MSRLM-2026-001" />
                   </div>
                 </div>
               </div>
@@ -236,46 +236,46 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                   <h3 className="text-xl font-black text-slate-900">Logistics & Budgeting</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                   <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Target Volume</label>
-                      <input type="number" value={formData.allocatedTarget} onChange={e => setFormData({...formData, allocatedTarget: e.target.value})} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" placeholder="000" />
-                   </div>
-                   <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Curriculum Hours</label>
-                      <select value={formData.trainingHours} onChange={e => setFormData({...formData, trainingHours: e.target.value})} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm">
-                        {[360, 390, 72, 168, 120].map(h => <option key={h} value={h}>{h} Hours</option>)}
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Target Volume</label>
+                    <input type="number" value={formData.allocatedTarget} onChange={e => setFormData({ ...formData, allocatedTarget: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" placeholder="000" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Curriculum Hours</label>
+                    <select value={formData.trainingHours} onChange={e => setFormData({ ...formData, trainingHours: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm">
+                      {[360, 390, 72, 168, 120].map(h => <option key={h} value={h}>{h} Hours</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Financial Cap (Lakhs)</label>
+                    <input type="number" step="0.01" value={formData.totalProjectCost} onChange={e => setFormData({ ...formData, totalProjectCost: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" placeholder="e.g. 45.50" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Deployment Date</label>
+                    <input type="date" value={formData.startDate} onChange={e => setFormData({ ...formData, startDate: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Termination Date</label>
+                    <input type="date" value={formData.endDate} onChange={e => setFormData({ ...formData, endDate: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" />
+                  </div>
+                  {currentRole === 'admin' && (
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Project Command</label>
+                      <select value={formData.managerId} onChange={e => setFormData({ ...formData, managerId: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 shadow-sm">
+                        <option value="">Select Sector Manager</option>
+                        {managersList.map(m => <option key={m._id} value={m._id}>{m.fullName}</option>)}
                       </select>
-                   </div>
-                   <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Financial Cap (Lakhs)</label>
-                      <input type="number" step="0.01" value={formData.totalProjectCost} onChange={e => setFormData({...formData, totalProjectCost: e.target.value})} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" placeholder="e.g. 45.50" />
-                   </div>
-                   <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Deployment Date</label>
-                      <input type="date" value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" />
-                   </div>
-                   <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Termination Date</label>
-                      <input type="date" value={formData.endDate} onChange={e => setFormData({...formData, endDate: e.target.value})} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" />
-                   </div>
-                   {currentRole === 'admin' && (
-                     <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Project Command</label>
-                        <select value={formData.managerId} onChange={e => setFormData({...formData, managerId: e.target.value})} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 shadow-sm">
-                          <option value="">Select Sector Manager</option>
-                          {managersList.map(m => <option key={m._id} value={m._id}>{m.fullName}</option>)}
-                        </select>
-                     </div>
-                   )}
+                    </div>
+                  )}
                 </div>
               </div>
             </form>
 
             <div className="px-10 py-8 bg-slate-50 border-t border-slate-100 flex gap-6 shrink-0">
-               <button type="button" onClick={() => setShowModal(false)} className="flex-1 h-14 rounded-2xl bg-white border border-slate-200 font-black text-slate-500 text-[10px] uppercase tracking-[0.2em] hover:bg-slate-50 transition-all">Discard Changes</button>
-               <button onClick={handleCreateProject} className="flex-2 h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 font-black text-white text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/30 transition-all hover:scale-[1.01] active:scale-95">
-                 {editingId ? 'Confirm System Update' : 'Initialize Project Protocol'}
-               </button>
+              <button type="button" onClick={() => setShowModal(false)} className="flex-1 h-14 rounded-2xl bg-white border border-slate-200 font-black text-slate-500 text-[10px] uppercase tracking-[0.2em] hover:bg-slate-50 transition-all">Discard Changes</button>
+              <button onClick={handleCreateProject} className="flex-2 h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 font-black text-white text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/30 transition-all hover:scale-[1.01] active:scale-95">
+                {editingId ? 'Confirm System Update' : 'Initialize Project Protocol'}
+              </button>
             </div>
           </div>
         </div>
@@ -284,13 +284,13 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
       {/* Main Content Actions - Light Theme Header */}
       <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between">
         <div>
-          <h3 className="text-4xl text-slate-900 font-black tracking-tight">System Initiatives</h3>
+          <h3 className="text-4xl text-slate-900 font-black tracking-tight">Project Management</h3>
           <p className="text-slate-500 font-bold text-xs uppercase tracking-[0.2em] mt-2 italic shadow-inner bg-white/50 px-3 py-1 rounded-lg inline-block">Inventory Access Code: {filtered.length} Active Records</p>
         </div>
         <div className="flex gap-4 w-full sm:w-auto">
           <div className="relative group flex-1 sm:w-80">
-             <input value={search} onChange={e => setSearch(e.target.value)} className="w-full h-14 pl-14 pr-6 bg-white border border-slate-200 rounded-2xl text-slate-700 placeholder:text-slate-400 font-bold focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 shadow-sm transition-all shadow-blue-500/5" placeholder="Search parameters..." />
-             <span className="absolute left-6 top-1/2 -translate-y-1/2 text-xl opacity-40">🔍</span>
+            <input value={search} onChange={e => setSearch(e.target.value)} className="w-full h-14 pl-14 pr-6 bg-white border border-slate-200 rounded-2xl text-slate-700 placeholder:text-slate-400 font-bold focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 shadow-sm transition-all shadow-blue-500/5" placeholder="Search parameters..." />
+            <span className="absolute left-6 top-1/2 -translate-y-1/2 text-xl opacity-40">🔍</span>
           </div>
           {currentRole === 'admin' && (
             <button onClick={() => { resetForm(); setEditingId(null); setShowModal(true); }} className="h-14 px-8 bg-slate-900 text-white font-black rounded-2xl shadow-2xl shadow-black/20 hover:bg-black transition-all hover:scale-105 active:scale-95 text-[10px] uppercase tracking-widest shrink-0">＋ New Initiative</button>
@@ -311,53 +311,53 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
             <tbody>
               {loading ? (
                 <tr>
-                   <td colSpan="5" className="py-24 text-center">
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="w-10 h-10 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin"></div>
-                        <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Retrieving Real-time Telemetry...</p>
-                      </div>
-                   </td>
+                  <td colSpan="5" className="py-24 text-center">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-10 h-10 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin"></div>
+                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Retrieving Real-time Telemetry...</p>
+                    </div>
+                  </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                   <td colSpan="5" className="py-24 text-center">
-                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">No matching initiatives detected</p>
-                   </td>
+                  <td colSpan="5" className="py-24 text-center">
+                    <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">No matching initiatives detected</p>
+                  </td>
                 </tr>
               ) : filtered.map((prj) => (
                 <tr key={prj._id} className="border-b border-slate-100 hover:bg-slate-50/80 transition-all group">
                   <td className="px-10 py-8">
                     <div>
-                        <p className="font-black text-slate-800 group-hover:text-blue-600 transition-colors text-base tracking-tight">{prj.name}</p>
-                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1.5 flex items-center gap-2">
-                           <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
-                           {prj.projectCategory || 'General Mode'}
-                        </p>
+                      <p className="font-black text-slate-800 group-hover:text-blue-600 transition-colors text-base tracking-tight">{prj.name}</p>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1.5 flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+                        {prj.projectCategory || 'General Mode'}
+                      </p>
                     </div>
                   </td>
                   <td className="px-10 py-8">
-                     <div className="flex items-center gap-3">
-                        <div className={`w-3.5 h-3.5 rounded-full border-2 border-white ${prj.manager === 'Not Assigned' ? 'bg-slate-200' : 'bg-emerald-500 shadow-lg shadow-emerald-500/20'}`}></div>
-                        <span className="text-sm font-bold text-slate-700">{currentRole === 'manager' ? 'Assigned to You' : (prj.manager || 'Unassigned')}</span>
-                     </div>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-3.5 h-3.5 rounded-full border-2 border-white ${prj.manager === 'Not Assigned' ? 'bg-slate-200' : 'bg-emerald-500 shadow-lg shadow-emerald-500/20'}`}></div>
+                      <span className="text-sm font-bold text-slate-700">{currentRole === 'manager' ? 'Assigned to You' : (prj.manager || 'Unassigned')}</span>
+                    </div>
                   </td>
                   <td className="px-10 py-8">
-                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] px-3.5 py-1.5 bg-white rounded-xl border border-slate-200 shadow-sm">{prj.displayLocation}</span>
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] px-3.5 py-1.5 bg-white rounded-xl border border-slate-200 shadow-sm">{prj.displayLocation}</span>
                   </td>
                   <td className="px-10 py-8">
-                     <span className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest ${prj.status === 'Active' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}>
-                        {prj.status}
-                     </span>
+                    <span className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest ${prj.status === 'Active' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}>
+                      {prj.status}
+                    </span>
                   </td>
                   <td className="px-10 py-8">
                     <div className="flex items-center gap-2">
-                       <button onClick={() => onNavigate('project-detail', { projectId: prj._id })} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all shadow-sm group/btn" title="View Intelligence">
-                          <span className="group-hover/btn:scale-125 transition-transform">👁️</span>
-                       </button>
-                       {currentRole === 'admin' && (
-                         <button onClick={() => handleEditOpen(prj)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="Modify Record">✏️</button>
-                       )}
-                       <button onClick={() => handleDeleteProject(prj._id)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm" title="Purge initiative">🗑️</button>
+                      <button onClick={() => onNavigate('project-detail', { projectId: prj._id })} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all shadow-sm group/btn" title="View Intelligence">
+                        <span className="group-hover/btn:scale-125 transition-transform">👁️</span>
+                      </button>
+                      {currentRole === 'admin' && (
+                        <button onClick={() => handleEditOpen(prj)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="Modify Record">✏️</button>
+                      )}
+                      <button onClick={() => handleDeleteProject(prj._id)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm" title="Purge initiative">🗑️</button>
                     </div>
                   </td>
                 </tr>

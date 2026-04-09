@@ -41,12 +41,11 @@ exports.trainerLogin = async (req, res) => {
         fullName: trainer.fullName,
         username: trainer.username,
         role: trainer.role,
-        isFirstLogin: false,
+        isFirstLogin: trainer.isFirstLogin,
         isProfileComplete: trainer.isProfileComplete,
       },
-      // isProfileComplete = false → force to /complete-profile
-      // false → go to dashboard
-      nextStep: !trainer.isProfileComplete
+      // If first login or profile not complete, force to /complete-profile
+      nextStep: (trainer.isFirstLogin || !trainer.isProfileComplete)
         ? 'COMPLETE_PROFILE'
         : 'DASHBOARD',
     });
@@ -130,9 +129,10 @@ exports.completeProfile = async (req, res) => {
       trainer.profilePhoto = req.body.profilePhoto;
     }
 
-    // Mark profile as complete → unlock all features
+    // Mark profile as complete and clear first login flag
     trainer.isProfileComplete = true;
-
+    trainer.isFirstLogin = false;
+    
     await trainer.save();
 
     res.status(200).json({

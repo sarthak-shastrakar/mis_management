@@ -293,7 +293,7 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
       {/* Header - Premium Light Theme */}
       <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between">
         <div>
-          <h3 className="text-4xl font-black text-slate-900 tracking-tight">Staff Directory</h3>
+          <h3 className="text-4xl font-black text-slate-900 tracking-tight">Trainer Management</h3>
           <p className="text-sm text-slate-500 font-bold uppercase tracking-[0.2em] mt-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-2 animate-pulse"></span>
             System Inventory: {filtered.length} Authenticated Personnel
@@ -362,7 +362,7 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-100">
-                  {['Personnel Profile', 'System ID', 'Mobile Contact', 'Assignments', 'Stats', 'Profile Integrity', 'Operational Actions'].map(h => (
+                  {['Personnel Profile', 'System ID', 'Mobile Contact', 'Assignments', 'Profile Integrity', 'Operational Actions'].map(h => (
                     <th key={h} className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">{h}</th>
                   ))}
                 </tr>
@@ -397,25 +397,11 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
                         )) : <span className="text-slate-300 italic text-[10px] font-bold tracking-widest uppercase">NOT ASSIGNED</span>}
                       </div>
                     </td>
-                    <td className="px-8 py-6">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-[10px] font-black text-slate-500 uppercase tracking-tighter">
-                          <span>Engagement</span>
-                          <span className="text-indigo-600">{t.attendance}%</span>
-                        </div>
-                        <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full ${t.attendance >= 80 ? 'bg-emerald-500' : t.attendance >= 50 ? 'bg-indigo-500' : 'bg-rose-500'}`}
-                            style={{ width: `${t.attendance}%` }}
-                          ></div>
-                        </div>
-                        <p className="text-[9px] font-black text-slate-400 text-right uppercase tracking-tighter">{t.uploads} Uploads</p>
-                      </div>
-                    </td>
+
                     <td className="px-8 py-6">
                       <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${t.profileComplete ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100'}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${t.profileComplete ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`}></span>
-                        {t.profileComplete ? 'Verified' : 'Pending KYC'}
+                        {t.profileComplete ? 'Verified' : 'Pending profile'}
                       </span>
                     </td>
                     <td className="px-8 py-6">

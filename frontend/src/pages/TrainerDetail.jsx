@@ -22,8 +22,8 @@ const Field = ({ label, value, editMode, onChange, type = 'text', options, readO
       return (
         <div className="space-y-1.5">
           <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</label>
-          <select 
-            value={value || ''} 
+          <select
+            value={value || ''}
             onChange={e => onChange(e.target.value)}
             className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all cursor-pointer"
           >
@@ -35,12 +35,12 @@ const Field = ({ label, value, editMode, onChange, type = 'text', options, readO
     return (
       <div className="space-y-1.5">
         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</label>
-        <input 
-          type={type} 
-          value={value || ''} 
+        <input
+          type={type}
+          value={value || ''}
           onChange={e => onChange(e.target.value)}
           placeholder={`Enter ${label.toLowerCase()}`}
-          className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all" 
+          className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all"
         />
       </div>
     );
@@ -102,7 +102,7 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
         ...formData,
         assignedProject: formData.assignedProjects?.[0]?._id || formData.assignedProjects?.[0]
       };
-      
+
       const endpoint = currentRole === 'admin' ? `/admin/trainers/${trainerId}` : `/manager/trainers/${trainerId}`;
       const response = await API.put(endpoint, payload);
       if (response.data.success) {
@@ -141,7 +141,7 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
             <span className="group-hover:rotate-90 transition-transform">✕</span>
           </button>
           <div>
-            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.25em] mb-1">Authenticated Employee Record</p>
+            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.25em] mb-1">Employee Record</p>
             <h2 className="text-4xl font-black text-slate-900 tracking-tight">{trainer.fullName}</h2>
           </div>
         </div>
@@ -149,8 +149,8 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
           {editMode ? (
             <>
               <button onClick={() => setEditMode(false)} className="px-8 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all">Cancel</button>
-              <button 
-                onClick={handleUpdate} 
+              <button
+                onClick={handleUpdate}
                 disabled={saving}
                 className="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-2xl shadow-indigo-500/20 active:scale-95"
               >
@@ -158,11 +158,11 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
               </button>
             </>
           ) : (
-            <button 
-              onClick={() => setEditMode(true)} 
+            <button
+              onClick={() => setEditMode(true)}
               className="px-8 py-4 bg-slate-900 hover:bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-2xl shadow-slate-900/10 active:scale-95"
             >
-              ✏️ Modify Intel
+              ✏️ Modify Detail
             </button>
           )}
         </div>
@@ -176,141 +176,100 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
         </div>
         <div className="flex-1 relative z-10">
           <div className="flex flex-wrap items-center gap-4 mb-4">
-               <span className="text-[11px] font-black text-slate-400 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 tracking-widest">{trainer.trainerId}</span>
-               <span className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${statusColors[trainer.status] || statusColors.pending}`}>
-                 {trainer.status.toUpperCase()}
-               </span>
-               <span className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${trainer.isProfileComplete ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-amber-50 text-amber-600 border border-amber-100 animate-pulse'}`}>
-                 {trainer.isProfileComplete ? '✓ KYC Verified' : '⚠ KYC Pending'}
-               </span>
+            <span className="text-[11px] font-black text-slate-400 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 tracking-widest">{trainer.trainerId}</span>
+            <span className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${statusColors[trainer.status] || statusColors.pending}`}>
+              {trainer.status.toUpperCase()}
+            </span>
           </div>
-          <p className="text-sm font-bold text-slate-500 leading-relaxed uppercase tracking-tighter">Assigned Territory: <span className="text-slate-900">{trainer.district}, {trainer.state}</span></p>
-        </div>
-        <div className="flex gap-12 border-l border-slate-50 pl-12">
-          <div className="text-center">
-            <p className={`text-4xl font-black mb-1 ${trainer.attendanceRate >= 80 ? 'text-emerald-500' : trainer.attendanceRate >= 50 ? 'text-amber-500' : 'text-rose-500'}`}>{trainer.attendanceRate}%</p>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Engagement</p>
-          </div>
-          <div className="text-center">
-            <p className="text-4xl font-black text-slate-900 mb-1">{trainer.totalUploads}</p>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Field Assets</p>
-          </div>
+          <p className="text-sm font-bold text-slate-500 leading-relaxed uppercase tracking-tighter">Trainer Location: <span className="text-slate-900">{trainer.district}, {trainer.state}</span></p>
         </div>
       </div>
 
       {/* Operational Matrix */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2 space-y-10">
-           {/* Section: Personnel details */}
-           <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm">
-             <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-10 pb-4 border-b border-slate-50 flex items-center gap-3">
-               <span className="w-1.5 h-6 bg-indigo-600 rounded-full"></span>
-               Personnel Data Cluster
-             </h4>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-               <Field label="Full Identification" value={formData.fullName} editMode={editMode} onChange={v => setFormData({...formData, fullName: v})} />
-               <Field label="Staff Reference ID" value={trainer.trainerId} editMode={false} readOnly />
-               <Field label="Primary Mobile Contact" value={formData.mobileNumber} editMode={editMode} type="tel" onChange={v => setFormData({...formData, mobileNumber: v})} />
-               <Field label="Corporate Email" value={formData.email} editMode={editMode} type="email" onChange={v => setFormData({...formData, email: v})} />
-               <Field label="Operational State" value={formData.state} editMode={editMode} onChange={v => setFormData({...formData, state: v})} />
-               <Field label="Assigned District" value={formData.district} editMode={editMode} onChange={v => setFormData({...formData, district: v})} />
-               <div className="md:col-span-2">
-                 <Field label="Residential Infrastructure Address" value={formData.address} editMode={editMode} onChange={v => setFormData({...formData, address: v})} />
-               </div>
-             </div>
-           </div>
+          {/* Section: Personnel details */}
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm">
+            <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-10 pb-4 border-b border-slate-50 flex items-center gap-3">
+              <span className="w-1.5 h-6 bg-indigo-600 rounded-full"></span>
+              Personnel Data Cluster
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <Field label="Full Identification" value={formData.fullName} editMode={editMode} onChange={v => setFormData({ ...formData, fullName: v })} />
+              <Field label="Staff Reference ID" value={trainer.trainerId} editMode={false} readOnly />
+              <Field label="Primary Mobile Contact" value={formData.mobileNumber} editMode={editMode} type="tel" onChange={v => setFormData({ ...formData, mobileNumber: v })} />
+              <Field label="Corporate Email" value={formData.email} editMode={editMode} type="email" onChange={v => setFormData({ ...formData, email: v })} />
+              <Field label="Operational State" value={formData.state} editMode={editMode} onChange={v => setFormData({ ...formData, state: v })} />
+              <Field label="Assigned District" value={formData.district} editMode={editMode} onChange={v => setFormData({ ...formData, district: v })} />
+              <div className="md:col-span-2">
+                <Field label="Residential Infrastructure Address" value={formData.address} editMode={editMode} onChange={v => setFormData({ ...formData, address: v })} />
+              </div>
+            </div>
+          </div>
 
-           {/* Section: KYC details */}
-           <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm">
-             <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-10 pb-4 border-b border-slate-50 flex items-center gap-3">
-               <span className="w-1.5 h-6 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/20"></span>
-               Verification & Banking Matrix
-             </h4>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-               <Field label="Aadhar ID Structure" value={formData.aadharNumber} editMode={editMode} onChange={v => setFormData({...formData, aadharNumber: v})} />
-               <Field label="Financial Institution" value={formData.bankName} editMode={editMode} onChange={v => setFormData({...formData, bankName: v})} />
-               <Field label="Account Flow Sequence" value={formData.accountNumber} editMode={editMode} onChange={v => setFormData({...formData, accountNumber: v})} />
-               <Field label="Operational Status" value={formData.status} editMode={editMode} options={['active', 'inactive', 'pending']} onChange={v => setFormData({...formData, status: v})} />
-             </div>
-           </div>
+          {/* Section: KYC details */}
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm">
+            <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-10 pb-4 border-b border-slate-50 flex items-center gap-3">
+              <span className="w-1.5 h-6 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/20"></span>
+              Verification & Banking Matrix
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <Field label="Aadhar ID Structure" value={formData.aadharNumber} editMode={editMode} onChange={v => setFormData({ ...formData, aadharNumber: v })} />
+              <Field label="Financial Institution" value={formData.bankName} editMode={editMode} onChange={v => setFormData({ ...formData, bankName: v })} />
+              <Field label="Account Flow Sequence" value={formData.accountNumber} editMode={editMode} onChange={v => setFormData({ ...formData, accountNumber: v })} />
+              <Field label="Operational Status" value={formData.status} editMode={editMode} options={['active', 'inactive', 'pending']} onChange={v => setFormData({ ...formData, status: v })} />
+            </div>
+          </div>
         </div>
 
         {/* Tactical Info Panel */}
         <div className="space-y-10">
-           {/* Section: Project link */}
-           <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm">
-             <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
-               <span className="w-1.5 h-6 bg-blue-600 rounded-full shadow-lg shadow-blue-500/20"></span>
-               Portfolio Alignment
-             </h4>
-             <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100 mb-6">
-                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1.5">Primary Active Index</p>
-                <div className="flex flex-wrap gap-2">
-                  {trainer.assignedProjects?.map(p => (
-                    <span key={p._id} className="font-black text-slate-900 text-xs bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100">{p.name}</span>
-                  ))}
-                  {(!trainer.assignedProjects || trainer.assignedProjects.length === 0) && (
-                    <span className="text-slate-400 italic text-xs font-bold uppercase tracking-widest">No Active Portfolio</span>
-                  )}
-                </div>
-             </div>
-             {editMode && (
-               <div className="animate-in fade-in slide-in-from-top-4">
-                 <Field 
-                  label="Reassign Primary Asset" 
-                  value={formData.assignedProjects?.[0]?._id || formData.assignedProjects?.[0]} 
-                  editMode={true} 
+          {/* Section: Project link */}
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm">
+            <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
+              <span className="w-1.5 h-6 bg-blue-600 rounded-full shadow-lg shadow-blue-500/20"></span>
+              Portfolio Alignment
+            </h4>
+            <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100 mb-6">
+              <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1.5">Primary Active Index</p>
+              <div className="flex flex-wrap gap-2">
+                {trainer.assignedProjects?.map(p => (
+                  <span key={p._id} className="font-black text-slate-900 text-xs bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100">{p.name}</span>
+                ))}
+                {(!trainer.assignedProjects || trainer.assignedProjects.length === 0) && (
+                  <span className="text-slate-400 italic text-xs font-bold uppercase tracking-widest">No Active Portfolio</span>
+                )}
+              </div>
+            </div>
+            {editMode && (
+              <div className="animate-in fade-in slide-in-from-top-4">
+                <Field
+                  label="Reassign Primary Asset"
+                  value={formData.assignedProjects?.[0]?._id || formData.assignedProjects?.[0]}
+                  editMode={true}
                   options={projectsList.map(p => ({ label: p.name, value: p._id }))}
-                  onChange={v => setFormData({...formData, assignedProjects: [v]})} 
+                  onChange={v => setFormData({ ...formData, assignedProjects: [v] })}
                 />
-               </div>
-             )}
-           </div>
+              </div>
+            )}
+          </div>
 
-           {/* Section: Command chain */}
-           <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm">
-             <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
-               <span className="w-1.5 h-6 bg-purple-600 rounded-full shadow-lg shadow-purple-500/20"></span>
-               Command Link
-             </h4>
-             <div className="flex items-center gap-5 p-6 bg-slate-50 rounded-3xl border border-slate-100 group hover:bg-white hover:border-indigo-100 transition-all">
-                <div className="w-16 h-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-indigo-600 font-black text-2xl shadow-sm shadow-indigo-500/5 group-hover:scale-110 transition-transform">
-                  {(trainer.createdBy?.fullName || 'S').charAt(0)}
-                </div>
-                <div>
-                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Assigned Manager</p>
-                   <p className="font-black text-slate-900 text-sm">{trainer.createdBy?.fullName || 'System Admin'}</p>
-                   <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider">Sector Overview</p>
-                </div>
-             </div>
-           </div>
-
-           {/* Section: Performance Analytics */}
-           <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm">
-             <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
-               <span className="w-1.5 h-6 bg-amber-500 rounded-full shadow-lg shadow-amber-500/20"></span>
-               Performance Matrix
-             </h4>
-             <div className="space-y-10">
-                <div className="group">
-                  <div className="flex justify-between items-center mb-3">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Field Engagement</p>
-                    <span className="text-xs font-black text-slate-800">{trainer.attendanceRate}%</span>
-                  </div>
-                  <div className="w-full h-3 bg-slate-50 rounded-full overflow-hidden shadow-inner border border-slate-100 p-0.5">
-                    <div className={`h-full rounded-full shadow-xl transition-all duration-1000 ${trainer.attendanceRate >= 80 ? 'bg-emerald-500' : trainer.attendanceRate >= 50 ? 'bg-amber-500' : 'bg-rose-500'}`} style={{ width: `${trainer.attendanceRate}%` }}></div>
-                  </div>
-                </div>
-                <div className="p-8 bg-slate-900 rounded-[2rem] text-white flex items-center justify-between shadow-2xl relative overflow-hidden group">
-                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full translate-x-1/2 -translate-y-1/2 group-hover:scale-150 transition-transform duration-700"></div>
-                   <div className="relative z-10">
-                      <p className="text-[10px] font-black opacity-40 uppercase tracking-[0.2em] mb-1">Intelligence Assets</p>
-                      <p className="text-4xl font-black">{trainer.totalUploads}</p>
-                   </div>
-                   <div className="text-5xl opacity-20 filter grayscale invert group-hover:grayscale-0 group-hover:invert-0 transition-all group-hover:scale-125">📸</div>
-                </div>
-             </div>
-           </div>
+          {/* Section: Command chain */}
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm">
+            <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
+              <span className="w-1.5 h-6 bg-purple-600 rounded-full shadow-lg shadow-purple-500/20"></span>
+              Manager Assigned
+            </h4>
+            <div className="flex items-center gap-5 p-6 bg-slate-50 rounded-3xl border border-slate-100 group hover:bg-white hover:border-indigo-100 transition-all">
+              <div className="w-16 h-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-indigo-600 font-black text-2xl shadow-sm shadow-indigo-500/5 group-hover:scale-110 transition-transform">
+                {(trainer.createdBy?.fullName || 'S').charAt(0)}
+              </div>
+              <div>
+                <p className="font-black text-slate-900 text-sm">{trainer.createdBy?.fullName || 'System Admin'}</p>
+                <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider">Sector Overview</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
