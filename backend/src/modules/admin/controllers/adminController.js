@@ -293,16 +293,31 @@ exports.deleteProject = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
 
+    const projectId = project._id;
+
+    // Remove this project from any Manager's assignedProjects array
+    await Manager.updateMany(
+      { assignedProjects: projectId },
+      { $pull: { assignedProjects: projectId } }
+    );
+
+    // Remove this project from any Trainer's assignedProjects array
+    await Trainer.updateMany(
+      { assignedProjects: projectId },
+      { $pull: { assignedProjects: projectId } }
+    );
+
     await project.deleteOne();
 
     res.status(200).json({
       success: true,
-      message: 'Project deleted successfully'
+      message: 'Project deleted successfully and unassigned from all staff'
     });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }
 };
+
 
 // @desc    Register Admin
 // @route   POST /api/v1/admin/register

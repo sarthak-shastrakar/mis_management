@@ -74,8 +74,9 @@ exports.addNewTrainer = async (req, res) => {
       username = `${username}_${Math.floor(10 + Math.random() * 90)}`;
     }
 
-    // 4. Password: 8 random characters as shown in mockup
-    const password = crypto.randomBytes(4).toString('hex');
+    // 4. Password: [FirstName]@123
+    const firstName = fullName.split(' ')[0].toLowerCase();
+    const password = `${firstName}@123`;
 
     // 5. Resolve Projects correctly (Manager sends array of Project IDs or Names)
     let finalProjectIds = [];
@@ -142,7 +143,7 @@ exports.addNewTrainer = async (req, res) => {
         accountRole: trainer.accountRole,
         username: trainer.username,
         tempPassword: password,
-        isFirstLogin: true,
+        isFirstLogin: false,
         isProfileComplete: false,
       },
     });

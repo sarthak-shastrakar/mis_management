@@ -48,11 +48,21 @@ exports.getMe = async (req, res, next) => {
     const manager = await Manager.findById(req.user.id).populate('assignedProjects', 'name');
     if (!manager) return res.status(404).json({ success: false, message: 'Manager not found' });
 
-    res.status(200).json({ success: true, data: manager });
+    // Count trainers created by this manager
+    const trainerCount = await Trainer.countDocuments({ createdBy: req.user.id });
+
+    res.status(200).json({ 
+      success: true, 
+      data: {
+        ...manager._doc,
+        totalTrainersCreated: trainerCount
+      } 
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 // ─────────────────────────────────────────────
 // @desc    Update own profile
@@ -294,11 +304,6 @@ exports.rejectAttendance = async (req, res, next) => {
       });
     }
 
-    attendance.status = 'rejected';
-    attendance.approvedBy = req.user.id;
-    attendance.approvedAt = new Date();
-    attendance.rejectionReason = rejectionReason;
-
     await attendance.save();
 
     res.status(200).json({
@@ -325,14 +330,10 @@ exports.rejectAttendance = async (req, res, next) => {
 // ─────────────────────────────────────────────
 exports.getDashboard = async (req, res, next) => {
   try {
-    // Populate assignedProjects FULLY to get location and progressStatus
     const manager = await Manager.findById(req.user.id).populate('assignedProjects');
     if (!manager) return res.status(404).json({ success: false, message: 'Manager not found' });
 
-    // ── 1. Assigned Projects Status ─────────────────────────
-    // Using manager.assignedProjects as source of truth for visibility
     const projects = manager.assignedProjects || [];
-
     const today = new Date().toISOString().split('T')[0];
     const todayAttendance = await Attendance.find({
       date: today,
@@ -348,10 +349,9 @@ exports.getDashboard = async (req, res, next) => {
     const assignedProjectsStatus = await Promise.all(projects.map(async (prj) => {
       const trainersCount = await Trainer.countDocuments({ assignedProjects: prj._id });
       const presentToday = todayProjectAttendance[prj._id] || todayProjectAttendance[prj.name] || 0;
-      const percentage = trainersCount > 0 ? Math.round((presentToday / trainersCount) * 100) : 0;
-
+      
       return {
-        projectId: prj._id, // Critical for "View Detail" button
+        projectId: prj._id,
         projectName: prj.name,
         location: prj.location ? `${prj.location.district}, ${prj.location.state}` : 'N/A',
         totalTrainers: trainersCount,
@@ -361,38 +361,14 @@ exports.getDashboard = async (req, res, next) => {
       };
     }));
 
-    // ── 2. Approval Insights ─────────────────────────────────
-    const pendingCount = await Attendance.countDocuments({ 
-       status: 'pending_approval',
-       projectId: { $in: projects.map(p => p._id) } 
-    });
-
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
-
-    const approvedToday = await Attendance.countDocuments({
-      status: 'approved',
-      approvedBy: req.user.id,
-      updatedAt: { $gte: startOfDay, $lte: endOfDay }
-    });
-
-    const approvalInsights = {
-      pendingCount,
-      approvedToday
-    };
-
-    // ── 3. Late Submission Approvals (> 5 days late) ─────────
-    const lateSubmissions = await Attendance.find({
+    const pendingSubmissions = await Attendance.find({
       status: 'pending_approval',
-      daysLate: { $gt: 5 },
       projectId: { $in: projects.map(p => p._id) }
     })
       .populate('trainerId', 'fullName trainerId mobileNumber assignedProject district')
-      .sort({ daysLate: -1 }); // most late first
+      .sort({ createdAt: -1 });
 
-    const lateSubmissionList = lateSubmissions.map((att) => ({
+    const pendingList = pendingSubmissions.map((att) => ({
       attendanceId: att._id,
       trainer: {
         name: att.trainerId?.fullName || 'N/A',
@@ -406,7 +382,6 @@ exports.getDashboard = async (req, res, next) => {
       remarks: att.remarks || null,
     }));
 
-    // ── Final Response ────────────────────────────────────────
     res.status(200).json({
       success: true,
       data: {
@@ -419,10 +394,9 @@ exports.getDashboard = async (req, res, next) => {
           })) : [],
         },
         assignedProjectsStatus,
-        approvalInsights,
         lateSubmissions: {
-          activeRequests: lateSubmissionList.length,
-          list: lateSubmissionList,
+          activeRequests: pendingList.length,
+          list: pendingList,
         },
       },
     });
@@ -430,6 +404,7 @@ exports.getDashboard = async (req, res, next) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 // @desc    Setup Project Details (Manager One-Time)
 // @route   PUT /api/v1/manager/projects/:id/setup

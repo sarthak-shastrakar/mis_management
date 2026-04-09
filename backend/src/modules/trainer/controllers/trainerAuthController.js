@@ -41,13 +41,11 @@ exports.trainerLogin = async (req, res) => {
         fullName: trainer.fullName,
         username: trainer.username,
         role: trainer.role,
-        isFirstLogin: trainer.isFirstLogin,
+        isFirstLogin: false,
         isProfileComplete: trainer.isProfileComplete,
       },
-      // Frontend should redirect based on these flags:
-      // isFirstLogin = true  → force to /set-password
       // isProfileComplete = false → force to /complete-profile
-      // both false → go to dashboard
+      // false → go to dashboard
       nextStep: !trainer.isProfileComplete
         ? 'COMPLETE_PROFILE'
         : 'DASHBOARD',
