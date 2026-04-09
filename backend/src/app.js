@@ -25,7 +25,7 @@ app.get('/api/v1', (req, res) => {
 });
 
 // Catch-all route for React SPA navigation
-app.get('*', (req, res) => {
+app.get('(.*)', (req, res) => {
   res.sendFile(path.join(frontendPath, 'index.html'));
 });
 
