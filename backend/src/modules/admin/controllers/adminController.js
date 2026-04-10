@@ -17,17 +17,13 @@ exports.getDashboardStats = async (req, res, next) => {
     const fieldTrainers = await Trainer.countDocuments();
     
     // Count daily uploads (today)
-    const today = new Date().toISOString().split('T')[0];
-    // This is a naive way, but works for now. 
-    // In production, an aggregation pipeline would be better.
-    const beneficiaries = await Beneficiary.find({ 'monitoring.date': today });
-    
-    let dailyUploadsCount = 0;
-    beneficiaries.forEach(ben => {
-      const todayEntry = ben.monitoring.find(m => m.date === today);
-      if (todayEntry) {
-         dailyUploadsCount += todayEntry.photoUrls.length;
-      }
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const dailyUploadsCount = await Attendance.countDocuments({
+      createdAt: { $gte: todayStart, $lte: todayEnd }
     });
 
     // Fetch recent active projects
