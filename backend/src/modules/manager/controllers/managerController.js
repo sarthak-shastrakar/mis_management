@@ -362,6 +362,7 @@ exports.getDashboard = async (req, res, next) => {
     const projectIds = projects.map(p => p._id.toString());
     const projectCustomIds = projects.map(p => p.projectId).filter(Boolean);
 
+    // 1. Fetch Late Attendance (Presently Attendance model)
     const pendingSubmissions = await Attendance.find({
       status: 'pending_approval',
       projectId: { $in: [...projectIds, ...projectCustomIds] }
@@ -387,6 +388,35 @@ exports.getDashboard = async (req, res, next) => {
       };
     });
 
+    // 2. Fetch Bulk Requests (BulkAttendanceRequest model)
+    const BulkRequest = require('../../attendance/models/bulkRequestModel');
+    
+    console.log('DEBUG: Logged in manager ID:', req.user.id);
+
+    const bulkRequestsData = await BulkRequest.find({
+      managerId: req.user.id,
+      status: 'Pending Approval'
+    })
+      .populate('trainerId', 'fullName trainerId mobileNumber district')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    console.log('DEBUG: Bulk Requests found for this manager:', bulkRequestsData.length);
+    if (bulkRequestsData.length === 0) {
+      const anyData = await BulkRequest.find({}).limit(1);
+      if (anyData.length > 0) {
+        console.log('DEBUG: Found other manager request in DB with managerId:', anyData[0].managerId);
+      }
+    }
+
+    const formattedBulkRequests = bulkRequestsData.map(r => {
+      const proj = projects.find(p => String(p._id) === String(r.projectId) || p.projectId === r.projectId || p.name === r.projectId);
+      return {
+        ...r,
+        projectName: proj ? proj.name : r.projectId
+      };
+    });
+
     res.status(200).json({
       success: true,
       data: {
@@ -400,8 +430,11 @@ exports.getDashboard = async (req, res, next) => {
         },
         assignedProjectsStatus,
         lateSubmissions: {
-          activeRequests: pendingList.length,
           list: pendingList,
+        },
+        bulkRequests: {
+          activeRequests: formattedBulkRequests.length,
+          list: formattedBulkRequests,
         },
       },
     });

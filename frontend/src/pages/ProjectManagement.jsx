@@ -352,7 +352,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
-                {['Project Name', 'Manager Assign', 'System Status', 'Operational Actions'].map(h => (
+                {['Project Name', 'Manager Assign', 'System Status', 'Actions'].map(h => (
                   <th key={h} className="px-10 py-7 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{h}</th>
                 ))}
               </tr>
@@ -397,16 +397,16 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                   </td>
                   <td className="px-10 py-8">
                     <div className="flex items-center gap-2">
-                      <button onClick={() => onNavigate('project-detail', { projectId: prj.projectId || prj._id })} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all shadow-sm group/btn" title="View Intelligence">
+                      <button onClick={() => onNavigate('project-detail', { projectId: prj.projectId || prj._id })} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all shadow-sm group/btn" title="View">
                         <span className="group-hover/btn:scale-125 transition-transform">👁️</span>
                       </button>
                       {currentRole === 'manager' && (
-                        <button onClick={() => handleOpenAssign(prj._id)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm" title="Assign Personnel">👥</button>
+                        <button onClick={() => handleOpenAssign(prj._id)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm" title="Assign Trainers">👥</button>
                       )}
                       {currentRole === 'admin' && (
                         <button onClick={() => handleEditOpen(prj)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="Modify Record">✏️</button>
                       )}
-                      <button onClick={() => handleDeleteProject(prj._id)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm" title="Purge initiative">🗑️</button>
+                      <button onClick={() => handleDeleteProject(prj._id)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm" title="Delete">🗑️</button>
                     </div>
                   </td>
                 </tr>

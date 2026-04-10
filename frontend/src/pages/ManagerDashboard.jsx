@@ -4,8 +4,10 @@ import API from '../api/api';
 const ManagerDashboard = ({ onNavigate }) => {
   const [assignedProjects, setAssignedProjects] = useState([]);
   const [trainerApprovals, setTrainerApprovals] = useState([]);
+  const [bulkRequests, setBulkRequests] = useState([]);
   const [stats, setStats] = useState({
     pendingApprovals: 0,
+    pendingBulk: 0,
     approvedToday: 0,
     managerName: '',
     managerId: ''
@@ -23,12 +25,17 @@ const ManagerDashboard = ({ onNavigate }) => {
   const fetchDashboardData = async () => {
     try {
       const response = await API.get('/manager/dashboard');
+
       if (response.data.success) {
-        const { assignedProjectsStatus, lateSubmissions, manager } = response.data.data;
+        const { assignedProjectsStatus, lateSubmissions, manager, bulkRequests: integratedBulk } = response.data.data;
+        
         setAssignedProjects(assignedProjectsStatus || []);
         setTrainerApprovals(lateSubmissions?.list || []);
+        setBulkRequests(integratedBulk?.list || []);
+
         setStats({
-          pendingApprovals: lateSubmissions?.activeRequests || 0,
+          pendingApprovals: (lateSubmissions?.list?.length) || 0,
+          pendingBulk: integratedBulk?.activeRequests || 0,
           approvedToday: 0,
           managerName: manager?.name || '',
           managerId: manager?.managerId || ''
@@ -68,6 +75,34 @@ const ManagerDashboard = ({ onNavigate }) => {
         }
       } catch (err) {
         alert(err.response?.data?.message || 'Approval failed');
+      }
+    }
+  };
+
+  const handleApproveBulk = async (requestId) => {
+    if (window.confirm('Are you sure you want to APPROVE this bulk request? This will automatically mark attendance for all requested dates.')) {
+      try {
+        const response = await API.put(`/attendance/bulk-request/${requestId}/approve`);
+        if (response.data.success) {
+          alert('Bulk request approved. Attendance records generated.');
+          fetchDashboardData();
+        }
+      } catch (err) {
+        alert(err.response?.data?.message || 'Approval failed');
+      }
+    }
+  };
+
+  const handleRejectBulk = async (requestId) => {
+    if (window.confirm('Are you sure you want to REJECT this bulk request?')) {
+      try {
+        const response = await API.put(`/attendance/bulk-request/${requestId}/reject`);
+        if (response.data.success) {
+          alert('Bulk request rejected');
+          fetchDashboardData();
+        }
+      } catch (err) {
+        alert(err.response?.data?.message || 'Rejection failed');
       }
     }
   };
@@ -149,7 +184,7 @@ const ManagerDashboard = ({ onNavigate }) => {
                   </td>
                 </tr>
               ) : trainerApprovals.map((req) => (
-                <tr key={req.attendanceId} className="transition-all">
+                <tr key={req.attendanceId} className="transition-all hover:bg-slate-50/50">
                   <td className="py-8 px-4">
                     <p className="font-black text-slate-900 text-lg transition-colors">{req.trainer.name}</p>
                     <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mt-1">ID: {req.trainer.trainerId}</p>
@@ -166,10 +201,10 @@ const ManagerDashboard = ({ onNavigate }) => {
                   <td className="py-8 px-4 text-right">
                     <div className="flex items-center justify-end gap-3 transition-all">
                       <button 
-                        onClick={() => handleApprove(req.attendanceId)}
-                        className="h-12 px-6 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-emerald-500/20"
+                         onClick={() => handleApprove(req.attendanceId)}
+                         className="h-12 px-6 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-emerald-500/20"
                       >
-                        Approve
+                         Approve
                       </button>
                       <button 
                         onClick={() => onNavigate && onNavigate('trainer-detail', { trainerId: req.trainer._id || req.trainer.trainerId })}
@@ -177,6 +212,85 @@ const ManagerDashboard = ({ onNavigate }) => {
                         title="Audit Profile"
                       >
                         👁️
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Bulk Attendance Approval Section - NEW */}
+      <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm shadow-slate-2/5 overflow-hidden">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10 pb-6 border-b border-slate-50">
+          <div>
+            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Bulk Attendance Requests</h3>
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">Multi-day attendance permission applications</p>
+          </div>
+          <span className="bg-purple-50 px-6 py-2.5 rounded-2xl text-[10px] font-black text-purple-600 uppercase tracking-widest border border-purple-100">
+            {stats.pendingBulk} Pending Requests
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-slate-50">
+                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Trainer</th>
+                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Project Scope</th>
+                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4 text-center">Requested Dates</th>
+                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Justification</th>
+                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4 text-right">Operational Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {bulkRequests.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="py-24 text-center">
+                    <div className="flex flex-col items-center gap-4 opacity-50">
+                      <span className="text-4xl">📋</span>
+                      <p className="text-slate-900 font-black uppercase tracking-widest text-xs">No Pending Bulk Applications</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : bulkRequests.map((req) => (
+                <tr key={req._id} className="transition-all hover:bg-slate-50/50">
+                  <td className="py-8 px-4">
+                    <p className="font-black text-slate-900 text-lg">{req.trainerId?.fullName || 'N/A'}</p>
+                    <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mt-1">ID: {req.trainerId?.trainerId || 'N/A'}</p>
+                  </td>
+                  <td className="py-8 px-4">
+                    <p className="text-sm font-bold text-slate-700">{req.projectName}</p>
+                  </td>
+                  <td className="py-8 px-4 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                       <span className="px-3 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-black border border-purple-100">{req.requestedDates.length} Days</span>
+                       <div className="flex flex-wrap gap-1 justify-center max-w-[150px]">
+                          {req.requestedDates.slice(0, 3).map(d => (
+                             <span key={d} className="text-[8px] font-bold text-slate-400">{new Date(d).toLocaleDateString()}</span>
+                          ))}
+                          {req.requestedDates.length > 3 && <span className="text-[8px] font-bold text-slate-400">+{req.requestedDates.length - 3} more</span>}
+                       </div>
+                    </div>
+                  </td>
+                  <td className="py-8 px-4">
+                    <p className="text-xs font-bold text-slate-500 italic max-w-xs leading-relaxed">"{req.reason || 'Verification required'}"</p>
+                  </td>
+                  <td className="py-8 px-4 text-right">
+                    <div className="flex items-center justify-end gap-3 transition-all">
+                      <button 
+                        onClick={() => handleApproveBulk(req._id)}
+                        className="h-10 px-5 bg-white border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white text-[9px] font-black uppercase tracking-widest rounded-xl transition-all"
+                      >
+                        Approve
+                      </button>
+                      <button 
+                        onClick={() => handleRejectBulk(req._id)}
+                        className="h-10 px-5 bg-white border-2 border-rose-600 text-rose-600 hover:bg-rose-600 hover:text-white text-[9px] font-black uppercase tracking-widest rounded-xl transition-all"
+                      >
+                        Reject
                       </button>
                     </div>
                   </td>

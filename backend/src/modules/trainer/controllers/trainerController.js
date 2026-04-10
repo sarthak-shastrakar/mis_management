@@ -14,8 +14,9 @@ exports.addNewTrainer = async (req, res) => {
     const { 
       fullName, 
       trainerId: manualTrainerId, 
+      mobileNumber,
+      state,
       district,
-      accountRole,
       assignedProjects: assignedProjectsFromReq, // Handle possible plural field
       assignedProject: assignedProjectFromReq,  // Handle possible singular field
       alternativeMobileNumber,
@@ -112,7 +113,7 @@ exports.addNewTrainer = async (req, res) => {
       assignedBy: finalProjectIds.length > 0 ? req.user.id : null,
       
       // New MIS Fields
-      accountRole: accountRole || 'trainer',
+      accountRole: 'trainer',
       alternativeMobileNumber,
       alternativeEmail,
       panCardNumber,

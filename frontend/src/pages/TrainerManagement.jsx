@@ -24,7 +24,6 @@ const TrainerModal = ({ trainer, onClose, onSave, projects }) => {
     mobileNumber: trainer ? trainer.mobile : '',
     state: trainer ? trainer.state : '',
     district: trainer ? trainer.location || trainer.district : '',
-    accountRole: trainer ? trainer.accountRole : 'trainer',
   });
 
   const handleSave = (e) => {
@@ -112,18 +111,7 @@ const TrainerModal = ({ trainer, onClose, onSave, projects }) => {
               />
             </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Account Role</label>
-              <select
-                value={formData.accountRole || 'trainer'}
-                onChange={e => setFormData({ ...formData, accountRole: e.target.value })}
-                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all"
-              >
-                <option value="trainer">Trainer</option>
-                <option value="demonstrator">Demonstrator</option>
-                <option value="supervisor">Supervisor</option>
-              </select>
-            </div>
+
           </div>
 
           <div>
@@ -338,8 +326,8 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
       {/* Insight Tiles - Clean Minimalist */}
       <div className="grid grid-cols-2 lg:grid-cols-2 gap-6">
         {[
-          { label: 'Network Size', value: trainersList.length, icon: '💼', color: 'text-indigo-600 bg-indigo-50 border-indigo-100' },
-          { label: 'Active Field', value: trainersList.filter(t => t.status === 'Active').length, icon: '📡', color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
+          { label: 'Total Trainers', value: trainersList.length, icon: '💼', color: 'text-indigo-600 bg-indigo-50 border-indigo-100' },
+          { label: 'Active Trainers', value: trainersList.filter(t => t.status === 'Active').length, icon: '📡', color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
         ].map((s) => (
           <div key={s.label} className={`bg-white rounded-[2rem] border ${s.color} p-8 flex items-center gap-6 shadow-sm transition-shadow`}>
             <div className="w-20 h-20 rounded-2xl bg-white border border-inherit flex items-center justify-center text-3xl shadow-sm">{s.icon}</div>

@@ -42,6 +42,7 @@ const bulkRequestSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    collection: 'bulkatttendancerequests'
   }
 );
 

@@ -342,7 +342,7 @@ exports.approveBulkRequest = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Request not found' });
     }
 
-    if (request.status !== 'Pending') {
+    if (request.status !== 'Pending Approval') {
       return res.status(400).json({ success: false, message: `Request is already ${request.status}` });
     }
 
@@ -395,7 +395,7 @@ exports.rejectBulkRequest = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Request not found' });
     }
 
-    if (request.status !== 'Pending') {
+    if (request.status !== 'Pending Approval') {
       return res.status(400).json({ success: false, message: `Request is already ${request.status}` });
     }
 
@@ -423,9 +423,8 @@ exports.getAllBulkRequests = async (req, res) => {
   try {
     let query = {};
     if (req.user.role === 'manager') {
-      const trainers = await Trainer.find({ createdBy: req.user.id }).select('_id');
-      const trainerIds = trainers.map(t => t._id);
-      query = { trainerId: { $in: trainerIds } };
+      // Find requests specifically assigned to this manager
+      query = { managerId: req.user.id };
     } else if (req.user.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Unauthorized access' });
     }

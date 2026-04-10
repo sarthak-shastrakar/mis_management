@@ -4,7 +4,6 @@ import API from '../api/api';
 const statusColors = {
   'Present': 'bg-emerald-100 text-emerald-700',
   'Absent': 'bg-rose-100 text-rose-700',
-  'On Leave': 'bg-amber-100 text-amber-700',
 };
 
 const AttendanceManagement = () => {
@@ -53,7 +52,7 @@ const AttendanceManagement = () => {
 
   const presentCount = filtered.filter(r => r.status === 'Present').length;
   const absentCount = filtered.filter(r => r.status === 'Absent').length;
-  const leaveCount = filtered.filter(r => r.status === 'On Leave').length;
+
 
   return (
     <div className="space-y-8">
@@ -87,7 +86,7 @@ const AttendanceManagement = () => {
           />
 
           <div className="flex bg-slate-100 rounded-xl p-1">
-            {['All', 'Present', 'Absent', 'On Leave'].map(s => (
+            {['All', 'Present', 'Absent'].map(s => (
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
@@ -123,13 +122,7 @@ const AttendanceManagement = () => {
             <p className="text-3xl font-black text-rose-600">{absentCount}</p>
           </div>
         </div>
-        <div className="bg-white rounded-2xl border border-slate-100 p-6 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl text-amber-600 bg-amber-50">🏖️</div>
-          <div>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">On Leave</p>
-            <p className="text-3xl font-black text-amber-600">{leaveCount}</p>
-          </div>
-        </div>
+
       </div>
 
       {/* Table block */}
