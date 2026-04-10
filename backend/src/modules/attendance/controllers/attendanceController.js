@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Attendance = require('../models/attendanceModel');
 const Project = require('../../project/models/projectModel');
 const Trainer = require('../../trainer/models/trainerModel');
+const BulkRequest = require('../models/bulkRequestModel');
 
 // ─────────────────────────────────────────────────────────────
 // @desc    Mark attendance for a project
@@ -257,7 +258,6 @@ exports.submitBulkRequest = async (req, res) => {
 exports.getBulkRequests = async (req, res) => {
   try {
     const trainerId = req.user.id;
-    const BulkRequest = require('../models/bulkRequestModel');
 
     const requests = await BulkRequest.find({ trainerId })
       .sort({ submittedAt: -1 });
@@ -324,6 +324,130 @@ exports.getAllAttendanceForManager = async (req, res) => {
       success: true,
       count: enrichedAttendance.length,
       data: enrichedAttendance,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+// ─────────────────────────────────────────────────────────────
+// @desc    Approve Bulk Attendance Request
+// @route   PUT /api/v1/attendance/bulk-request/:id/approve
+// @access  Private (Manager/Admin)
+// ─────────────────────────────────────────────────────────────
+exports.approveBulkRequest = async (req, res) => {
+  try {
+    const request = await BulkRequest.findById(req.params.id);
+
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    if (request.status !== 'Pending') {
+      return res.status(400).json({ success: false, message: `Request is already ${request.status}` });
+    }
+
+    // 1. Update Request Status
+    request.status = 'Approved';
+    request.approvedBy = req.user.id;
+    request.approvedAt = new Date();
+    await request.save();
+
+    // 2. Automatically create Attendance records for each requested date
+    const attendancePromises = request.requestedDates.map(date => {
+      return Attendance.create({
+        trainerId: request.trainerId,
+        projectId: request.projectId,
+        date: date,
+        status: 'approved',
+        requiresApproval: false,
+        remarks: 'Directly marked via Bulk Approval Request',
+        location: {
+          latitude: 0,
+          longitude: 0,
+          type: 'Point',
+          coordinates: [0, 0]
+        }
+      });
+    });
+
+    await Promise.all(attendancePromises);
+
+    res.status(200).json({
+      success: true,
+      message: 'Bulk Request approved and attendance records generated.',
+      data: request
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// @desc    Reject Bulk Attendance Request
+// @route   PUT /api/v1/attendance/bulk-request/:id/reject
+// @access  Private (Manager/Admin)
+// ─────────────────────────────────────────────────────────────
+exports.rejectBulkRequest = async (req, res) => {
+  try {
+    const request = await BulkRequest.findById(req.params.id);
+
+    if (!request) {
+      return res.status(404).json({ success: false, message: 'Request not found' });
+    }
+
+    if (request.status !== 'Pending') {
+      return res.status(400).json({ success: false, message: `Request is already ${request.status}` });
+    }
+
+    request.status = 'Rejected';
+    request.approvedBy = req.user.id;
+    request.approvedAt = new Date();
+    await request.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Bulk Request rejected.',
+      data: request
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// @desc    Get all bulk requests (Manager/Admin)
+// @route   GET /api/v1/attendance/bulk-requests/all
+// @access  Private (Manager/Admin)
+// ─────────────────────────────────────────────────────────────
+exports.getAllBulkRequests = async (req, res) => {
+  try {
+    let query = {};
+    if (req.user.role === 'manager') {
+      const trainers = await Trainer.find({ createdBy: req.user.id }).select('_id');
+      const trainerIds = trainers.map(t => t._id);
+      query = { trainerId: { $in: trainerIds } };
+    } else if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Unauthorized access' });
+    }
+
+    const requests = await BulkRequest.find(query)
+      .populate('trainerId', 'fullName trainerId mobileNumber')
+      .sort({ submittedAt: -1 })
+      .lean();
+
+    // Attach project names
+    const projects = await Project.find({}).lean();
+    const enrichedRequests = requests.map(r => {
+      const proj = projects.find(p => String(p._id) === String(r.projectId) || p.projectId === r.projectId || p.name === r.projectId);
+      return {
+        ...r,
+        projectName: proj ? proj.name : 'Unknown Project'
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data: enrichedRequests
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

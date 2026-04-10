@@ -3,7 +3,6 @@ const Admin = require('../models/adminModel');
 const Manager = require('../../manager/models/managerModel');
 const Trainer = require('../../trainer/models/trainerModel');
 const Project = require('../../project/models/projectModel');
-const Beneficiary = require('../../beneficiary/models/beneficiaryModel');
 const Attendance = require('../../attendance/models/attendanceModel');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -293,13 +292,6 @@ exports.updateProject = async (req, res, next) => {
       runValidators: false
     });
 
-    // Ensure 1 Project -> 1 Manager consistency
-    // 1. Remove project from ALL managers' lists
-    await Manager.updateMany(
-      { assignedProjects: project._id },
-      { $pull: { assignedProjects: project._id } }
-    );
-
     // 2. Add to the new manager if specified
     if (newManagerId) {
       await Manager.findByIdAndUpdate(newManagerId, { $addToSet: { assignedProjects: project._id } });
@@ -489,12 +481,6 @@ exports.addNewManager = async (req, res, next) => {
 
     // 5. Sync Project Model: Update the project's manager field
     if (Array.isArray(assignedProjects) && assignedProjects.length > 0) {
-      // 5a. Remove these projects from ANY OTHER manager who might have had them
-      await Manager.updateMany(
-        { _id: { $ne: manager._id } },
-        { $pull: { assignedProjects: { $in: assignedProjects } } }
-      );
-
       // 5b. Update the project's manager field
       await Project.updateMany(
         { _id: { $in: assignedProjects } },
@@ -618,21 +604,6 @@ exports.updateManager = async (req, res, next) => {
     if (req.body.assignedProjects !== undefined) {
       const newProjectIds = Array.isArray(req.body.assignedProjects) ? req.body.assignedProjects : [];
       
-      // 1. Unset manager from projects that are NO LONGER in the newProjectIds list
-      await Project.updateMany(
-        { manager: manager._id, _id: { $nin: newProjectIds } },
-        { manager: null }
-      );
-
-      // 2. IMPORTANT: Remove these projects from ANY OTHER manager who might have had them
-      // This ensures 1 Project -> 1 Manager consistency
-      if (newProjectIds.length > 0) {
-        await Manager.updateMany(
-          { _id: { $ne: manager._id } },
-          { $pull: { assignedProjects: { $in: newProjectIds } } }
-        );
-      }
-
       // 3. Set manager for projects that are in the newProjectIds list
       await Project.updateMany(
         { _id: { $in: newProjectIds } },
@@ -913,34 +884,12 @@ exports.getPhotosByDate = async (req, res, next) => {
     const end = new Date(start);
     end.setDate(start.getDate() + 1);
 
-    const beneficiaries = await Beneficiary.find({ 'monitoring.date': date })
-      .populate('project', 'name')
-      .populate('assignedStaff', 'fullName');
-
-    // --- 2. Trainer Attendance Records (Presence) ---
+    // --- 1. Trainer Attendance Records (Presence) ---
     const attendances = await Attendance.find({ date: { $gte: start, $lt: end } })
       .populate('trainerId', 'fullName');
-    // --- 3. Combine into a Unified Structure ---
-    const combined = [];
 
-    // Add Monitoring
-    beneficiaries.forEach(ben => {
-      const entry = ben.monitoring.find(m => m.date === date);
-      if (entry) {
-        combined.push({
-          type: 'monitoring',
-          beneficiaryId: ben.beneficiaryId,
-          beneficiaryName: ben.name,
-          projectName: ben.project ? ben.project.name : 'Unknown',
-          trainerName: ben.assignedStaff ? ben.assignedStaff.fullName : 'Not Assigned',
-          photoUrls: entry.photoUrls,
-          status: entry.status,
-          date: entry.date,
-          village: ben.location?.village || 'N/A',
-          taluka: ben.location?.taluka || 'N/A'
-        });
-      }
-    });
+    // --- 2. Combine into a Unified Structure ---
+    const combined = [];
 
     // Add Attendance
     attendances.forEach(att => {
@@ -974,33 +923,12 @@ exports.getPhotosByTrainer = async (req, res, next) => {
     const { trainerId } = req.query;
     if (!trainerId) return res.status(400).json({ success: false, message: 'Please provide trainerId' });
 
-    const beneficiaries = await Beneficiary.find({ assignedStaff: trainerId })
-      .populate('project', 'name')
-      .populate('assignedStaff', 'fullName');
-
-    // --- 2. Attendance Presence for this Trainer ---
+    // --- 1. Attendance Presence for this Trainer ---
     const attendances = await Attendance.find({ trainerId })
        .populate('trainerId', 'fullName');
 
-    // --- 3. Combine ---
+    // --- 2. Combine ---
     const combined = [];
-
-    beneficiaries.forEach(ben => {
-      ben.monitoring.forEach(entry => {
-        combined.push({
-          type: 'monitoring',
-          beneficiaryId: ben.beneficiaryId,
-          beneficiaryName: ben.name,
-          projectName: ben.project ? ben.project.name : 'Unknown',
-          trainerName: ben.assignedStaff ? ben.assignedStaff.fullName : 'Not Assigned',
-          photoUrls: entry.photoUrls || [],
-          status: entry.status,
-          date: entry.date,
-          village: ben.location?.village || 'N/A',
-          taluka: ben.location?.taluka || 'N/A'
-        });
-      });
-    });
 
     attendances.forEach(att => {
       combined.push({

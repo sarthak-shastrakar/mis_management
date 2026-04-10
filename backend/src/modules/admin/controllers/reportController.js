@@ -4,7 +4,6 @@ const archiver = require('archiver');
 const axios = require('axios');
 const Trainer = require('../../trainer/models/trainerModel');
 const Project = require('../../project/models/projectModel');
-const Beneficiary = require('../../beneficiary/models/beneficiaryModel');
 const Attendance = require('../../attendance/models/attendanceModel');
 const { cloudinary } = require('../../../utils/cloudinary');
 
@@ -82,37 +81,11 @@ exports.downloadProjectPhotos = async (req, res) => {
     const project = await Project.findById(projectId);
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
 
-    let query = { project: projectId };
-    if (trainerId) query.assignedStaff = trainerId;
-
-    const beneficiaries = await Beneficiary.find(query);
-
     const archive = archiver('zip', { zlib: { level: 9 } });
     res.setHeader('Content-Type', 'application/zip');
     res.setHeader('Content-Disposition', `attachment; filename=Project_${project.workOrderNo}_Photos.zip`);
 
     archive.pipe(res);
-
-    for (const ben of beneficiaries) {
-      if (ben.monitoring && ben.monitoring.length > 0) {
-        for (const entry of ben.monitoring) {
-          // If date filter is provided, skip other dates
-          if (date && entry.date !== date) continue;
-
-          for (let i = 0; i < entry.photoUrls.length; i++) {
-            const url = entry.photoUrls[i];
-            const fileName = `${ben.beneficiaryId}_${entry.date}_img${i + 1}.jpg`;
-            
-            try {
-              const response = await axios.get(url, { responseType: 'arraybuffer' });
-              archive.append(Buffer.from(response.data), { name: `Photos/${ben.beneficiaryId}/${fileName}` });
-            } catch (error) {
-              console.error(`Failed to download image: ${url}`);
-            }
-          }
-        }
-      }
-    }
 
     // --- 2. Trainer Attendance Photos ---
     let attQuery = { projectId: projectId };
@@ -159,42 +132,18 @@ exports.exportPhotoSummaryReport = async (req, res) => {
   try {
     const { date, projectId } = req.query;
     
-    let query = {};
-    if (projectId) query.project = projectId;
-    if (date) query['monitoring.date'] = date;
-
-    const beneficiaries = await Beneficiary.find(query)
-      .populate('project', 'name')
-      .populate('assignedStaff', 'fullName');
-
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Photo Upload Summary');
 
     worksheet.columns = [
-      { header: 'Beneficiary ID', key: 'benId', width: 20 },
-      { header: 'Name', key: 'name', width: 25 },
+      { header: 'ID', key: 'benId', width: 20 },
+      { header: 'Name', key: 'name', width: 35 },
       { header: 'Project', key: 'project', width: 25 },
       { header: 'Staff Name', key: 'staff', width: 25 },
       { header: 'Date', key: 'date', width: 15 },
       { header: 'Photos Count', key: 'count', width: 15 },
       { header: 'Status', key: 'status', width: 15 },
     ];
-
-    beneficiaries.forEach(ben => {
-      ben.monitoring.forEach(entry => {
-        if (date && entry.date !== date) return;
-
-        worksheet.addRow({
-          benId: ben.beneficiaryId,
-          name: ben.name,
-          project: ben.project ? ben.project.name : 'N/A',
-          staff: ben.assignedStaff ? ben.assignedStaff.fullName : 'N/A',
-          date: entry.date,
-          count: entry.photoUrls.length,
-          status: entry.status,
-        });
-      });
-    });
 
     // --- 2. Trainer Attendance Entries ---
     let attQuery = {};

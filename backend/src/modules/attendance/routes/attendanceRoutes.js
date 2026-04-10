@@ -6,7 +6,10 @@ const {
   markAttendance,
   getMyAttendance,
   getProjectAttendance,
-  getAllAttendanceForManager
+  getAllAttendanceForManager,
+  approveBulkRequest,
+  rejectBulkRequest,
+  getAllBulkRequests
 } = require('../controllers/attendanceController');
 
 // ─────────────────────────────────────────────────────────────
@@ -40,5 +43,10 @@ router.get('/my-history/:projectId', protect, getMyAttendance);
  * @access  Private (Manager/Admin)
  */
 router.get('/project/:projectId', protect, getProjectAttendance);
+
+// --- Bulk Request Operations ---
+router.get('/bulk-requests/all', protect, managerOnly, getAllBulkRequests);
+router.put('/bulk-request/:id/approve', protect, managerOnly, approveBulkRequest);
+router.put('/bulk-request/:id/reject', protect, managerOnly, rejectBulkRequest);
 
 module.exports = router;

@@ -352,7 +352,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
-                {['Project Name', 'Manager Assign', 'Focus Territory', 'System Status', 'Operational Actions'].map(h => (
+                {['Project Name', 'Manager Assign', 'System Status', 'Operational Actions'].map(h => (
                   <th key={h} className="px-10 py-7 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{h}</th>
                 ))}
               </tr>
@@ -360,7 +360,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="py-24 text-center">
+                  <td colSpan="4" className="py-24 text-center">
                     <div className="flex flex-col items-center gap-4">
                       <div className="w-10 h-10 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin"></div>
                       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Retrieving Real-time Telemetry...</p>
@@ -369,7 +369,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="py-24 text-center">
+                  <td colSpan="4" className="py-24 text-center">
                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">No matching initiatives detected</p>
                   </td>
                 </tr>
@@ -389,9 +389,6 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                       <div className={`w-3.5 h-3.5 rounded-full border-2 border-white ${prj.manager === 'Not Assigned' ? 'bg-slate-200' : 'bg-emerald-500 shadow-lg shadow-emerald-500/20'}`}></div>
                       <span className="text-sm font-bold text-slate-700">{currentRole === 'manager' ? 'Assigned to You' : (prj.manager || 'Unassigned')}</span>
                     </div>
-                  </td>
-                  <td className="px-10 py-8">
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.1em] px-3.5 py-1.5 bg-white rounded-xl border border-slate-200 shadow-sm">{prj.displayLocation}</span>
                   </td>
                   <td className="px-10 py-8">
                     <span className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest ${prj.status === 'Active' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}>

@@ -14,7 +14,6 @@ import TrainerProfile from '../pages/TrainerProfile';
 import TrainerDashboard from '../pages/TrainerDashboard';
 import MarkAttendance from '../pages/MarkAttendance';
 import TrainerHistory from '../pages/TrainerHistory';
-import BeneficiaryManagement from '../pages/BeneficiaryManagement';
 import ManagerProfile from '../pages/ManagerProfile';
 
 const Layout = ({ currentRole, currentUser, userStatus, setUserStatus, onLogout, managersList, setManagersList }) => {
