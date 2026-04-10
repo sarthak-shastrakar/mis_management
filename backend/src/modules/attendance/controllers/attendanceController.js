@@ -140,30 +140,34 @@ exports.submitAttendance = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Calculate difference in days
-    const diffTime = Math.abs(today - attendanceDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    // Calculate difference in days (0 = today, 1 = yesterday, etc.)
+    const diffTime = today - attendanceDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
-    let status = 'present';
-    let requiresApproval = false;
-    let message = 'Attendance marked successfully';
-
-    // 5-day rule: If more than 5 days old, requires approval
-    if (attendanceDate < today && diffDays > 5) {
-      status = 'pending_approval';
-      requiresApproval = true;
-      message = `Attendance submitted. Since this is ${diffDays} days old, it requires manager approval.`;
-    } else if (attendanceDate > today) {
-       return res.status(400).json({ success: false, message: 'Cannot mark attendance for future dates' });
+    if (attendanceDate > today) {
+      return res.status(400).json({ success: false, message: 'Cannot mark attendance for future dates' });
     }
 
-    // 4. Check for duplicate
+    // Strict 5-day rule (e.g., if today is 10, then 10, 9, 8, 7, 6 are allowed)
+    // 10-6 = 4 days difference. So diffDays <= 4 is allowed.
+    if (diffDays > 4) {
+      return res.status(403).json({ 
+        success: false, 
+        message: `Attendance for ${diffDays + 1} days ago cannot be marked directly. Please submit an approval request through the Bulk Request section.` 
+      });
+    }
+
+    // 4. Auto-Remark and Status
+    const autoRemark = " - Marked";
+    const finalRemarks = remarks ? `${remarks}${autoRemark}` : 'Marked';
+
+    // 5. Check for duplicate
     const existingEntry = await Attendance.findOne({ trainerId, projectId, date: attendanceDate });
     if (existingEntry) {
       return res.status(400).json({ success: false, message: 'Attendance already marked for this date and project' });
     }
 
-    // 5. Create record
+    // 6. Create record
     const attendance = await Attendance.create({
       trainerId,
       projectId,
@@ -174,10 +178,10 @@ exports.submitAttendance = async (req, res) => {
         latitude: parseFloat(latitude), 
         longitude: parseFloat(longitude) 
       },
-      status,
-      requiresApproval,
-      daysLate: diffDays > 5 ? diffDays : 0,
-      remarks
+      status: 'present',
+      requiresApproval: false,
+      daysLate: diffDays,
+      remarks: finalRemarks
     });
 
     res.status(201).json({
