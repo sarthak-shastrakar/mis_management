@@ -12,7 +12,7 @@ const {
   completeProfile,
 } = require("../controllers/trainerAuthController");
 
-const { 
+const {
   submitAttendance,
   submitBulkRequest,
   getBulkRequests
@@ -65,6 +65,7 @@ router.post(
 // FULLY PROTECTED — Trainer must be logged in AND profile complete
 //                  All feature routes go here
 // ─────────────────────────────────────────────────────────────
+
 router.get(
   "/profile/me",
   protect,

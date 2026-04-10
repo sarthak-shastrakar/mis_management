@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Admin = require('../models/adminModel');
 const Manager = require('../../manager/models/managerModel');
 const Trainer = require('../../trainer/models/trainerModel');
@@ -137,7 +138,7 @@ exports.createProject = async (req, res, next) => {
     });
 
     // If manager is assigned, update Manager model as well
-    if (managerId) {
+    if (managerId && mongoose.Types.ObjectId.isValid(managerId)) {
       await Manager.findByIdAndUpdate(managerId, { $addToSet: { assignedProjects: project._id } });
     }
 
@@ -236,9 +237,19 @@ exports.updateProject = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
 
+    // Robust Manager Resolution
+    let resolvedManagerId = managerId || project.manager;
+    if (managerId && !mongoose.Types.ObjectId.isValid(managerId)) {
+      // If it's a custom ID (e.g. MGR-6870), find the actual ObjectId
+      const managerDoc = await Manager.findOne({ managerId: managerId });
+      if (managerDoc) {
+        resolvedManagerId = managerDoc._id;
+      }
+    }
+
     const updateData = {
       name: name || project.name,
-      manager: managerId || project.manager,
+      manager: resolvedManagerId,
       location: {
         state: location?.state || project.location.state,
         district: location?.district || project.location.district,
@@ -269,10 +280,27 @@ exports.updateProject = async (req, res, next) => {
       isLocked: req.body.isLocked !== undefined ? req.body.isLocked : project.isLocked
     };
 
+    // Bi-directional Synchronization
+    const oldManagerId = project.manager;
+    const newManagerId = resolvedManagerId;
+
     project = await Project.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
-      runValidators: false // User requested no validation for edits
+      runValidators: false
     });
+
+    // If manager changed or was newly assigned
+    if (newManagerId && oldManagerId?.toString() !== newManagerId?.toString()) {
+      // 1. Remove from old manager if they existed
+      if (oldManagerId) {
+        await Manager.findByIdAndUpdate(oldManagerId, { $pull: { assignedProjects: project._id } });
+      }
+      // 2. Add to new manager
+      await Manager.findByIdAndUpdate(newManagerId, { $addToSet: { assignedProjects: project._id } });
+    } else if (!newManagerId && oldManagerId) {
+      // If manager was removed entirely
+      await Manager.findByIdAndUpdate(oldManagerId, { $pull: { assignedProjects: project._id } });
+    }
 
     res.status(200).json({
       success: true,
@@ -288,7 +316,15 @@ exports.updateProject = async (req, res, next) => {
 // @access  Private (Admin Only)
 exports.deleteProject = async (req, res, next) => {
   try {
-    const project = await Project.findById(req.params.id);
+    const id = req.params.id;
+    let project;
+
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      project = await Project.findById(id);
+    } else {
+      project = await Project.findOne({ projectId: id });
+    }
+
     if (!project) {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
@@ -483,15 +519,17 @@ exports.addNewManager = async (req, res, next) => {
 // @access  Private (Admin Only)
 exports.getAllManagers = async (req, res, next) => {
   try {
-    const managers = await Manager.find()
-      .populate('assignedProjects', 'name')
-      .sort({ createdAt: -1 });
+    const managers = await Manager.find().sort({ createdAt: -1 });
+    const allProjects = await Project.find().select('name manager');
 
     const managersWithProjects = managers.map((m) => {
-      const projects = m.assignedProjects || [];
+      // Find all projects where this manager is the owner
+      const projects = allProjects.filter(p => p.manager?.toString() === m._id.toString());
+      
       return {
         ...m._doc,
-        assignedProjectsNames: projects.map(p => p.name).join(', ') || 'None'
+        assignedProjectsNames: projects.map(p => p.name).join(', ') || 'None',
+        assignedProjectsCount: projects.length
       };
     });
 
@@ -716,7 +754,22 @@ exports.resetManagerPassword = async (req, res, next) => {
 // @access  Private (Admin Only)
 exports.getAllTrainers = async (req, res, next) => {
   try {
-    const trainers = await Trainer.find().sort({ createdAt: -1 });
+    const trainers = await Trainer.find()
+      .populate('assignedProjects', 'name')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // Add real stats for each trainer
+    for (const trainer of trainers) {
+      const attendanceCount = await Attendance.countDocuments({ 
+        trainerId: trainer._id,
+        status: { $in: ['present', 'approved'] } 
+      });
+      trainer.totalUploads = attendanceCount;
+      const diffTime = Math.abs(new Date() - new Date(trainer.createdAt));
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+      trainer.attendanceRate = Math.min(100, Math.round((attendanceCount / diffDays) * 100));
+    }
 
     res.status(200).json({
       success: true,
@@ -733,11 +786,24 @@ exports.getAllTrainers = async (req, res, next) => {
 // @access  Private (Admin Only)
 exports.getTrainer = async (req, res, next) => {
   try {
-    const trainer = await Trainer.findById(req.params.id);
+    const trainer = await Trainer.findById(req.params.id)
+      .populate('assignedProjects', 'name')
+      .lean();
 
     if (!trainer) {
       return res.status(404).json({ success: false, message: 'Trainer not found' });
     }
+
+    // Add real stats for this specific trainer
+    const attendanceCount = await Attendance.countDocuments({ 
+      trainerId: trainer._id,
+      status: { $in: ['present', 'approved'] } 
+    });
+    
+    trainer.totalUploads = attendanceCount;
+    const diffTime = Math.abs(new Date() - new Date(trainer.createdAt));
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+    trainer.attendanceRate = Math.min(100, Math.round((attendanceCount / diffDays) * 100));
 
     res.status(200).json({
       success: true,

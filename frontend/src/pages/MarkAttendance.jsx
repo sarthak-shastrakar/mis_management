@@ -5,10 +5,12 @@ const MarkAttendance = () => {
   const [projectsList, setProjectsList] = useState([]);
   const [selectedProject, setSelectedProject] = useState('');
   const [photos, setPhotos] = useState([]);
+  const [videos, setVideos] = useState([]);
   const [remarks, setRemarks] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     fetchMyProjects();
@@ -41,6 +43,19 @@ const MarkAttendance = () => {
     setPhotos(photos.filter((_, i) => i !== index));
   };
 
+  const handleVideoChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length + videos.length > 2) {
+      alert('Max 2 videos allowed');
+      return;
+    }
+    setVideos([...videos, ...files]);
+  };
+
+  const removeVideo = (index) => {
+    setVideos(videos.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedProject) {
@@ -65,12 +80,17 @@ const MarkAttendance = () => {
       formData.append('latitude', latitude);
       formData.append('longitude', longitude);
       formData.append('remarks', remarks);
+      
       photos.forEach(file => {
         formData.append('photos', file);
       });
+      
+      videos.forEach(file => {
+        formData.append('videos', file);
+      });
 
-      // 3. API Call
-      const response = await API.post('/attendance/mark', formData, {
+      // 3. API Call (Using trainer-specific submission endpoint)
+      const response = await API.post('/trainer/attendance/submit', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -78,7 +98,9 @@ const MarkAttendance = () => {
 
       if (response.data.success) {
         setSuccess(true);
+        setSuccessMessage(response.data.message || 'Attendance marked successfully!');
         setPhotos([]);
+        setVideos([]);
         setRemarks('');
       }
     } catch (err) {
@@ -93,7 +115,7 @@ const MarkAttendance = () => {
       <div className="flex flex-col items-center justify-center h-[70vh] text-center space-y-6">
         <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center text-5xl">✅</div>
         <h2 className="text-3xl font-black text-white">Attendance Marked!</h2>
-        <p className="text-slate-500 max-w-sm">Your daily presence and photos have been successfully uploaded and are visible to your manager.</p>
+        <p className="text-slate-500 max-w-sm">{successMessage || 'Your daily presence and media have been successfully uploaded and are visible to your manager.'}</p>
         <button onClick={() => setSuccess(false)} className="px-8 py-3 bg-blue-600 text-white rounded-2xl font-bold">New Attendance</button>
       </div>
     );
@@ -142,10 +164,30 @@ const MarkAttendance = () => {
           </div>
         </div>
 
+        <div className="space-y-4">
+          <label className="block text-xs font-black text-slate-500 uppercase tracking-widest text-indigo-500">Field Videos (Max 2)</label>
+          <div className="grid grid-cols-2 gap-4">
+            {videos.map((file, i) => (
+              <div key={i} className="relative aspect-square rounded-2xl overflow-hidden border-2 border-dashed border-indigo-200 bg-indigo-50 flex items-center justify-center">
+                <span className="text-3xl">🎥</span>
+                <span className="absolute bottom-2 left-2 right-2 text-[10px] font-bold text-indigo-600 truncate bg-white/80 px-2 py-1 rounded-md text-center">{file.name}</span>
+                <button type="button" onClick={() => removeVideo(i)} className="absolute top-2 right-2 w-8 h-8 bg-indigo-600/50 text-white rounded-full flex items-center justify-center backdrop-blur-md">✕</button>
+              </div>
+            ))}
+            {videos.length < 2 && (
+              <label className="aspect-square flex flex-col items-center justify-center bg-indigo-50/30 border-2 border-dashed border-indigo-200 rounded-2xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50 transition-all">
+                <span className="text-3xl mb-2">🎬</span>
+                <span className="text-xs font-bold text-indigo-500">Pick Video</span>
+                <input type="file" multiple className="hidden" onChange={handleVideoChange} accept="video/*" />
+              </label>
+            )}
+          </div>
+        </div>
+
         <div>
           <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-3">Today's Remarks</label>
           <textarea
-            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-medium text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
             placeholder="Describe today's field activities..."
             rows="3"
             value={remarks}
@@ -155,7 +197,7 @@ const MarkAttendance = () => {
 
         <button
           type="submit"
-          disabled={loading || photos.length === 0}
+          disabled={loading || (photos.length === 0 && videos.length === 0)}
           className={`w-full py-5 text-white bg-blue-600 rounded-3xl font-black uppercase tracking-widest shadow-xl shadow-blue-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:bg-slate-300 disabled:shadow-none`}
         >
           {loading ? 'Processing...' : 'Submit Attendance'}

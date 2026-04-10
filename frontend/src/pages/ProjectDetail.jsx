@@ -53,7 +53,7 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
       const user = JSON.parse(localStorage.getItem('user'));
       const isAdmin = user?.role === 'admin';
       const endpoint = isAdmin ? `/admin/projects/${projectId}` : `/manager/projects/${projectId}`;
-      
+
       const response = await API.get(endpoint);
       if (response.data.success) {
         setProject(response.data.data);
@@ -69,7 +69,7 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       const isManager = user?.role === 'manager';
-      
+
       let response;
       if (isManager) {
         response = await API.put(`/manager/projects/${projectId}/setup`, project);
@@ -96,9 +96,9 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
 
   if (!project) return (
     <div className="flex flex-col items-center justify-center h-60 text-center">
-       <p className="text-4xl mb-4">🚫</p>
-       <p className="text-sm font-black text-slate-400 uppercase tracking-widest">Target Project Not Found</p>
-       <button onClick={onBack} className="mt-4 px-6 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest">Back to Page</button>
+      <p className="text-4xl mb-4">🚫</p>
+      <p className="text-sm font-black text-slate-400 uppercase tracking-widest">Target Project Not Found</p>
+      <button onClick={onBack} className="mt-4 px-6 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest">Back to Page</button>
     </div>
   );
 
@@ -126,7 +126,7 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
                 <>
                   <button onClick={() => { setEditMode(false); fetchProject(); }} className="px-8 py-3 bg-white border border-slate-200 text-slate-600 text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-slate-50 transition-all">Cancel</button>
                   <button onClick={handleUpdate} className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-xl shadow-blue-500/20">
-                    {isManager ? 'Submit & Lock Protocol' : 'Save Intelligence'}
+                    {isManager ? 'Submit & Lock Protocol' : 'Save'}
                   </button>
                 </>
               );
@@ -135,7 +135,7 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
             if (isAdmin) {
               return (
                 <button onClick={() => setEditMode(true)} className="px-8 py-3 bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-xl">
-                  ✏️ Reconfigure Project
+                  ✏️ Edit Project
                 </button>
               );
             }
@@ -150,10 +150,10 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
 
             if (isManager && project.isLocked) {
               return (
-                 <div className="flex items-center gap-2 px-6 py-3 bg-slate-100 border border-slate-200 rounded-2xl text-slate-400">
-                   <span className="text-lg">🔒</span>
-                   <p className="text-[10px] font-black uppercase tracking-widest">Operation Locked by Admin</p>
-                 </div>
+                <div className="flex items-center gap-2 px-6 py-3 bg-slate-100 border border-slate-200 rounded-2xl text-slate-400">
+                  <span className="text-lg">🔒</span>
+                  <p className="text-[10px] font-black uppercase tracking-widest">Operation Locked by Admin</p>
+                </div>
               );
             }
 
@@ -163,7 +163,7 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
       </div>
 
       {/* Status + Progress Banner */}
-      <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 flex flex-wrap items-center gap-10 shadow-sm">
+      {/* <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 flex flex-wrap items-center gap-10 shadow-sm">
         <div className="flex items-center gap-3">
           <span className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] ${statusColors[project.status] || 'bg-slate-100 text-slate-600'}`}>
             {project.status === 'Active' ? 'Deployment Active' : 'System Closed'}
@@ -192,56 +192,56 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
             <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mt-1">Target</p>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Main Detail Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
         {/* Core Details */}
         <div className="xl:col-span-2 bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm">
           <div className="flex items-center gap-3 mb-8 pb-6 border-b border-slate-50">
-             <span className="w-1.5 h-6 bg-blue-600 rounded-full"></span>
-             <h3 className="text-lg font-black text-slate-900">Project Parameters</h3>
+            <span className="w-1.5 h-6 bg-blue-600 rounded-full"></span>
+            <h3 className="text-lg font-black text-slate-900">Project Parameters</h3>
           </div>
           <div className="grid grid-cols-2 gap-8">
-            <Field label="Project Name" value={project.name} editMode={editMode} onChange={v => setProject({...project, name: v})} />
-            <Field label="Work Order No" value={project.workOrderNo} editMode={editMode} onChange={v => setProject({...project, workOrderNo: v})} />
-            <Field label="Category" value={project.projectCategory} editMode={editMode} options={['PMAY-G STT Mode', 'PMAY-G RPL Mode', 'MoRTH RPL', 'BoCW RPL', 'None']} onChange={v => setProject({...project, projectCategory: v})} />
-            <Field label="District Focus" value={project.location?.district} editMode={editMode} onChange={v => setProject({...project, location: {...project.location, district: v}})} />
-            <Field label="Allocated Target" value={project.allocatedTarget} editMode={editMode} type="number" onChange={v => setProject({...project, allocatedTarget: v})} />
-            <Field label="Training Hours" value={project.trainingHours} editMode={editMode} options={['360', '390', '72', '168', '120']} onChange={v => setProject({...project, trainingHours: v})} />
-            <Field label="Cost Per Hour" value={project.trainingCostPerHour} editMode={editMode} options={['38.5', '46.5', '53.5']} onChange={v => setProject({...project, trainingCostPerHour: v})} />
-            <Field label="Total Budget (Lakhs)" value={project.totalProjectCost} editMode={editMode} type="number" onChange={v => setProject({...project, totalProjectCost: v})} />
-            
+            <Field label="Project Name" value={project.name} editMode={editMode} onChange={v => setProject({ ...project, name: v })} />
+            <Field label="Work Order No" value={project.workOrderNo} editMode={editMode} onChange={v => setProject({ ...project, workOrderNo: v })} />
+            <Field label="Category" value={project.projectCategory} editMode={editMode} options={['PMAY-G STT Mode', 'PMAY-G RPL Mode', 'MoRTH RPL', 'BoCW RPL', 'None']} onChange={v => setProject({ ...project, projectCategory: v })} />
+            <Field label="District Focus" value={project.location?.district} editMode={editMode} onChange={v => setProject({ ...project, location: { ...project.location, district: v } })} />
+            <Field label="Allocated Target" value={project.allocatedTarget} editMode={editMode} type="number" onChange={v => setProject({ ...project, allocatedTarget: v })} />
+            <Field label="Training Hours" value={project.trainingHours} editMode={editMode} options={['360', '390', '72', '168', '120']} onChange={v => setProject({ ...project, trainingHours: v })} />
+            <Field label="Cost Per Hour" value={project.trainingCostPerHour} editMode={editMode} options={['38.5', '46.5', '53.5']} onChange={v => setProject({ ...project, trainingCostPerHour: v })} />
+            <Field label="Total Budget (Lakhs)" value={project.totalProjectCost} editMode={editMode} type="number" onChange={v => setProject({ ...project, totalProjectCost: v })} />
+
             {/* Extended Status Fields */}
             <div className="col-span-2 grid grid-cols-2 gap-8 mt-4 pt-6 border-t border-slate-50">
-               <Field label="1st Installment" value={project.installment1Status} editMode={editMode} options={['None', 'Bill Submitted', 'Bill Under Process', 'Payment received']} onChange={v => setProject({...project, installment1Status: v})} />
-               <Field label="Installment 1 Date" value={project.installment1Date?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({...project, installment1Date: v})} />
-               
-               <Field label="Assessment Fee Payer" value={project.assessmentFeesPaidBy} editMode={editMode} options={['None', 'SBSS', 'District', 'Block', 'State']} onChange={v => setProject({...project, assessmentFeesPaidBy: v})} />
-               <Field label="Assessment Status" value={project.assessmentStatus} editMode={editMode} options={['None', 'Batch Enroll', 'Batch Assign', 'Batch Schedule', 'Result Declare', 'Result Yet to declare']} onChange={v => setProject({...project, assessmentStatus: v})} />
-               <Field label="Assessment Date" value={project.assessmentDate?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({...project, assessmentDate: v})} />
+              <Field label="1st Installment" value={project.installment1Status} editMode={editMode} options={['None', 'Bill Submitted', 'Bill Under Process', 'Payment received']} onChange={v => setProject({ ...project, installment1Status: v })} />
+              <Field label="Installment 1 Date" value={project.installment1Date?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({ ...project, installment1Date: v })} />
 
-               <Field label="2nd Installment" value={project.installment2Status} editMode={editMode} options={['None', 'Bill Submitted', 'Bill Under Process', 'Payment received']} onChange={v => setProject({...project, installment2Status: v})} />
-               <Field label="Installment 2 Date" value={project.installment2Date?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({...project, installment2Date: v})} />
+              <Field label="Assessment Fee Payer" value={project.assessmentFeesPaidBy} editMode={editMode} options={['None', 'SBSS', 'District', 'Block', 'State']} onChange={v => setProject({ ...project, assessmentFeesPaidBy: v })} />
+              <Field label="Assessment Status" value={project.assessmentStatus} editMode={editMode} options={['None', 'Batch Enroll', 'Batch Assign', 'Batch Schedule', 'Result Declare', 'Result Yet to declare']} onChange={v => setProject({ ...project, assessmentStatus: v })} />
+              <Field label="Assessment Date" value={project.assessmentDate?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({ ...project, assessmentDate: v })} />
 
-               <Field label="Max Demonstrators" value={project.maxDemonstrators} editMode={editMode} type="number" onChange={v => setProject({...project, maxDemonstrators: v})} />
-               <Field label="Site Address" value={project.projectAddress} editMode={editMode} onChange={v => setProject({...project, projectAddress: v})} />
+              <Field label="2nd Installment" value={project.installment2Status} editMode={editMode} options={['None', 'Bill Submitted', 'Bill Under Process', 'Payment received']} onChange={v => setProject({ ...project, installment2Status: v })} />
+              <Field label="Installment 2 Date" value={project.installment2Date?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({ ...project, installment2Date: v })} />
+
+              <Field label="Max Demonstrators" value={project.maxDemonstrators} editMode={editMode} type="number" onChange={v => setProject({ ...project, maxDemonstrators: v })} />
+              <Field label="Site Address" value={project.projectAddress} editMode={editMode} onChange={v => setProject({ ...project, projectAddress: v })} />
             </div>
 
-            <Field label="Start Date" value={project.startDate?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({...project, startDate: v})} />
-            <Field label="End Date" value={project.endDate?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({...project, endDate: v})} />
+            <Field label="Start Date" value={project.startDate?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({ ...project, startDate: v })} />
+            <Field label="End Date" value={project.endDate?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({ ...project, endDate: v })} />
             <Field
               label="Operational Status"
               value={project.status}
               editMode={editMode}
               options={['Active', 'Closed']}
-              onChange={v => setProject({...project, status: v})}
+              onChange={v => setProject({ ...project, status: v })}
             />
             <div className="col-span-2">
               {editMode ? (
                 <div>
                   <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-1.5">Strategic Overview</label>
-                  <textarea value={project.description} onChange={e => setProject({...project, description: e.target.value})} rows={4} className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all resize-none" />
+                  <textarea value={project.description} onChange={e => setProject({ ...project, description: e.target.value })} rows={4} className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all resize-none" />
                 </div>
               ) : (
                 <div>
@@ -258,7 +258,7 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
           {/* Manager Info */}
           <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-[0.03] transition-all transform">
-               <span className="text-8xl">👔</span>
+              <span className="text-8xl">👔</span>
             </div>
             <h3 className="text-base font-black text-slate-900 mb-6 pb-4 border-b border-slate-50">Assigned Manager</h3>
             <div className="flex items-center gap-5">

@@ -275,3 +275,53 @@ exports.getBulkRequests = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// ─────────────────────────────────────────────────────────────
+// @desc    Get all attendance for manager's trainers
+// @route   GET /api/v1/attendance/all-projects
+// @access  Private (Manager/Admin)
+// ─────────────────────────────────────────────────────────────
+exports.getAllAttendanceForManager = async (req, res) => {
+  try {
+    let query = {};
+    if (req.user.role === 'manager') {
+      // Find trainers created by this manager
+      const trainers = await Trainer.find({ createdBy: req.user.id }).select('_id');
+      const trainerIds = trainers.map(t => t._id);
+      query = { trainerId: { $in: trainerIds } };
+    } else if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Unauthorized access' });
+    }
+
+    const attendance = await Attendance.find(query)
+      .populate('trainerId', 'fullName trainerId mobileNumber accountRole')
+      .sort({ date: -1 })
+      .lean();
+
+    // Resolve Project Names with robust comparison
+    const projects = await Project.find({}).lean();
+    const enrichedAttendance = attendance.map(att => {
+      const attProjId = String(att.projectId || '');
+      
+      // Look for project by _id, custom projectId, or even name
+      const projectDoc = projects.find(p => 
+        String(p._id) === attProjId || 
+        String(p.projectId) === attProjId ||
+        String(p.name) === attProjId
+      );
+      
+      return {
+        ...att,
+        projectName: projectDoc ? projectDoc.name : (attProjId.length > 10 ? 'Project Deleted' : att.projectId)
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      count: enrichedAttendance.length,
+      data: enrichedAttendance,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

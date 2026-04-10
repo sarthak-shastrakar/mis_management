@@ -48,11 +48,10 @@ const AdminDashboard = ({ onNavigate }) => {
   return (
     <div className="space-y-10">
       {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <StatsCard title="Total Projects" value={stats.totalProjects} change="+Live" icon="📂" color="bg-blue-600 text-blue-600" />
         <StatsCard title="Active Managers" value={stats.activeManagers} change="+Realtime" icon="👤" color="bg-purple-600 text-purple-600" />
         <StatsCard title="Field Trainers" value={stats.fieldTrainers} change="+Live" icon="👥" color="bg-emerald-600 text-emerald-600" />
-        <StatsCard title="Daily Uploads" value={stats.dailyUploads} change="Today" icon="🖼️" color="bg-amber-600 text-amber-600" />
       </div>
 
       <div className="bg-white rounded-[2rem] p-10 border border-slate-100 shadow-sm shadow-slate-2/5 overflow-hidden">

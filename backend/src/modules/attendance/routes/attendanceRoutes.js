@@ -5,12 +5,20 @@ const { uploadHousePhoto } = require('../../../utils/cloudinary');
 const {
   markAttendance,
   getMyAttendance,
-  getProjectAttendance
+  getProjectAttendance,
+  getAllAttendanceForManager
 } = require('../controllers/attendanceController');
 
 // ─────────────────────────────────────────────────────────────
 // Attendance Routes
 // ─────────────────────────────────────────────────────────────
+
+/**
+ * @route   GET /api/v1/attendance/all-projects
+ * @desc    Get all attendance for manager's trainers
+ * @access  Private (Manager/Admin)
+ */
+router.get('/all-projects', protect, getAllAttendanceForManager);
 
 /**
  * @route   POST /api/v1/attendance/mark

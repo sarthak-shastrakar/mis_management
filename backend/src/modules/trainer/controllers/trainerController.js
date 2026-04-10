@@ -14,11 +14,10 @@ exports.addNewTrainer = async (req, res) => {
     const { 
       fullName, 
       trainerId: manualTrainerId, 
-      mobileNumber, 
-      assignedProjects, 
-      state, 
       district,
       accountRole,
+      assignedProjects: assignedProjectsFromReq, // Handle possible plural field
+      assignedProject: assignedProjectFromReq,  // Handle possible singular field
       alternativeMobileNumber,
       alternativeEmail,
       panCardNumber,
@@ -80,8 +79,10 @@ exports.addNewTrainer = async (req, res) => {
 
     // 5. Resolve Projects correctly (Manager sends array of Project IDs or Names)
     let finalProjectIds = [];
-    if (assignedProjects && Array.isArray(assignedProjects)) {
-      for (const prjId of assignedProjects) {
+    const projectsToResolve = assignedProjectsFromReq || (assignedProjectFromReq ? [assignedProjectFromReq] : []);
+    
+    if (projectsToResolve && Array.isArray(projectsToResolve)) {
+      for (const prjId of projectsToResolve) {
         if (prjId === 'None') continue;
         const foundProject = await Project.findOne({
           $or: [
@@ -92,17 +93,6 @@ exports.addNewTrainer = async (req, res) => {
         });
         if (foundProject) finalProjectIds.push(foundProject._id);
       }
-    } else if (req.body.assignedProject && req.body.assignedProject !== 'None') {
-      // Legacy support for single project field
-      const prjId = req.body.assignedProject;
-      const foundProject = await Project.findOne({
-        $or: [
-          { _id: mongoose.Types.ObjectId.isValid(prjId) ? prjId : null },
-          { projectId: prjId },
-          { name: prjId }
-        ].filter(q => Object.values(q)[0] !== null)
-      });
-      if (foundProject) finalProjectIds.push(foundProject._id);
     }
 
     // 6. Create trainer
@@ -234,7 +224,17 @@ exports.getTrainer = async (req, res) => {
 // @access  Private (Manager/Admin Only)
 exports.updateTrainer = async (req, res) => {
   try {
-    const { fullName, mobileNumber, assignedProject, state, district, status, password } = req.body;
+    const { 
+      fullName, 
+      mobileNumber, 
+      assignedProject, 
+      assignedProjects,
+      state, 
+      district, 
+      status, 
+      password,
+      accountRole
+    } = req.body;
 
     let trainer = await Trainer.findById(req.params.id);
     if (!trainer) return res.status(404).json({ success: false, message: 'Trainer not found' });
@@ -247,9 +247,15 @@ exports.updateTrainer = async (req, res) => {
     }
 
     if (fullName)        trainer.fullName        = fullName;
-    if (req.body.assignedProjects && Array.isArray(req.body.assignedProjects)) {
+    if (state)           trainer.state           = state;
+    if (district)        trainer.district        = district;
+    if (accountRole)     trainer.accountRole     = accountRole;
+
+    const projectsToUpdate = assignedProjects || (assignedProject ? [assignedProject] : null);
+
+    if (projectsToUpdate && Array.isArray(projectsToUpdate)) {
       let finalProjectIds = [];
-      for (const prjId of req.body.assignedProjects) {
+      for (const prjId of projectsToUpdate) {
         if (prjId === 'None') continue;
         const foundProject = await Project.findOne({
           $or: [
@@ -262,20 +268,6 @@ exports.updateTrainer = async (req, res) => {
       }
       trainer.assignedProjects = finalProjectIds;
       trainer.assignedBy = req.user.id;
-    } else if (req.body.assignedProject && req.body.assignedProject !== 'None') {
-       // Single project support
-       const prjId = req.body.assignedProject;
-       const foundProject = await Project.findOne({
-         $or: [
-           { _id: mongoose.Types.ObjectId.isValid(prjId) ? prjId : null },
-           { projectId: prjId },
-           { name: prjId }
-         ].filter(q => Object.values(q)[0] !== null)
-       });
-       if (foundProject) {
-         trainer.assignedProjects = [foundProject._id];
-         trainer.assignedBy = req.user.id;
-       }
     }
     
     if (status)          trainer.status          = status;

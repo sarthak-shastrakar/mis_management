@@ -22,17 +22,18 @@ const AttendanceManagement = () => {
     setLoading(true);
     try {
       // In production, you'd fetch all projects or selected ones
-      const response = await API.get('/attendance/all-projects'); 
+      const response = await API.get('/attendance/all-projects');
       if (response.data.success) {
         setAttendanceData(response.data.data.map(r => ({
           ...r,
           trainerName: r.trainerId?.fullName || 'Unknown',
           trainerIdCode: r.trainerId?.trainerId || 'N/A',
-          project: r.projectId,
+          project: r.projectName || r.projectId,
           time: new Date(r.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          location: `${r.location.latitude.toFixed(3)}, ${r.location.longitude.toFixed(3)}`,
+          location: `${r.location?.latitude?.toFixed(3) || '0'}, ${r.location?.longitude?.toFixed(3) || '0'}`,
           status: r.status.charAt(0).toUpperCase() + r.status.slice(1),
-          photos: r.photos || []
+          photos: r.photos || [],
+          videos: r.videos || []
         })));
       }
     } catch (err) {
@@ -59,7 +60,7 @@ const AttendanceManagement = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
-          <h3 className="text-2xl font-black text-white">Attendance Register</h3>
+          <h3 className="text-2xl font-black text-black">Attendance Register</h3>
           <p className="text-sm text-slate-500 font-medium mt-1">View daily field attendance of all trainers</p>
         </div>
       </div>
@@ -149,18 +150,34 @@ const AttendanceManagement = () => {
                     <p className="font-black text-slate-900 text-sm">{record.trainerName}</p>
                     <p className="text-[11px] font-bold text-blue-500 mt-0.5">{record.trainerIdCode}</p>
                   </td>
-                  <td className="px-6 py-5 text-sm font-semibold text-slate-600 max-w-[150px] truncate">{record.project}</td>
+                  <td className="px-6 py-5 text-sm font-semibold max-w-[150px] truncate">
+                    {record.project === 'Project Deleted' ? (
+                      <span className="text-rose-500 italic font-medium">Project Deleted</span>
+                    ) : (
+                      <span className="text-slate-600">{record.project}</span>
+                    )}
+                  </td>
                   <td className="px-6 py-5 font-bold text-slate-800">{record.time}</td>
                   <td className="px-6 py-5 text-xs font-medium text-slate-500 max-w-[200px] truncate">{record.location}</td>
                   <td className="px-6 py-5">
-                    <div className="flex gap-2">
-                       {record.photos.map((u, i) => (
-                         <div key={i} className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 relative group">
-                            <img src={u} alt="Upload" className="w-full h-full object-cover" />
-                            <a href={u} target="_blank" download className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] text-white font-black transition-all">DL</a>
-                         </div>
-                       ))}
-                       {record.photos.length === 0 && <span className="text-slate-300 text-[10px] font-bold">No Photos</span>}
+                    <div className="flex flex-wrap gap-2">
+                      {/* Photos */}
+                      {record.photos.map((u, i) => (
+                        <div key={`p-${i}`} className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 relative group shadow-sm hover:shadow-md transition-shadow">
+                          <img src={u} alt="Upload" className="w-full h-full object-cover" />
+                          <a href={u} target="_blank" rel="noopener noreferrer" className="absolute inset-0 bg-blue-600/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] text-white font-black transition-all">IMG</a>
+                        </div>
+                      ))}
+                      {/* Videos */}
+                      {record.videos.map((u, i) => (
+                        <div key={`v-${i}`} className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 relative group bg-slate-900 flex items-center justify-center shadow-sm hover:shadow-md transition-shadow">
+                          <span className="text-white text-[10px]">🎥</span>
+                          <a href={u} target="_blank" rel="noopener noreferrer" className="absolute inset-0 bg-indigo-600/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[10px] text-white font-black transition-all">VID</a>
+                        </div>
+                      ))}
+                      {record.photos.length === 0 && record.videos.length === 0 && (
+                        <span className="text-slate-300 text-[10px] font-bold uppercase tracking-widest italic">No Data</span>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-5">

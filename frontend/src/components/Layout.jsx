@@ -52,6 +52,7 @@ const Layout = ({ currentRole, currentUser, userStatus, setUserStatus, onLogout,
         <Header
           currentRole={currentRole}
           activePage={activePage}
+          currentUser={currentUser}
         />
 
         <main className="p-10">

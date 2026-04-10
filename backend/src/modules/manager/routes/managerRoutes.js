@@ -13,6 +13,7 @@ const {
   getAssignedProjects,
   setupProjectDetails,
   getProjectDetails,
+  assignTrainersToProject,
 } = require('../controllers/managerController');
 
 const {
@@ -63,6 +64,7 @@ router
 // Project Setup (Manager One-Time)
 // ─────────────────────────────────────────────
 router.put('/projects/:id/setup', protect, managerOnly, setupProjectDetails);
+router.post('/projects/:id/assign-trainers', protect, managerOnly, assignTrainersToProject);
 
 // ─────────────────────────────────────────────
 // Assign Trainer to Project

@@ -66,9 +66,9 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
               Access the master dashboard for verifying geo-tagged activities and managing high-level monitoring workflows.
             </p>
           </div>
-          <div className="pt-10 border-t border-white/10 uppercase tracking-[0.2em] text-[10px] font-black opacity-60">
+          {/* <div className="pt-10 border-t border-white/10 uppercase tracking-[0.2em] text-[10px] font-black opacity-60">
             Secure Infrastructure • V3.2.0
-          </div>
+          </div> */}
         </div>
 
         <div className="p-10 lg:p-16 flex flex-col justify-center bg-white/80 backdrop-blur-xl">
@@ -86,19 +86,19 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
 
             <div className="space-y-5">
               <div className="group">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Identity ID</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Username</label>
                 <input
                   type="text"
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="admin / mgr_ / tr_"
+                  placeholder="Enter your username"
                   className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all hover:bg-white"
                 />
               </div>
 
               <div className="group">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Access Key</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2 px-1">Password</label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -133,15 +133,15 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
               disabled={loading}
               className={`w-full h-14 bg-slate-900 hover:bg-black text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-slate-900/10 transition-all hover:scale-[1.01] active:scale-[0.98] disabled:bg-slate-300 disabled:shadow-none`}
             >
-              {loading ? 'Authenticating...' : 'Enter System'}
+              {loading ? 'Authenticating...' : 'Login'}
             </button>
           </form>
 
-          <div className="mt-12 flex items-center justify-center">
+          {/* <div className="mt-12 flex items-center justify-center">
             <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
               Prod Release v3.0 • Authorized Access Only
             </span>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

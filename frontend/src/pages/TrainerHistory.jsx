@@ -21,7 +21,7 @@ const TrainerHistory = () => {
 
   const fetchMyProjects = async () => {
     try {
-      const response = await API.get('/manager/my-projects');
+      const response = await API.get('/trainer/projects');
       if (response.data.success) {
         setProjectsList(response.data.data);
         if (response.data.data.length > 0) {
@@ -36,7 +36,7 @@ const TrainerHistory = () => {
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const response = await API.get(`/attendance/my-history/${selectedProject}`);
+      const response = await API.get(`/trainer/attendance/history/${selectedProject}`);
       if (response.data.success) {
         setHistory(response.data.data);
       }
@@ -99,9 +99,15 @@ const TrainerHistory = () => {
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                 {record.photos.map((url, i) => (
-                  <div key={i} className="aspect-square rounded-2xl overflow-hidden border border-slate-100 shadow-sm relative group">
+                  <div key={`p-${i}`} className="aspect-square rounded-2xl overflow-hidden border border-slate-100 shadow-sm relative group">
                     <img src={url} alt="Attendance" className="w-full h-full object-cover" />
-                    <a href={url} target="_blank" rel="noopener noreferrer" className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white font-bold transition-opacity">View Big</a>
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="absolute inset-0 bg-blue-600/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-black transition-opacity">IMG</a>
+                  </div>
+                ))}
+                {record.videos && record.videos.map((url, i) => (
+                  <div key={`v-${i}`} className="aspect-square rounded-2xl overflow-hidden border border-slate-100 shadow-sm relative group bg-indigo-900 flex items-center justify-center">
+                    <span className="text-2xl">🎥</span>
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="absolute inset-0 bg-indigo-600/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-black transition-opacity">VIDEO</a>
                   </div>
                 ))}
               </div>

@@ -100,7 +100,7 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
       // Logic for multi-project assignment update
       const payload = {
         ...formData,
-        assignedProject: formData.assignedProjects?.[0]?._id || formData.assignedProjects?.[0]
+        assignedProjects: formData.assignedProjects?.map(p => p._id || p)
       };
 
       const endpoint = currentRole === 'admin' ? `/admin/trainers/${trainerId}` : `/manager/trainers/${trainerId}`;
@@ -242,14 +242,37 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
               </div>
             </div>
             {editMode && (
-              <div className="animate-in fade-in slide-in-from-top-4">
-                <Field
-                  label="Reassign Primary Asset"
-                  value={formData.assignedProjects?.[0]?._id || formData.assignedProjects?.[0]}
-                  editMode={true}
-                  options={projectsList.map(p => ({ label: p.name, value: p._id }))}
-                  onChange={v => setFormData({ ...formData, assignedProjects: [v] })}
-                />
+              <div className="space-y-4 animate-in fade-in slide-in-from-top-4">
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Assign Active Portfolio</label>
+                <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto p-4 bg-slate-50 rounded-2xl border border-slate-100 custom-scrollbar">
+                  {projectsList.map(p => {
+                    const projectId = p._id;
+                    const isSelected = formData.assignedProjects?.some(ap => (ap._id || ap) === projectId);
+                    
+                    return (
+                      <div 
+                        key={projectId}
+                        onClick={() => {
+                          const current = formData.assignedProjects || [];
+                          const exists = current.some(ap => (ap._id || ap) === projectId);
+                          const next = exists 
+                            ? current.filter(ap => (ap._id || ap) !== projectId)
+                            : [...current, projectId];
+                          setFormData({ ...formData, assignedProjects: next });
+                        }}
+                        className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-300'}`}
+                      >
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-white border-white' : 'border-slate-300'}`}>
+                          {isSelected && <span className="text-indigo-600 text-[10px]">✓</span>}
+                        </div>
+                        <span className="text-[11px] font-black uppercase tracking-tight">{p.name}</span>
+                      </div>
+                    );
+                  })}
+                  {projectsList.length === 0 && (
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-center py-4 italic">No active projects available</p>
+                  )}
+                </div>
               </div>
             )}
           </div>

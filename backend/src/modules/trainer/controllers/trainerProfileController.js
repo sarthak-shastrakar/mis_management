@@ -167,11 +167,14 @@ exports.getAttendanceHistory = async (req, res) => {
 
       return {
         id: entry._id,
-        date: entry.date, // Frontend will format to "DD MMM YYYY"
+        date: entry.date,
         day: new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(entry.date),
         status: displayStatus,
         rawStatus: entry.status,
-        remarks: entry.remarks
+        remarks: entry.remarks,
+        photos: entry.photos || [],
+        videos: entry.videos || [],
+        location: entry.location || { latitude: 0, longitude: 0 }
       };
     });
 

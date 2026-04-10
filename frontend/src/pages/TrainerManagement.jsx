@@ -294,10 +294,6 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
       <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between">
         <div>
           <h3 className="text-4xl font-black text-slate-900 tracking-tight">Trainer Management</h3>
-          <p className="text-sm text-slate-500 font-bold uppercase tracking-[0.2em] mt-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-2 animate-pulse"></span>
-            System Inventory: {filtered.length} Authenticated Personnel
-          </p>
         </div>
         <div className="flex items-center gap-4">
           <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-1.5 flex gap-1">
@@ -362,7 +358,7 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-100">
-                  {['Personnel Profile', 'System ID', 'Mobile Contact', 'Assignments', 'Profile Integrity', 'Operational Actions'].map(h => (
+                  {['Trainer name', 'Trainer ID', 'Mobile Contact', 'Project Assign', 'Profile Status', 'Operational Actions'].map(h => (
                     <th key={h} className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">{h}</th>
                   ))}
                 </tr>

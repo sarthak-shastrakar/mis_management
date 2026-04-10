@@ -359,26 +359,33 @@ exports.getDashboard = async (req, res, next) => {
       };
     }));
 
+    const projectIds = projects.map(p => p._id.toString());
+    const projectCustomIds = projects.map(p => p.projectId).filter(Boolean);
+
     const pendingSubmissions = await Attendance.find({
       status: 'pending_approval',
-      projectId: { $in: projects.map(p => p._id) }
+      projectId: { $in: [...projectIds, ...projectCustomIds] }
     })
       .populate('trainerId', 'fullName trainerId mobileNumber assignedProject district')
       .sort({ createdAt: -1 });
 
-    const pendingList = pendingSubmissions.map((att) => ({
-      attendanceId: att._id,
-      trainer: {
-        name: att.trainerId?.fullName || 'N/A',
-        trainerId: att.trainerId?.trainerId || 'N/A',
-        mobile: att.trainerId?.mobileNumber || 'N/A',
-      },
-      project: att.projectId,
-      date: att.date,
-      daysMissing: att.daysLate,
-      status: att.status,
-      remarks: att.remarks || null,
-    }));
+    const pendingList = pendingSubmissions.map((att) => {
+      const projectDoc = projects.find(p => p._id.toString() === att.projectId || p.name === att.projectId);
+      return {
+        attendanceId: att._id,
+        trainer: {
+          name: att.trainerId?.fullName || 'N/A',
+          trainerId: att.trainerId?.trainerId || 'N/A',
+          mobile: att.trainerId?.mobileNumber || 'N/A',
+          _id: att.trainerId?._id
+        },
+        project: projectDoc ? projectDoc.name : att.projectId,
+        date: att.date,
+        daysMissing: att.daysLate,
+        status: att.status,
+        remarks: att.remarks || null,
+      };
+    });
 
     res.status(200).json({
       success: true,
@@ -578,4 +585,56 @@ const sendTokenResponse = (manager, statusCode, res) => {
       assignedProjects: manager.assignedProjects,
     },
   });
+};
+
+// ─────────────────────────────────────────────
+// @desc    Assign multiple Trainers to a Project (Sync)
+// @route   POST /api/v1/manager/projects/:id/assign-trainers
+// @access  Private (Manager/Admin)
+// ─────────────────────────────────────────────
+exports.assignTrainersToProject = async (req, res, next) => {
+  try {
+    const { id: projectId } = req.params;
+    const { trainerIds } = req.body; // Array of Trainer IDs
+
+    if (!trainerIds || !Array.isArray(trainerIds)) {
+      return res.status(400).json({ success: false, message: 'Please provide an array of trainerIds' });
+    }
+
+    // 1. Get all trainers that this manager is allowed to manage
+    let query = {};
+    if (req.user.role === 'manager') {
+      query = { createdBy: req.user.id };
+    } else if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Unauthorized access' });
+    }
+
+    const availableTrainers = await Trainer.find(query);
+
+    // 2. Sync assignment
+    const updatePromises = availableTrainers.map(async (trainer) => {
+      const isSelected = trainerIds.includes(trainer._id.toString());
+      const isCurrentlyAssigned = trainer.assignedProjects.some(pid => pid.toString() === projectId);
+
+      if (isSelected && !isCurrentlyAssigned) {
+        // Add project
+        trainer.assignedProjects.push(projectId);
+        trainer.assignedBy = req.user.id;
+        await trainer.save();
+      } else if (!isSelected && isCurrentlyAssigned) {
+        // Remove project
+        trainer.assignedProjects = trainer.assignedProjects.filter(pid => pid.toString() !== projectId);
+        await trainer.save();
+      }
+    });
+
+    await Promise.all(updatePromises);
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Project personnel assignment synchronized successfully' 
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 };
