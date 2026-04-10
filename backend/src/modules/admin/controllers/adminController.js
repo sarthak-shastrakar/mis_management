@@ -137,8 +137,13 @@ exports.createProject = async (req, res, next) => {
       isLocked: false
     });
 
-    // If manager is assigned, update Manager model as well
+    // 5. Sync Project Model: Update the project's manager field
     if (managerId && mongoose.Types.ObjectId.isValid(managerId)) {
+      // Ensure this project is not in ANY OTHER manager's list
+      await Manager.updateMany(
+        { _id: { $ne: managerId } },
+        { $pull: { assignedProjects: project._id } }
+      );
       await Manager.findByIdAndUpdate(managerId, { $addToSet: { assignedProjects: project._id } });
     }
 
@@ -281,7 +286,6 @@ exports.updateProject = async (req, res, next) => {
     };
 
     // Bi-directional Synchronization
-    const oldManagerId = project.manager;
     const newManagerId = resolvedManagerId;
 
     project = await Project.findByIdAndUpdate(req.params.id, updateData, {
@@ -289,17 +293,16 @@ exports.updateProject = async (req, res, next) => {
       runValidators: false
     });
 
-    // If manager changed or was newly assigned
-    if (newManagerId && oldManagerId?.toString() !== newManagerId?.toString()) {
-      // 1. Remove from old manager if they existed
-      if (oldManagerId) {
-        await Manager.findByIdAndUpdate(oldManagerId, { $pull: { assignedProjects: project._id } });
-      }
-      // 2. Add to new manager
+    // Ensure 1 Project -> 1 Manager consistency
+    // 1. Remove project from ALL managers' lists
+    await Manager.updateMany(
+      { assignedProjects: project._id },
+      { $pull: { assignedProjects: project._id } }
+    );
+
+    // 2. Add to the new manager if specified
+    if (newManagerId) {
       await Manager.findByIdAndUpdate(newManagerId, { $addToSet: { assignedProjects: project._id } });
-    } else if (!newManagerId && oldManagerId) {
-      // If manager was removed entirely
-      await Manager.findByIdAndUpdate(oldManagerId, { $pull: { assignedProjects: project._id } });
     }
 
     res.status(200).json({

@@ -236,7 +236,7 @@ const ManagerManagement = () => {
 
       {/* Initialize / Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 overflow-y-auto cursor-pointer" onClick={(e) => { if (e.target === e.currentTarget) setShowModal(false); }}>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 overflow-y-auto cursor-pointer" onClick={(e) => { if (e.target === e.currentTarget) { setShowModal(false); resetForm(); } }}>
           <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in duration-300 cursor-default my-auto max-h-[90vh] flex flex-col hover:shadow-blue-500/10 transition-shadow">
             {/* STICKY HEADER WITH CROSS SIGN */}
             <div className={`sticky top-0 z-30 px-12 py-10 ${isCreated ? 'bg-emerald-900' : 'bg-slate-900'} text-white flex justify-between items-center relative overflow-hidden transition-colors duration-500 shrink-0 border-b border-white/5`}>
@@ -251,7 +251,7 @@ const ManagerManagement = () => {
               </div>
               <button
                 type="button"
-                onClick={() => setShowModal(false)}
+                onClick={() => { setShowModal(false); resetForm(); }}
                 className="w-12 h-12 bg-white/10 hover:bg-rose-600 rounded-2xl flex items-center justify-center transition-all text-xl relative z-10 group shadow-lg border border-white/10 active:scale-90"
               >
                 <span className="group-hover:rotate-90 transition-transform block">✕</span>
