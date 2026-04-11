@@ -305,34 +305,18 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
             className="w-full h-14 pl-16 pr-6 bg-slate-50 border border-slate-200 rounded-[1.25rem] text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-white transition-all shadow-sm shadow-indigo-500/5"
           />
         </div>
-        <div className="flex gap-2 flex-wrap items-center">
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-2">Quick Filter:</span>
-          {statuses.map(s => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-5 py-2.5 rounded-xl text-[10px] font-black tracking-[0.1em] transition-all uppercase ${statusFilter === s ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-white border border-slate-100 text-slate-500 hover:bg-slate-50 shadow-sm'}`}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
+
       </div>
 
-      {/* Insight Tiles - Clean Minimalist */}
-      <div className="grid grid-cols-2 lg:grid-cols-2 gap-6">
-        {[
-          { label: 'Total Trainers', value: trainersList.length, icon: '💼', color: 'text-indigo-600 bg-indigo-50 border-indigo-100' },
-          { label: 'Active Trainers', value: trainersList.filter(t => t.status === 'Active').length, icon: '📡', color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
-        ].map((s) => (
-          <div key={s.label} className={`bg-white rounded-[2rem] border ${s.color} p-8 flex items-center gap-6 shadow-sm transition-shadow`}>
-            <div className="w-20 h-20 rounded-2xl bg-white border border-inherit flex items-center justify-center text-3xl shadow-sm">{s.icon}</div>
-            <div>
-              <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em] mb-1">{s.label}</p>
-              <p className="text-4xl font-black text-slate-900 tracking-tight">{s.value}</p>
-            </div>
+      {/* Stats Card */}
+      <div className="grid grid-cols-1 gap-6">
+        <div className="bg-white rounded-[2rem] border border-indigo-100 text-indigo-600 bg-indigo-50 p-8 flex items-center gap-6 shadow-sm">
+          <div className="w-20 h-20 rounded-2xl bg-white border border-indigo-100 flex items-center justify-center text-3xl shadow-sm">💼</div>
+          <div>
+            <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em] mb-1">Total Trainers</p>
+            <p className="text-4xl font-black text-slate-900 tracking-tight">{trainersList.length}</p>
           </div>
-        ))}
+        </div>
       </div>
 
       {/* Data Presentation Layer */}
@@ -342,7 +326,7 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-100">
-                  {['Trainer name', 'Trainer ID', 'Mobile Contact', 'Project Assign', 'Profile Status', 'Operational Actions'].map(h => (
+                  {['Trainer Name', 'Trainer ID', 'Mobile Number', 'Project Assigned', 'Status', 'Actions'].map(h => (
                     <th key={h} className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">{h}</th>
                   ))}
                 </tr>

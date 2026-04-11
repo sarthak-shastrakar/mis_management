@@ -195,14 +195,14 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
               Personnel Data Cluster
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              <Field label="Full Identification" value={formData.fullName} editMode={editMode} onChange={v => setFormData({ ...formData, fullName: v })} />
-              <Field label="Staff Reference ID" value={trainer.trainerId} editMode={false} readOnly />
-              <Field label="Primary Mobile Contact" value={formData.mobileNumber} editMode={editMode} type="tel" onChange={v => setFormData({ ...formData, mobileNumber: v })} />
-              <Field label="Corporate Email" value={formData.email} editMode={editMode} type="email" onChange={v => setFormData({ ...formData, email: v })} />
-              <Field label="Operational State" value={formData.state} editMode={editMode} onChange={v => setFormData({ ...formData, state: v })} />
-              <Field label="Assigned District" value={formData.district} editMode={editMode} onChange={v => setFormData({ ...formData, district: v })} />
+              <Field label="Full Name" value={formData.fullName} editMode={editMode} onChange={v => setFormData({ ...formData, fullName: v })} />
+              <Field label="Trainer ID" value={trainer.trainerId} editMode={false} readOnly />
+              <Field label="Mobile Number" value={formData.mobileNumber} editMode={editMode} type="tel" onChange={v => setFormData({ ...formData, mobileNumber: v })} />
+              <Field label="Email" value={formData.email} editMode={editMode} type="email" onChange={v => setFormData({ ...formData, email: v })} />
+              <Field label="State" value={formData.state} editMode={editMode} onChange={v => setFormData({ ...formData, state: v })} />
+              <Field label="District" value={formData.district} editMode={editMode} onChange={v => setFormData({ ...formData, district: v })} />
               <div className="md:col-span-2">
-                <Field label="Residential Infrastructure Address" value={formData.address} editMode={editMode} onChange={v => setFormData({ ...formData, address: v })} />
+                <Field label="Address" value={formData.address} editMode={editMode} onChange={v => setFormData({ ...formData, address: v })} />
               </div>
             </div>
           </div>
@@ -214,69 +214,16 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
               Verification & Banking Matrix
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              <Field label="Aadhar ID Structure" value={formData.aadharNumber} editMode={editMode} onChange={v => setFormData({ ...formData, aadharNumber: v })} />
-              <Field label="Financial Institution" value={formData.bankName} editMode={editMode} onChange={v => setFormData({ ...formData, bankName: v })} />
-              <Field label="Account Flow Sequence" value={formData.accountNumber} editMode={editMode} onChange={v => setFormData({ ...formData, accountNumber: v })} />
-              <Field label="Operational Status" value={formData.status} editMode={editMode} options={['active', 'inactive', 'pending']} onChange={v => setFormData({ ...formData, status: v })} />
+              <Field label="Aadhar Number" value={formData.aadharNumber} editMode={editMode} onChange={v => setFormData({ ...formData, aadharNumber: v })} />
+              <Field label="Bank Name" value={formData.bankName} editMode={editMode} onChange={v => setFormData({ ...formData, bankName: v })} />
+              <Field label="Account Number" value={formData.accountNumber} editMode={editMode} onChange={v => setFormData({ ...formData, accountNumber: v })} />
+              <Field label="Status" value={formData.status} editMode={editMode} options={['active', 'inactive', 'pending']} onChange={v => setFormData({ ...formData, status: v })} />
             </div>
           </div>
         </div>
 
-        {/* Tactical Info Panel */}
+        {/* Side Panel */}
         <div className="space-y-10">
-          {/* Section: Project link */}
-          <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm">
-            <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
-              <span className="w-1.5 h-6 bg-blue-600 rounded-full shadow-lg shadow-blue-500/20"></span>
-              Portfolio Alignment
-            </h4>
-            <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100 mb-6">
-              <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1.5">Primary Active Index</p>
-              <div className="flex flex-wrap gap-2">
-                {trainer.assignedProjects?.map(p => (
-                  <span key={p._id} className="font-black text-slate-900 text-xs bg-white px-3 py-1.5 rounded-xl shadow-sm border border-blue-100">{p.name}</span>
-                ))}
-                {(!trainer.assignedProjects || trainer.assignedProjects.length === 0) && (
-                  <span className="text-slate-400 italic text-xs font-bold uppercase tracking-widest">No Active Portfolio</span>
-                )}
-              </div>
-            </div>
-            {editMode && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-top-4">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Assign Active Portfolio</label>
-                <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto p-4 bg-slate-50 rounded-2xl border border-slate-100 custom-scrollbar">
-                  {projectsList.map(p => {
-                    const projectId = p._id;
-                    const isSelected = formData.assignedProjects?.some(ap => (ap._id || ap) === projectId);
-                    
-                    return (
-                      <div 
-                        key={projectId}
-                        onClick={() => {
-                          const current = formData.assignedProjects || [];
-                          const exists = current.some(ap => (ap._id || ap) === projectId);
-                          const next = exists 
-                            ? current.filter(ap => (ap._id || ap) !== projectId)
-                            : [...current, projectId];
-                          setFormData({ ...formData, assignedProjects: next });
-                        }}
-                        className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-300'}`}
-                      >
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-white border-white' : 'border-slate-300'}`}>
-                          {isSelected && <span className="text-indigo-600 text-[10px]">✓</span>}
-                        </div>
-                        <span className="text-[11px] font-black uppercase tracking-tight">{p.name}</span>
-                      </div>
-                    );
-                  })}
-                  {projectsList.length === 0 && (
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest text-center py-4 italic">No active projects available</p>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Section: Command chain */}
           <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm">
             <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-8 flex items-center gap-3">
@@ -285,11 +232,11 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
             </h4>
             <div className="flex items-center gap-5 p-6 bg-slate-50 rounded-3xl border border-slate-100 group hover:bg-white hover:border-indigo-100 transition-all">
               <div className="w-16 h-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-indigo-600 font-black text-2xl shadow-sm shadow-indigo-500/5 group-hover:scale-110 transition-transform">
-                {(trainer.createdBy?.fullName || 'S').charAt(0)}
+                {(trainer.manager?.fullName || trainer.createdBy?.fullName || 'N').charAt(0)}
               </div>
               <div>
-                <p className="font-black text-slate-900 text-sm">{trainer.createdBy?.fullName || 'System Admin'}</p>
-                <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider">Sector Overview</p>
+                <p className="font-black text-slate-900 text-sm">{trainer.manager?.fullName || trainer.createdBy?.fullName || 'Not Assigned'}</p>
+                <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider">Manager</p>
               </div>
             </div>
           </div>

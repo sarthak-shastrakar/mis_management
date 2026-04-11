@@ -28,7 +28,7 @@ const AttendanceManagement = () => {
           trainerName: r.trainerId?.fullName || 'Unknown',
           trainerIdCode: r.trainerId?.trainerId || 'N/A',
           project: r.projectName || r.projectId,
-          time: new Date(r.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          time: new Date(r.createdAt || r.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           location: `${r.location?.latitude?.toFixed(3) || '0'}, ${r.location?.longitude?.toFixed(3) || '0'}`,
           status: r.status.charAt(0).toUpperCase() + r.status.slice(1),
           photos: r.photos || [],
