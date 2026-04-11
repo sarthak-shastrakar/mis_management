@@ -29,7 +29,7 @@ const AttendanceManagement = () => {
           trainerIdCode: r.trainerId?.trainerId || 'N/A',
           project: r.projectName || r.projectId,
           time: new Date(r.createdAt || r.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          location: `${r.location?.latitude?.toFixed(3) || '0'}, ${r.location?.longitude?.toFixed(3) || '0'}`,
+          location: `${r.location?.latitude?.toFixed(6) || '0'}, ${r.location?.longitude?.toFixed(6) || '0'}`,
           status: r.status.charAt(0).toUpperCase() + r.status.slice(1),
           photos: r.photos || [],
           videos: r.videos || []
@@ -78,12 +78,18 @@ const AttendanceManagement = () => {
         </div>
 
         <div className="flex gap-4 flex-wrap">
-          <input
-            type="date"
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            className="h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900"
-          />
+          <div className="relative flex items-center h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl overflow-hidden cursor-pointer">
+            <span className="text-sm font-bold text-slate-900 z-10 pointer-events-none tracking-widest">
+              {dateFilter.split('-').reverse().join('-')}
+            </span>
+            <span className="ml-3 text-slate-400 z-10 pointer-events-none">📅</span>
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+          </div>
 
           <div className="flex bg-slate-100 rounded-xl p-1">
             {['All', 'Present', 'Absent'].map(s => (

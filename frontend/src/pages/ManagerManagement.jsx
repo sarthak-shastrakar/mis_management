@@ -247,10 +247,10 @@ const ManagerManagement = () => {
               <div className={`absolute top-0 right-0 w-64 h-64 ${isCreated ? 'bg-emerald-500/20' : 'bg-blue-600/20'} blur-[100px] rounded-full`}></div>
               <div className="relative z-10">
                 <h2 className="text-3xl font-black tracking-tight">
-                  {isCreated ? 'Account Initialized' : viewOnly ? 'Manager Intelligence' : editingId ? 'Modify Access Control' : 'Initialize Terminal Access'}
+                  {isCreated ? 'Account Created' : viewOnly ? 'Manager Profile' : editingId ? 'Edit Manager' : 'Add New Manager'}
                 </h2>
                 <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.3em] mt-1">
-                  {isCreated ? 'Credentials Generated Successfully' : viewOnly ? 'Read-Only Administrative View' : 'High-Level Administrative Provisioning'}
+                  {isCreated ? 'Credentials Generated Successfully' : viewOnly ? 'View Manager Details' : 'Enter Manager Details Below'}
                 </p>
               </div>
               <button
@@ -343,7 +343,7 @@ const ManagerManagement = () => {
                     onClick={() => { setShowModal(false); resetForm(); fetchManagers(); }}
                     className="w-full h-14 text-slate-400 font-black text-[10px] uppercase tracking-[0.4em] hover:text-slate-600 transition-all"
                   >
-                    Return to Directive Dashboard
+                    Close
                   </button>
                 </div>
               ) : (
@@ -351,75 +351,131 @@ const ManagerManagement = () => {
                 <form onSubmit={handleCreateManager} className="p-12 space-y-8 bg-white">
                   <div className="grid grid-cols-2 gap-8">
                     <div className="col-span-2">
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Official Full Name</label>
-                      <input required disabled={viewOnly} value={managerForm.fullName} onChange={e => setManagerForm({ ...managerForm, fullName: e.target.value })} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none disabled:opacity-70" placeholder="Identity Verification Name" />
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Full Name</label>
+                      <input required disabled={viewOnly} value={managerForm.fullName} onChange={e => setManagerForm({ ...managerForm, fullName: e.target.value })} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none disabled:opacity-70" placeholder="Full Name" />
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Corporate Email</label>
-                      <input required disabled={viewOnly} type="email" value={managerForm.emailAddress} onChange={e => setManagerForm({ ...managerForm, emailAddress: e.target.value })} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none disabled:opacity-70" placeholder="work@domain.com" />
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Email</label>
+                      <input required disabled={viewOnly} type="email" value={managerForm.emailAddress} onChange={e => setManagerForm({ ...managerForm, emailAddress: e.target.value })} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none disabled:opacity-70" placeholder="Email Address" />
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Secure Contact</label>
-                      <input required disabled={viewOnly} type="tel" value={managerForm.mobileNumber} onChange={e => setManagerForm({ ...managerForm, mobileNumber: e.target.value })} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none disabled:opacity-70" placeholder="Primary Mobile Node" />
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Phone Number</label>
+                      <input required disabled={viewOnly} type="tel" value={managerForm.mobileNumber} onChange={e => setManagerForm({ ...managerForm, mobileNumber: e.target.value })} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none disabled:opacity-70" placeholder="Phone Number" />
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Territory Selection</label>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">State</label>
                       <select required disabled={viewOnly} value={managerForm.state} onChange={e => setManagerForm({ ...managerForm, state: e.target.value })} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] font-black text-slate-900 outline-none uppercase tracking-widest cursor-pointer disabled:opacity-70">
                         <option value="">Select State</option>
-                        <option value="Maharashtra">Maharashtra</option>
+                        <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                        <option value="Andhra Pradesh">Andhra Pradesh</option>
+                        <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                        <option value="Assam">Assam</option>
+                        <option value="Bihar">Bihar</option>
+                        <option value="Chandigarh">Chandigarh</option>
+                        <option value="Chhattisgarh">Chhattisgarh</option>
+                        <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
+                        <option value="Delhi">Delhi</option>
+                        <option value="Goa">Goa</option>
                         <option value="Gujarat">Gujarat</option>
-                        <option value="Madhya Pradesh">Madhya Pradesh</option>
-                        <option value="Rajasthan">Rajasthan</option>
+                        <option value="Haryana">Haryana</option>
+                        <option value="Himachal Pradesh">Himachal Pradesh</option>
+                        <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                        <option value="Jharkhand">Jharkhand</option>
                         <option value="Karnataka">Karnataka</option>
+                        <option value="Kerala">Kerala</option>
+                        <option value="Ladakh">Ladakh</option>
+                        <option value="Lakshadweep">Lakshadweep</option>
+                        <option value="Madhya Pradesh">Madhya Pradesh</option>
+                        <option value="Maharashtra">Maharashtra</option>
+                        <option value="Manipur">Manipur</option>
+                        <option value="Meghalaya">Meghalaya</option>
+                        <option value="Mizoram">Mizoram</option>
+                        <option value="Nagaland">Nagaland</option>
+                        <option value="Odisha">Odisha</option>
+                        <option value="Puducherry">Puducherry</option>
+                        <option value="Punjab">Punjab</option>
+                        <option value="Rajasthan">Rajasthan</option>
+                        <option value="Sikkim">Sikkim</option>
+                        <option value="Tamil Nadu">Tamil Nadu</option>
+                        <option value="Telangana">Telangana</option>
+                        <option value="Tripura">Tripura</option>
+                        <option value="Uttar Pradesh">Uttar Pradesh</option>
+                        <option value="Uttarakhand">Uttarakhand</option>
+                        <option value="West Bengal">West Bengal</option>
                       </select>
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Administrative District</label>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">District</label>
                       <input required disabled={viewOnly} value={managerForm.district} onChange={e => setManagerForm({ ...managerForm, district: e.target.value })} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all disabled:opacity-70" placeholder="e.g. Nashik" />
                     </div>
-
                     <div className="col-span-2">
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Strategic Project Assignments</label>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Projects</label>
                       <div className="grid grid-cols-2 gap-4 p-6 bg-slate-50 border border-slate-200 rounded-[2rem] max-h-48 overflow-y-auto custom-scrollbar">
                         {projectsList.map(prj => (
-                          <label key={prj._id} className="flex items-center gap-3 cursor-pointer group">
-                            <div className="relative flex items-center justify-center">
-                              <input
-                                type="checkbox"
-                                checked={managerForm.assignedProjects.includes(prj._id)}
-                                onChange={(e) => {
-                                  const updated = e.target.checked
-                                    ? [...managerForm.assignedProjects, prj._id]
-                                    : managerForm.assignedProjects.filter(id => id !== prj._id);
-                                  setManagerForm({ ...managerForm, assignedProjects: updated });
-                                }}
-                                className="peer appearance-none w-6 h-6 border-2 border-slate-200 rounded-lg checked:bg-blue-600 checked:border-blue-600 transition-all cursor-pointer disabled:opacity-50"
-                                disabled={viewOnly}
-                              />
-                              <div className="absolute text-white text-[10px] font-black opacity-0 peer-checked:opacity-100 pointer-events-none">✓</div>
-                            </div>
-                            <span className="text-[11px] font-black text-slate-600 group-hover:text-blue-600 transition-colors uppercase tracking-tight">{prj.name}</span>
-                          </label>
+                          <div
+                            key={prj._id}
+                            onClick={() => {
+                              if (viewOnly) return;
+                              const updated = managerForm.assignedProjects.includes(prj._id)
+                                ? managerForm.assignedProjects.filter(id => id !== prj._id)
+                                : [...managerForm.assignedProjects, prj._id];
+                              setManagerForm({ ...managerForm, assignedProjects: updated });
+                            }}
+                            className={`flex items-center p-4 rounded-xl cursor-pointer transition-all border ${managerForm.assignedProjects.includes(prj._id) ? 'bg-blue-50 border-blue-200 text-blue-700 font-extrabold shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 font-bold'} ${viewOnly ? 'cursor-default' : ''}`}
+                          >
+                            <span className="text-[11px] uppercase tracking-tight">{prj.name}</span>
+                          </div>
                         ))}
                         {projectsList.length === 0 && <p className="col-span-2 text-center text-slate-400 font-bold text-[10px] uppercase py-4">No active projects available</p>}
                       </div>
                     </div>
+
                   </div>
 
                   {editingId && (
                     <div className="space-y-4">
-                      <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-200 flex items-center justify-between shadow-sm">
-                        <div className="flex-1">
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Username</p>
-                          <p className="text-lg font-black text-slate-900">{managerForm.username}</p>
+                      <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-200 flex flex-col gap-6 shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Username</p>
+                            <p className="text-lg font-black text-slate-900">{managerForm.username}</p>
+                          </div>
+                          <div className="flex-1 text-right border-l border-slate-200 pl-8">
+                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Password</p>
+                            <p className="text-lg font-black text-slate-900">{managerForm.password}</p>
+                          </div>
                         </div>
-                        <div className="flex-1 text-right border-l border-slate-200 pl-8">
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Password</p>
-                          <p className="text-lg font-black text-slate-900">{managerForm.password}</p>
+                        <div className="flex gap-4">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const text = `Hi ${managerForm.username},\n\nThese are your credentials for login:\nUsername: ${managerForm.username}\nPassword: ${managerForm.password}\nLogin: ${window.location.origin}/login`;
+                              navigator.clipboard.writeText(text);
+                              alert('📋 Credentials copied!');
+                            }}
+                            className="flex-1 py-3 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center justify-center gap-2 shadow-sm"
+                          >
+                            📋 Copy
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const shareText = `Hi ${managerForm.username},\n\nThese are your credentials for login:\nUsername: ${managerForm.username}\nPassword: ${managerForm.password}\nLogin: ${window.location.origin}/login`;
+                              if (navigator.share) {
+                                try { await navigator.share({ title: 'Credentials', text: shareText }); }
+                                catch (e) {}
+                              } else {
+                                window.open(`https://wa.me/${managerForm.mobileNumber}?text=${encodeURIComponent(shareText)}`, '_blank');
+                              }
+                            }}
+                            className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-2 shadow-sm shadow-blue-500/20"
+                          >
+                            🔗 Share
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -427,11 +483,11 @@ const ManagerManagement = () => {
 
                   <div className="flex gap-6 pt-6">
                     <button type="button" onClick={() => setShowModal(false)} className="flex-1 h-16 rounded-2xl bg-slate-100 font-black text-slate-500 text-[11px] uppercase tracking-[0.3em] hover:bg-slate-200 transition-all">
-                      {viewOnly ? 'Terminate View' : 'Abort Directive'}
+                      {viewOnly ? 'Close View' : 'Cancel'}
                     </button>
                     {!viewOnly && (
                       <button type="submit" className="flex-[2] h-16 rounded-2xl font-black text-white text-[11px] uppercase tracking-[0.3em] shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98] bg-blue-600 shadow-blue-500/20">
-                        {editingId ? 'Update Terminal Access' : 'Authorize Account Installation'}
+                        {editingId ? 'Update' : 'Add Manager'}
                       </button>
                     )}
                   </div>
