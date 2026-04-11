@@ -413,7 +413,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                   </td>
                   <td className="px-10 py-8">
                     <div className="flex items-center gap-2">
-                      <button onClick={() => onNavigate('project-detail', { projectId: prj.projectId || prj._id })} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all shadow-sm group/btn" title="View">
+                      <button onClick={() => onNavigate('project-detail', { projectId: prj._id })} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all shadow-sm group/btn" title="View">
                         <span className="group-hover/btn:scale-125 transition-transform">👁️</span>
                       </button>
                        {/* {currentRole === 'manager' && (

@@ -160,7 +160,12 @@ exports.getAllTrainers = async (req, res) => {
 
     // Filtering logic for Managers
     if (req.user.role === 'manager') {
-      query = { createdBy: req.user.id };
+      query = { 
+        $or: [
+          { createdBy: req.user.id },
+          { reportingManager: req.user.id }
+        ]
+      };
     }
 
     const trainers = await Trainer.find(query)
