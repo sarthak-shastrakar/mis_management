@@ -2,37 +2,40 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const path = require('path');
 
-dotenv.config({ path: path.join(__dirname, '.env') });
+// Load env vars
+dotenv.config({ path: path.join(__dirname, 'src/config/.env') });
 
+const Trainer = require('./src/modules/trainer/models/trainerModel');
 const Manager = require('./src/modules/manager/models/managerModel');
-const Project = require('./src/modules/project/models/projectModel');
 
-
-async function checkProjects() {
+const checkData = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log('Connected to DB');
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log('Connected to MongoDB');
 
-    const projects = await Project.find().populate('manager');
-    console.log(`Found ${projects.length} projects`);
+    const trainers = await Trainer.find().lean();
+    console.log(`\nFound ${trainers.length} trainers total.`);
 
-    for (const prj of projects) {
-      console.log(`Project: ${prj.name} (${prj._id})`);
-      console.log(`  Manager Field: ${prj.manager ? prj.manager.fullName + ' (' + prj.manager._id + ')' : 'null'}`);
-    }
+    const managers = await Manager.find().lean();
+    console.log(`Found ${managers.length} managers total.\n`);
 
-    const managers = await Manager.find().populate('assignedProject');
-    console.log(`\nFound ${managers.length} managers`);
-    for (const m of managers) {
-      console.log(`Manager: ${m.fullName} (${m._id})`);
-      console.log(`  Assigned Project: ${m.assignedProject ? m.assignedProject.name + ' (' + m.assignedProject._id + ')' : 'null'}`);
-    }
+    managers.forEach(m => {
+      console.log(`Manager: ${m.fullName} (${m.username}) - ID: ${m._id}`);
+    });
 
-    process.exit(0);
+    console.log('\nTrainer Details:');
+    trainers.forEach(t => {
+      console.log(`- ${t.fullName} (${t.trainerId}):`);
+      console.log(`  createdBy: ${t.createdBy}`);
+      console.log(`  reportingManager: ${t.reportingManager}`);
+      console.log(`  assignedProjects: ${t.assignedProjects}`);
+    });
+
+    process.exit();
   } catch (err) {
     console.error(err);
     process.exit(1);
   }
-}
+};
 
-checkProjects();
+checkData();

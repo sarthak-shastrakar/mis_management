@@ -160,10 +160,11 @@ exports.getAllTrainers = async (req, res) => {
 
     // Filtering logic for Managers
     if (req.user.role === 'manager') {
+      const managerId = new mongoose.Types.ObjectId(req.user.id);
       query = { 
         $or: [
-          { createdBy: req.user.id },
-          { reportingManager: req.user.id }
+          { createdBy: managerId },
+          { reportingManager: managerId }
         ]
       };
     }

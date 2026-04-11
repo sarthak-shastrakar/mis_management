@@ -48,10 +48,11 @@ exports.getMe = async (req, res, next) => {
     if (!manager) return res.status(404).json({ success: false, message: 'Manager not found' });
 
     // Count trainers created by this manager
+    const managerId = new mongoose.Types.ObjectId(req.user.id);
     const trainerCount = await Trainer.countDocuments({ 
       $or: [
-        { createdBy: req.user.id },
-        { reportingManager: req.user.id }
+        { createdBy: managerId },
+        { reportingManager: managerId }
       ]
     });
 
@@ -642,13 +643,15 @@ exports.assignTrainersToProject = async (req, res, next) => {
     // 1. Get all trainers that this manager is allowed to manage
     let query = {};
     if (req.user.role === 'manager') {
+      const managerId = new mongoose.Types.ObjectId(req.user.id);
       query = { 
         $or: [
-          { createdBy: req.user.id },
-          { reportingManager: req.user.id }
+          { createdBy: managerId },
+          { reportingManager: managerId }
         ]
       };
-    } else if (req.user.role !== 'admin') {
+    }
+ else if (req.user.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Unauthorized access' });
     }
 
