@@ -160,9 +160,9 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
           ) : (
             <button
               onClick={() => setEditMode(true)}
-              className="px-8 py-4 bg-slate-900 hover:bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-2xl shadow-slate-900/10 active:scale-95"
+              className="px-8 py-4 bg-slate-900 hover:bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-2xl shadow-slate-900/10 active:scale-95 flex items-center justify-center gap-2"
             >
-              ✏️ Modify Detail
+              ✏️ <span className="pt-[1px]">Modify Detail</span>
             </button>
           )}
         </div>

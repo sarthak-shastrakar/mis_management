@@ -453,7 +453,7 @@ const ManagerManagement = () => {
                           <button
                             type="button"
                             onClick={() => {
-                              const text = `Hi ${managerForm.username},\n\nThese are your credentials for login:\nUsername: ${managerForm.username}\nPassword: ${managerForm.password}\nLogin: ${window.location.origin}/login`;
+                              const text = `Hi ${managerForm.fullName},\n\nThese are your credentials for login:\nUsername: ${managerForm.username}\nPassword: ${managerForm.password}\nLogin: ${window.location.origin}/login`;
                               navigator.clipboard.writeText(text);
                               alert('📋 Credentials copied!');
                             }}
@@ -464,7 +464,7 @@ const ManagerManagement = () => {
                           <button
                             type="button"
                             onClick={async () => {
-                              const shareText = `Hi ${managerForm.username},\n\nThese are your credentials for login:\nUsername: ${managerForm.username}\nPassword: ${managerForm.password}\nLogin: ${window.location.origin}/login`;
+                              const shareText = `Hi ${managerForm.fullName},\n\nThese are your credentials for login:\nUsername: ${managerForm.username}\nPassword: ${managerForm.password}\nLogin: ${window.location.origin}/login`;
                               if (navigator.share) {
                                 try { await navigator.share({ title: 'Credentials', text: shareText }); }
                                 catch (e) {}
@@ -482,8 +482,8 @@ const ManagerManagement = () => {
                   )}
 
                   <div className="flex gap-6 pt-6">
-                    <button type="button" onClick={() => setShowModal(false)} className="flex-1 h-16 rounded-2xl bg-slate-100 font-black text-slate-500 text-[11px] uppercase tracking-[0.3em] hover:bg-slate-200 transition-all">
-                      {viewOnly ? 'Close View' : 'Cancel'}
+                    <button type="button" onClick={() => setShowModal(false)} className={`flex-1 h-16 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] transition-all ${viewOnly ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+                      {viewOnly ? 'Close' : 'Cancel'}
                     </button>
                     {!viewOnly && (
                       <button type="submit" className="flex-[2] h-16 rounded-2xl font-black text-white text-[11px] uppercase tracking-[0.3em] shadow-2xl transition-all hover:scale-[1.02] active:scale-[0.98] bg-blue-600 shadow-blue-500/20">
