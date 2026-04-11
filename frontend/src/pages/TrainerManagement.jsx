@@ -402,9 +402,11 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
                         >✏️</button>
                         <button
                           onClick={() => handleDeleteTrainer(t._id)}
-                          className="w-10 h-10 bg-slate-100 hover:bg-rose-600 hover:text-white text-slate-600 rounded-xl flex items-center justify-center transition-all shadow-sm"
-                          title="Purge Profile"
-                        >🗑️</button>
+                          className="w-10 h-10 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-500 rounded-xl flex items-center justify-center transition-all shadow-sm border border-rose-100"
+                          title="Delete"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -460,8 +462,10 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
                   >View Intelligence</button>
                   <button
                     onClick={() => handleDeleteTrainer(t._id)}
-                    className="w-14 h-14 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 rounded-2xl flex items-center justify-center transition-all border border-rose-100"
-                  >🗑️</button>
+                    className="w-14 h-14 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-500 rounded-2xl flex items-center justify-center transition-all border border-rose-100"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                  </button>
                 </div>
               </div>
             ))}

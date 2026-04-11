@@ -223,7 +223,9 @@ const ManagerManagement = () => {
                   <td className="px-10 py-8">
                     <div className="flex items-center gap-3">
                       <button onClick={() => handleEditOpen(m)} className="w-11 h-11 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center hover:bg-amber-500 hover:text-white transition-all shadow-sm border border-amber-100" title="Modify Access">✏️</button>
-                      <button onClick={() => handleDeleteManager(m._id)} className="w-11 h-11 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm border border-rose-100" title="Revoke Privilege">🗑️</button>
+                      <button onClick={() => handleDeleteManager(m._id)} className="w-11 h-11 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm border border-rose-100" title="Revoke Privilege">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                      </button>
                       <button onClick={() => handleViewOpen(m)} className="w-11 h-11 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm border border-slate-200" title="Full Analytics">👁️</button>
                     </div>
                   </td>

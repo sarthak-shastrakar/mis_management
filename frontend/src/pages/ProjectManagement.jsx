@@ -117,7 +117,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
   };
 
   const handleDeleteProject = async (id) => {
-    if (window.confirm('CRITICAL ACTION: Are you absolutely sure you want to purge this initiative from the system? This cannot be undone.')) {
+    if (window.confirm('Are you sure you want to delete this record? Once deleted this cannot be undone.')) {
       try {
         const endpoint = currentRole === 'admin' ? `/admin/projects/${id}` : `/manager/projects/${id}`;
         const response = await API.delete(endpoint);
@@ -324,7 +324,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
             <div className="px-10 py-8 bg-slate-50 border-t border-slate-100 flex gap-6 shrink-0">
               <button type="button" onClick={() => setShowModal(false)} className="flex-1 h-14 rounded-2xl bg-white border border-slate-200 font-black text-slate-500 text-[10px] uppercase tracking-[0.2em] hover:bg-slate-50 transition-all">Discard Changes</button>
               <button onClick={handleCreateProject} className="flex-2 h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 font-black text-white text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/30 transition-all hover:scale-[1.01] active:scale-95">
-                {editingId ? 'Confirm System Update' : 'Create Project'}
+                {editingId ? 'Update Changes' : 'Create Project'}
               </button>
             </div>
           </div>
@@ -337,10 +337,6 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
           <h3 className="text-4xl text-slate-900 font-black tracking-tight">Project Management</h3>
         </div>
         <div className="flex gap-4 w-full sm:w-auto">
-          <div className="relative group flex-1 sm:w-80">
-            <input value={search} onChange={e => setSearch(e.target.value)} className="w-full h-14 pl-14 pr-6 bg-white border border-slate-200 rounded-2xl text-slate-700 placeholder:text-slate-400 font-bold focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 shadow-sm transition-all shadow-blue-500/5" placeholder="Search parameters..." />
-            <span className="absolute left-6 top-1/2 -translate-y-1/2 text-xl opacity-40">🔍</span>
-          </div>
           {currentRole === 'admin' && (
             <button onClick={() => { resetForm(); setEditingId(null); setShowModal(true); }} className="h-14 px-8 bg-slate-900 text-white font-black rounded-2xl shadow-2xl shadow-black/20 hover:bg-black transition-all hover:scale-105 active:scale-95 text-[10px] uppercase tracking-widest shrink-0">＋ New Project</button>
           )}
@@ -404,9 +400,13 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                         <button onClick={() => handleOpenAssign(prj._id)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm" title="Assign Trainers">👥</button>
                       )}
                       {currentRole === 'admin' && (
-                        <button onClick={() => handleEditOpen(prj)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="Modify Record">✏️</button>
+                        <button onClick={() => handleEditOpen(prj)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="Modify Record">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
                       )}
-                      <button onClick={() => handleDeleteProject(prj._id)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm" title="Delete">🗑️</button>
+                      <button onClick={() => handleDeleteProject(prj._id)} className="w-11 h-11 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm border border-rose-100" title="Delete">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                      </button>
                     </div>
                   </td>
                 </tr>
