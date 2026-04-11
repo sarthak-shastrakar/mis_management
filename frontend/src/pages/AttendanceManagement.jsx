@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import API from '../api/api';
 
 const statusColors = {
@@ -12,6 +12,7 @@ const AttendanceManagement = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [loading, setLoading] = useState(true);
+  const dateInputRef = useRef(null);
 
   useEffect(() => {
     fetchAttendance();
@@ -78,12 +79,22 @@ const AttendanceManagement = () => {
         </div>
 
         <div className="flex gap-4 flex-wrap">
-          <div className="relative flex items-center h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl overflow-hidden cursor-pointer">
+          <div 
+            onClick={() => {
+              try {
+                dateInputRef.current?.showPicker();
+              } catch (e) {
+                dateInputRef.current?.click();
+              }
+            }}
+            className="relative flex items-center h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl overflow-hidden cursor-pointer"
+          >
             <span className="text-sm font-bold text-slate-900 z-10 pointer-events-none tracking-widest">
               {dateFilter.split('-').reverse().join('-')}
             </span>
             <span className="ml-3 text-slate-400 z-10 pointer-events-none">📅</span>
             <input
+              ref={dateInputRef}
               type="date"
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}

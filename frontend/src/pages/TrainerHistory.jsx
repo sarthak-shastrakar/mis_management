@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import API from '../api/api';
 
 const TrainerHistory = () => {
@@ -8,6 +8,7 @@ const TrainerHistory = () => {
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [location, setLocation] = useState('');
   const [loading, setLoading] = useState(false);
+  const dateInputRef = useRef(null);
 
   useEffect(() => {
     fetchMyProjects();
@@ -75,7 +76,20 @@ const TrainerHistory = () => {
         </div>
         <div className="flex-1">
           <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Filter by Date</label>
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none" />
+          <input 
+            ref={dateInputRef}
+            type="date" 
+            value={date} 
+            onChange={(e) => setDate(e.target.value)} 
+            onClick={() => {
+              try {
+                dateInputRef.current?.showPicker();
+              } catch (e) {
+                dateInputRef.current?.click();
+              }
+            }}
+            className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none cursor-pointer" 
+          />
         </div>
         <div className="flex-1">
           <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Search Remark/Loc</label>
