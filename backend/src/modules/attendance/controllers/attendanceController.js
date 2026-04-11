@@ -187,7 +187,7 @@ exports.submitAttendance = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message,
+      message: 'Attendance marked successfully',
       data: attendance
     });
   } catch (err) {
