@@ -470,8 +470,11 @@ exports.setupProjectDetails = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
 
-    // Verify ownership
-    if (project.manager.toString() !== req.user.id) {
+    // Verify ownership or assignment
+    const isOwner = project.manager && project.manager.toString() === req.user.id;
+    const isAssigned = req.user.assignedProjects && req.user.assignedProjects.some(pid => pid.toString() === project._id.toString());
+
+    if (!isOwner && !isAssigned) {
       return res.status(403).json({ success: false, message: 'Not authorized to setup this project' });
     }
 
@@ -605,8 +608,11 @@ exports.getProjectDetails = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
 
-    // Security: Only allow if assigned to this manager
-    if (project.manager && project.manager.toString() !== req.user.id) {
+    // Security: Allow if manager is owner OR explicitly assigned
+    const isOwner = project.manager && project.manager.toString() === req.user.id;
+    const isAssigned = req.user.assignedProjects && req.user.assignedProjects.some(pid => pid.toString() === project._id.toString());
+
+    if (!isOwner && !isAssigned) {
       return res.status(401).json({ success: false, message: 'Not authorized to view this project' });
     }
 
