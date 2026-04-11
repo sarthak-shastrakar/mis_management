@@ -14,6 +14,7 @@ const {
   toggleTrainerStatus,
   logout,
   deleteAccount,
+  deleteTrainer,
   getDashboardStats,
   createProject,
   getAllProjects,
@@ -85,7 +86,8 @@ router.get("/trainers", protect, adminOnly, getAllTrainers);
 router
   .route("/trainers/:id")
   .get(protect, adminOnly, getTrainer)
-  .put(protect, adminOnly, updateTrainer);
+  .put(protect, adminOnly, updateTrainer)
+  .delete(protect, adminOnly, deleteTrainer);
 
 // Exchange Trainer Project (Admin)
 router.post("/trainers/exchange-project", protect, adminOnly, exchangeTrainerProject);

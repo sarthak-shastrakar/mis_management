@@ -867,6 +867,39 @@ exports.toggleTrainerStatus = async (req, res, next) => {
   }
 };
 
+// @desc    Delete Trainer (Admin)
+// @route   DELETE /api/v1/admin/trainers/:id
+// @access  Private (Admin Only)
+exports.deleteTrainer = async (req, res, next) => {
+  try {
+    const trainer = await Trainer.findById(req.params.id);
+
+    if (!trainer) {
+      return res.status(404).json({ success: false, message: 'Trainer not found' });
+    }
+
+    // Remove trainer from any project's assigned list
+    await Project.updateMany(
+      { trainers: trainer._id },
+      { $pull: { trainers: trainer._id } }
+    );
+
+    // Delete all attendance records for this trainer
+    await Attendance.deleteMany({ trainerId: trainer._id });
+
+    await trainer.deleteOne();
+
+    res.status(200).json({
+      success: true,
+      message: `Trainer "${trainer.fullName}" deleted successfully`,
+      data: {}
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+
 // @desc    Get Photos Date-wise
 // @route   GET /api/v1/admin/photos/date-wise
 // @access  Private (Admin)
