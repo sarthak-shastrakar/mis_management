@@ -232,10 +232,10 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
             </h4>
             <div className="flex items-center gap-5 p-6 bg-slate-50 rounded-3xl border border-slate-100 group hover:bg-white hover:border-indigo-100 transition-all">
               <div className="w-16 h-16 rounded-2xl bg-white border border-slate-100 flex items-center justify-center text-indigo-600 font-black text-2xl shadow-sm shadow-indigo-500/5 group-hover:scale-110 transition-transform">
-                {(trainer.manager?.fullName || trainer.createdBy?.fullName || 'N').charAt(0)}
+                {(trainer.reportingManager?.fullName || trainer.createdBy?.fullName || 'N').charAt(0)}
               </div>
               <div>
-                <p className="font-black text-slate-900 text-sm">{trainer.manager?.fullName || trainer.createdBy?.fullName || 'Not Assigned'}</p>
+                <p className="font-black text-slate-900 text-sm">{trainer.reportingManager?.fullName || trainer.createdBy?.fullName || 'Not Assigned'}</p>
                 <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider">Manager</p>
               </div>
             </div>

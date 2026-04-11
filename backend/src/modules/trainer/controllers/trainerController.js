@@ -165,6 +165,7 @@ exports.getAllTrainers = async (req, res) => {
 
     const trainers = await Trainer.find(query)
       .populate('createdBy', 'fullName')
+      .populate('reportingManager', 'fullName')
       .populate('assignedBy', 'fullName')
       .populate('assignedProjects', 'name')
       .sort({ createdAt: -1 })
@@ -196,6 +197,7 @@ exports.getTrainer = async (req, res) => {
   try {
     const trainer = await Trainer.findById(req.params.id)
       .populate('createdBy', 'fullName')
+      .populate('reportingManager', 'fullName')
       .populate('assignedBy', 'fullName')
       .populate('assignedProjects', 'name')
       .lean();
