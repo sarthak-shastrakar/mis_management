@@ -16,15 +16,34 @@ const avatarColors = [
   'from-cyan-500 to-blue-600',
 ];
 
-const TrainerModal = ({ trainer, onClose, onSave, projects }) => {
+const TrainerModal = ({ trainer, onClose, onSave, projects, currentRole, successData }) => {
   const [selectedProjects, setSelectedProjects] = useState(trainer ? trainer.projects.map(p => p._id || p) : []);
+  const [managers, setManagers] = useState([]);
   const [formData, setFormData] = useState({
     fullName: trainer ? trainer.name : '',
     trainerId: trainer ? trainer.trainerId : '',
     mobileNumber: trainer ? trainer.mobile : '',
     state: trainer ? trainer.state : '',
     district: trainer ? trainer.location || trainer.district : '',
+    reportingManager: trainer ? trainer.reportingManager : '',
   });
+
+  useEffect(() => {
+    if (currentRole === 'admin') {
+      fetchManagers();
+    }
+  }, [currentRole]);
+
+  const fetchManagers = async () => {
+    try {
+      const response = await API.get('/admin/managers');
+      if (response.data.success) {
+        setManagers(response.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch managers', err);
+    }
+  };
 
   const handleSave = (e) => {
     e.preventDefault();
@@ -45,14 +64,97 @@ const TrainerModal = ({ trainer, onClose, onSave, projects }) => {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6">
       <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden overflow-y-auto max-h-[90vh]">
-        <div className="bg-gradient-to-r from-indigo-600 to-purple-700 p-8 text-white">
+        <div className={`p-8 text-white ${successData ? 'bg-emerald-900' : 'bg-gradient-to-r from-indigo-600 to-purple-700'}`}>
           <div className="flex justify-between items-start">
-            <h2 className="text-2xl font-black">{trainer ? 'Edit Trainer' : 'Add New Trainer'}</h2>
+            <div>
+              <h2 className="text-2xl font-black">
+                {successData ? 'Account Created' : trainer ? 'Edit Trainer' : 'Add New Trainer'}
+              </h2>
+              {successData && <p className="text-emerald-400 font-bold text-[10px] uppercase tracking-widest mt-1">Credentials Generated Successfully</p>}
+            </div>
             <button onClick={onClose} className="w-12 h-12 bg-white/10 hover:bg-rose-600 rounded-2xl flex items-center justify-center transition-all text-xl group shadow-lg">
               <span className="group-hover:rotate-90 transition-transform">✕</span>
             </button>
           </div>
         </div>
+        
+        {successData ? (
+          <div className="p-12 space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="flex flex-col items-center text-center space-y-4 py-6">
+              <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-[2.5rem] flex items-center justify-center text-4xl shadow-xl shadow-emerald-500/10">
+                ✓
+              </div>
+              <div>
+                <h3 className="text-2xl font-black text-slate-900">Provisioning Complete</h3>
+                <p className="text-sm text-slate-500 font-bold mt-1 uppercase tracking-widest">Administrative Access Credentials Generated</p>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-6">
+                <div className="p-8 bg-slate-900 rounded-[2.5rem] relative overflow-hidden group border border-slate-800">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-2 relative z-10">Terminal ID</p>
+                  <p className="text-2xl font-black text-white relative z-10">{successData.username}</p>
+                  <div className="absolute top-0 right-0 p-6 opacity-10 text-white text-3xl">👤</div>
+                </div>
+                <div className="p-8 bg-blue-900 rounded-[2.5rem] relative overflow-hidden group border border-blue-800">
+                  <p className="text-[10px] font-black text-blue-300 uppercase tracking-[0.3em] mb-2 relative z-10">Access Key</p>
+                  <p className="text-2xl font-black text-white relative z-10">{successData.password}</p>
+                  <div className="absolute top-0 right-0 p-6 opacity-10 text-white text-3xl">🔑</div>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200">
+                <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Identity Profile Sync</h4>
+                <div className="grid grid-cols-2 gap-8">
+                  <div>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Full Name</p>
+                    <p className="font-extrabold text-slate-900">{successData.fullName}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Account Role</p>
+                    <p className="font-extrabold text-slate-900 uppercase">Trainer</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-6">
+              <button
+                onClick={() => {
+                  const text = `Hi ${successData.fullName},\n\nThese are your credentials for login:\nUsername: ${successData.username}\nPassword: ${successData.password}\nLogin: ${window.location.origin}/login`;
+                  navigator.clipboard.writeText(text);
+                  alert('📋 Credentials copied!');
+                }}
+                className="flex-1 h-16 bg-white border border-slate-200 text-slate-900 font-black rounded-2xl text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-slate-50 transition-all shadow-sm"
+              >
+                📋 Copy
+              </button>
+              <button
+                onClick={async () => {
+                  const shareText = `Hi ${successData.fullName},\n\nYour Trainer account credentials:\n\nUsername: ${successData.username}\nPassword: ${successData.password}\n\nLogin URL: ${window.location.origin}/login`;
+                  if (navigator.share) {
+                    try { await navigator.share({ title: 'Trainer Credentials', text: shareText }); }
+                    catch (err) { console.log(err); }
+                  } else {
+                    const mobile = formData.mobileNumber;
+                    window.open(`https://wa.me/${mobile}?text=${encodeURIComponent(shareText)}`, '_blank');
+                  }
+                }}
+                className="flex-1 h-16 bg-blue-600 text-white font-black rounded-2xl text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-blue-700 transition-all shadow-2xl shadow-blue-500/20"
+              >
+                🔗 Share
+              </button>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="w-full h-14 text-slate-400 font-black text-[10px] uppercase tracking-[0.4em] hover:text-slate-600 transition-all"
+            >
+              Close
+            </button>
+          </div>
+        ) : (
         <form onSubmit={handleSave} className="p-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="md:col-span-2">
@@ -148,7 +250,22 @@ const TrainerModal = ({ trainer, onClose, onSave, projects }) => {
               />
             </div>
 
-
+            {currentRole === 'admin' && (
+              <div className="md:col-span-2">
+                <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Reporting Manager</label>
+                <select
+                  required
+                  value={formData.reportingManager}
+                  onChange={e => setFormData({ ...formData, reportingManager: e.target.value })}
+                  className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all cursor-pointer"
+                >
+                  <option value="">Select Manager</option>
+                  {managers.map(m => (
+                    <option key={m._id} value={m._id}>{m.fullName} ({m.managerId})</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           <div>
@@ -178,6 +295,7 @@ const TrainerModal = ({ trainer, onClose, onSave, projects }) => {
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );
@@ -280,13 +398,15 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
   const handleSaveTrainer = async (t) => {
     try {
       if (t.id) {
-        const response = await API.put(`/manager/trainers/${t.id}`, t);
+        const endpoint = currentRole === 'admin' ? `/admin/trainers/${t.id}` : `/manager/trainers/${t.id}`;
+        const response = await API.put(endpoint, t);
         if (response.data.success) {
           fetchTrainers();
           return true;
         }
       } else {
-        const response = await API.post('/manager/trainers/add', t);
+        const endpoint = currentRole === 'admin' ? '/admin/trainers/add' : '/manager/trainers/add';
+        const response = await API.post(endpoint, t);
         if (response.data.success) {
           setSuccessData({
             username: response.data.data.username,
@@ -310,6 +430,7 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
           trainer={editTrainer}
           projects={projectsList}
           successData={successData}
+          currentRole={currentRole}
           onClose={() => { setShowModal(false); setEditTrainer(null); setSuccessData(null); }}
           onSave={handleSaveTrainer}
         />

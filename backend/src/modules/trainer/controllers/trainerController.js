@@ -25,7 +25,8 @@ exports.addNewTrainer = async (req, res) => {
       totStatus,
       totLevel,
       residentCity,
-      joiningLocation
+      joiningLocation,
+      reportingManager: reportingManagerId 
     } = req.body;
 
     if (!fullName || !mobileNumber || !state || !district) {
@@ -108,7 +109,7 @@ exports.addNewTrainer = async (req, res) => {
       username,
       password,
       plainPassword: password,
-      reportingManager: req.user.id,
+      reportingManager: (req.user.role === 'admin' && reportingManagerId) ? reportingManagerId : req.user.id,
       createdBy: req.user.id,
       assignedBy: finalProjectIds.length > 0 ? req.user.id : null,
       

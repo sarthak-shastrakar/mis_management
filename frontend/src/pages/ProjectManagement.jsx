@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import API from '../api/api';
 
 const statusColors = {
@@ -22,6 +22,8 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const startDateRef = useRef(null);
+  const endDateRef = useRef(null);
 
   // For Project Creation Form
   const [formData, setFormData] = useState({
@@ -301,12 +303,30 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                     <input type="number" step="0.01" value={formData.totalProjectCost} onChange={e => setFormData({ ...formData, totalProjectCost: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" placeholder="e.g. 45.50" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Start Date</label>
-                    <input type="date" value={formData.startDate} onChange={e => setFormData({ ...formData, startDate: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" />
+                    <input 
+                      ref={startDateRef}
+                      type="date" 
+                      value={formData.startDate} 
+                      onChange={e => setFormData({ ...formData, startDate: e.target.value })} 
+                      onClick={() => {
+                        try { startDateRef.current?.showPicker(); }
+                        catch (e) { startDateRef.current?.click(); }
+                      }}
+                      className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm cursor-pointer" 
+                    />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">End Date</label>
-                    <input type="date" value={formData.endDate} onChange={e => setFormData({ ...formData, endDate: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" />
+                    <input 
+                      ref={endDateRef}
+                      type="date" 
+                      value={formData.endDate} 
+                      onChange={e => setFormData({ ...formData, endDate: e.target.value })}
+                      onClick={() => {
+                        try { endDateRef.current?.showPicker(); }
+                        catch (e) { endDateRef.current?.click(); }
+                      }}
+                      className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm cursor-pointer" 
+                    />
                   </div>
                   {currentRole === 'admin' && (
                     <div>
@@ -324,7 +344,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
             <div className="px-10 py-8 bg-slate-50 border-t border-slate-100 flex gap-6 shrink-0">
                <button type="button" onClick={() => setShowModal(false)} className="flex-1 h-14 rounded-2xl bg-white border border-slate-200 font-black text-slate-500 text-[10px] uppercase tracking-[0.2em] hover:bg-slate-50 transition-all">Cancel</button>
               <button onClick={handleCreateProject} className="flex-2 h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 font-black text-white text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/30 transition-all hover:scale-[1.01] active:scale-95">
-                 {editingId ? 'Save Changes' : 'Create Project'}
+                 {editingId ? 'Update' : 'Add'}
               </button>
             </div>
           </div>

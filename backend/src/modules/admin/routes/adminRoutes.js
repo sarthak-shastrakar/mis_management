@@ -26,6 +26,9 @@ const {
   exchangeTrainerProject,
 } = require("../controllers/adminController");
 const { 
+  addNewTrainer 
+} = require("../../trainer/controllers/trainerController");
+const { 
   exportStaffPerformance, 
   downloadProjectPhotos, 
   exportProjectSummary,
@@ -82,6 +85,7 @@ router.get("/photos/trainer-wise", protect, adminOnly, getPhotosByTrainer);
 // Trainer Management (Admin)
 // ─────────────────────────────────────────────
 router.get("/trainers", protect, adminOnly, getAllTrainers);
+router.post("/trainers/add", protect, adminOnly, addNewTrainer);
 
 router
   .route("/trainers/:id")
