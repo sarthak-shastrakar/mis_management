@@ -240,6 +240,62 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
               </div>
             </div>
           </div>
+
+          {/* Section: Login Details */}
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full translate-x-1/2 -translate-y-1/2 group-hover:bg-indigo-100 transition-colors"></div>
+            <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-8 flex items-center gap-3 relative z-10">
+              <span className="w-1.5 h-6 bg-indigo-600 rounded-full shadow-lg shadow-indigo-500/20"></span>
+              Login Details
+            </h4>
+            
+            <div className="space-y-6 relative z-10">
+              <div className="flex items-center gap-5 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-xl shadow-sm border border-slate-100">🆔</div>
+                <div>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Username</p>
+                  <p className="font-black text-slate-900">{trainer.username}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 group/pass">
+                <div className="flex items-center gap-5">
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-xl shadow-sm border border-slate-100">🔑</div>
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Password</p>
+                    <p className="font-black text-slate-900 tracking-wider font-mono">{trainer.plainPassword || '••••••••'}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  onClick={() => {
+                    const text = `Hi ${trainer.fullName},\n\nThese are your credentials for login:\nUsername: ${trainer.username}\nPassword: ${trainer.plainPassword}\nLogin: ${window.location.origin}/login`;
+                    navigator.clipboard.writeText(text);
+                    alert('📋 Credentials copied!');
+                  }}
+                  className="flex-1 h-12 bg-white border border-slate-200 text-slate-900 font-black rounded-xl text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-slate-50 transition-all shadow-sm"
+                >
+                  📋 Copy
+                </button>
+                <button
+                  onClick={async () => {
+                    const shareText = `Hi ${trainer.fullName},\n\nYour Trainer account credentials:\n\nUsername: ${trainer.username}\nPassword: ${trainer.plainPassword}\n\nLogin URL: ${window.location.origin}/login`;
+                    if (navigator.share) {
+                      try { await navigator.share({ title: 'Trainer Credentials', text: shareText }); }
+                      catch (err) { console.log(err); }
+                    } else {
+                      window.open(`https://wa.me/${trainer.mobileNumber}?text=${encodeURIComponent(shareText)}`, '_blank');
+                    }
+                  }}
+                  className="flex-1 h-12 bg-indigo-600 text-white font-black rounded-xl text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20"
+                >
+                  🔗 Share
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
