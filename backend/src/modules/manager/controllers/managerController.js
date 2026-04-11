@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Manager = require('../models/managerModel');
 const Trainer = require('../../trainer/models/trainerModel');
 const Attendance = require('../../attendance/models/attendanceModel');
@@ -456,7 +457,14 @@ exports.getDashboard = async (req, res, next) => {
 exports.setupProjectDetails = async (req, res, next) => {
   try {
     const Project = require('../../project/models/projectModel');
-    let project = await Project.findById(req.params.id);
+    
+    // Robust Project Resolution
+    let project = await Project.findOne({
+      $or: [
+        { _id: mongoose.Types.ObjectId.isValid(req.params.id) ? req.params.id : null },
+        { projectId: req.params.id }
+      ].filter(q => Object.values(q)[0] !== null)
+    });
 
     if (!project) {
       return res.status(404).json({ success: false, message: 'Project not found' });
@@ -584,7 +592,14 @@ exports.getAssignedProjects = async (req, res, next) => {
 exports.getProjectDetails = async (req, res, next) => {
   try {
     const Project = require('../../project/models/projectModel');
-    const project = await Project.findById(req.params.id);
+    
+    // Robust Project Resolution
+    const project = await Project.findOne({
+      $or: [
+        { _id: mongoose.Types.ObjectId.isValid(req.params.id) ? req.params.id : null },
+        { projectId: req.params.id }
+      ].filter(q => Object.values(q)[0] !== null)
+    });
 
     if (!project) {
       return res.status(404).json({ success: false, message: 'Project not found' });
