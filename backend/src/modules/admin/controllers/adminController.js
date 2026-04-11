@@ -725,6 +725,7 @@ exports.resetManagerPassword = async (req, res, next) => {
 exports.getAllTrainers = async (req, res, next) => {
   try {
     const trainers = await Trainer.find()
+      .populate('reportingManager', 'fullName')
       .populate('assignedProjects', 'name')
       .sort({ createdAt: -1 })
       .lean();
@@ -757,6 +758,7 @@ exports.getAllTrainers = async (req, res, next) => {
 exports.getTrainer = async (req, res, next) => {
   try {
     const trainer = await Trainer.findById(req.params.id)
+      .populate('reportingManager', 'fullName')
       .populate('assignedProjects', 'name')
       .lean();
 
@@ -789,7 +791,7 @@ exports.getTrainer = async (req, res, next) => {
 // @access  Private (Admin Only)
 exports.updateTrainer = async (req, res, next) => {
   try {
-    const { fullName, mobileNumber, state, district, assignedProject } = req.body;
+    const { fullName, mobileNumber, state, district, assignedProject, reportingManager } = req.body;
 
     const trainer = await Trainer.findById(req.params.id);
 
@@ -810,6 +812,7 @@ exports.updateTrainer = async (req, res, next) => {
     if (state) trainer.state = state;
     if (district) trainer.district = district;
     if (assignedProject) trainer.assignedProject = assignedProject;
+    if (reportingManager !== undefined) trainer.reportingManager = reportingManager;
 
     await trainer.save();
 
