@@ -7,6 +7,7 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 const Manager = require('./src/modules/manager/models/managerModel');
 const Project = require('./src/modules/project/models/projectModel');
 
+
 async function checkProjects() {
   try {
     await mongoose.connect(process.env.MONGO_URI);
