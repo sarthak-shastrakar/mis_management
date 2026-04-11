@@ -86,7 +86,7 @@ const AdminDashboard = ({ onNavigate }) => {
                   <td className="py-6 text-sm font-bold text-slate-600">{prj.manager}</td>
                   <td className="py-6 text-sm font-bold text-slate-600 text-center">{prj.trainers}</td>
                   <td className="py-6 text-right">
-                    <button onClick={() => onNavigate('project-detail', { projectId: prj.mongoId })} className="px-5 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all">Inspect</button>
+                    <button onClick={() => onNavigate('project-detail', { projectId: prj.mongoId })} className="px-5 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:bg-blue-600">View</button>
                   </td>
                 </tr>
               ))}

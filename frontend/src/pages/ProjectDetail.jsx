@@ -212,22 +212,6 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
             <Field label="Cost Per Hour" value={project.trainingCostPerHour} editMode={editMode} options={['38.5', '46.5', '53.5']} onChange={v => setProject({ ...project, trainingCostPerHour: v })} />
             <Field label="Total Budget (Lakhs)" value={project.totalProjectCost} editMode={editMode} type="number" onChange={v => setProject({ ...project, totalProjectCost: v })} />
 
-            {/* Extended Status Fields */}
-            <div className="col-span-2 grid grid-cols-2 gap-8 mt-4 pt-6 border-t border-slate-50">
-              <Field label="1st Installment" value={project.installment1Status} editMode={editMode} options={['None', 'Bill Submitted', 'Bill Under Process', 'Payment received']} onChange={v => setProject({ ...project, installment1Status: v })} />
-              <Field label="Installment 1 Date" value={project.installment1Date?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({ ...project, installment1Date: v })} />
-
-              <Field label="Assessment Fee Payer" value={project.assessmentFeesPaidBy} editMode={editMode} options={['None', 'SBSS', 'District', 'Block', 'State']} onChange={v => setProject({ ...project, assessmentFeesPaidBy: v })} />
-              <Field label="Assessment Status" value={project.assessmentStatus} editMode={editMode} options={['None', 'Batch Enroll', 'Batch Assign', 'Batch Schedule', 'Result Declare', 'Result Yet to declare']} onChange={v => setProject({ ...project, assessmentStatus: v })} />
-              <Field label="Assessment Date" value={project.assessmentDate?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({ ...project, assessmentDate: v })} />
-
-              <Field label="2nd Installment" value={project.installment2Status} editMode={editMode} options={['None', 'Bill Submitted', 'Bill Under Process', 'Payment received']} onChange={v => setProject({ ...project, installment2Status: v })} />
-              <Field label="Installment 2 Date" value={project.installment2Date?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({ ...project, installment2Date: v })} />
-
-              <Field label="Max Demonstrators" value={project.maxDemonstrators} editMode={editMode} type="number" onChange={v => setProject({ ...project, maxDemonstrators: v })} />
-              <Field label="Site Address" value={project.projectAddress} editMode={editMode} onChange={v => setProject({ ...project, projectAddress: v })} />
-            </div>
-
             <Field label="Start Date" value={project.startDate?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({ ...project, startDate: v })} />
             <Field label="End Date" value={project.endDate?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({ ...project, endDate: v })} />
             <Field

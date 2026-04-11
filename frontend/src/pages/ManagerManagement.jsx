@@ -183,7 +183,7 @@ const ManagerManagement = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
-                {['ID Reference', 'Profile Information', 'Regional Base', 'Active Task', 'Access Control'].map(h => (
+                {['ID Reference', 'Profile Information', 'Regional Base', 'Active Task', 'Actions'].map(h => (
                   <th key={h} className="px-10 py-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{h}</th>
                 ))}
               </tr>
@@ -414,11 +414,11 @@ const ManagerManagement = () => {
                     <div className="space-y-4">
                       <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-200 flex items-center justify-between shadow-sm">
                         <div className="flex-1">
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Terminal Username</p>
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Username</p>
                           <p className="text-lg font-black text-slate-900">{managerForm.username}</p>
                         </div>
                         <div className="flex-1 text-right border-l border-slate-200 pl-8">
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Passkey Node</p>
+                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Password</p>
                           <p className="text-lg font-black text-slate-900">{managerForm.password}</p>
                         </div>
                       </div>

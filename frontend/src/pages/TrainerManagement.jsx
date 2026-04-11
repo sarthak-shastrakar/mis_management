@@ -284,10 +284,6 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
           <h3 className="text-4xl font-black text-slate-900 tracking-tight">Trainer Management</h3>
         </div>
         <div className="flex items-center gap-4">
-          <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-1.5 flex gap-1">
-            <button onClick={() => setViewMode('table')} className={`px-5 py-2.5 rounded-xl text-xs font-black tracking-widest transition-all ${viewMode === 'table' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}>TABLE</button>
-            <button onClick={() => setViewMode('grid')} className={`px-5 py-2.5 rounded-xl text-xs font-black tracking-widest transition-all ${viewMode === 'grid' ? 'bg-slate-900 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}>GRID</button>
-          </div>
           <button
             onClick={() => setShowModal(true)}
             className="group flex items-center gap-3 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-2xl shadow-indigo-500/30 transition-all active:scale-95 text-xs uppercase tracking-[0.2em]"
