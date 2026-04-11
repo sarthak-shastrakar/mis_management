@@ -242,8 +242,8 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col border border-white">
             <div className="px-10 py-8 bg-gradient-to-r from-blue-600 to-indigo-700 text-white flex justify-between items-center shrink-0 shadow-lg">
               <div>
-                <h2 className="text-3xl font-black tracking-tight">{editingId ? 'Modify Project' : 'Launch New Project'}</h2>
-                <p className="text-blue-100/80 font-bold text-xs uppercase tracking-[0.2em] mt-1">Project Management Form</p>
+                <h2 className="text-3xl font-black tracking-tight">{editingId ? 'Edit Project' : 'Add New Project'}</h2>
+                <p className="text-blue-100/80 font-bold text-xs uppercase tracking-[0.2em] mt-1">Project Details</p>
               </div>
               <button type="button" onClick={() => setShowModal(false)} className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-center transition-all">
                 <span className="text-2xl">✕</span>
@@ -259,11 +259,11 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="md:col-span-2">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Official Project Name</label>
-                    <input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 shadow-sm transition-all" placeholder="e.g. Enter Project Name" />
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Project Name</label>
+                    <input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 shadow-sm transition-all" placeholder="Enter Project Name" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Assigned Category</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Category</label>
                     <select value={formData.projectCategory} onChange={e => setFormData({ ...formData, projectCategory: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm focus:ring-4 focus:ring-blue-500/5">
                       <option value="PMAY-G STT Mode">PMAY-G STT Mode</option>
                       <option value="PMAY-G RPL Mode">PMAY-G RPL Mode</option>
@@ -273,7 +273,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Official Work Order ID</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Work Order No</label>
                     <input value={formData.workOrderNo} onChange={e => setFormData({ ...formData, workOrderNo: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" placeholder="e.g. WO-MSRLM-2026-001" />
                   </div>
                 </div>
@@ -283,21 +283,21 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
               <div className="space-y-6">
                 <div className="flex items-center gap-3 mb-6">
                   <span className="w-2 h-7 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/20"></span>
-                  <h3 className="text-xl font-black text-slate-900">Logistics & Budgeting</h3>
+                  <h3 className="text-xl font-black text-slate-900">Project Details</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Target Volume</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Target</label>
                     <input type="number" value={formData.allocatedTarget} onChange={e => setFormData({ ...formData, allocatedTarget: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" placeholder="000" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Curriculum Hours</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Hours</label>
                     <select value={formData.trainingHours} onChange={e => setFormData({ ...formData, trainingHours: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm">
                       {[360, 390, 72, 168, 120].map(h => <option key={h} value={h}>{h} Hours</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Financial Cap (Lakhs)</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Total Budget (Lakhs)</label>
                     <input type="number" step="0.01" value={formData.totalProjectCost} onChange={e => setFormData({ ...formData, totalProjectCost: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" placeholder="e.g. 45.50" />
                   </div>
                   <div>
@@ -310,9 +310,9 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                   </div>
                   {currentRole === 'admin' && (
                     <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Project Manager</label>
+                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Manager</label>
                       <select value={formData.managerId} onChange={e => setFormData({ ...formData, managerId: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 shadow-sm">
-                        <option value="">Select Sector Manager</option>
+                        <option value="">Select Manager</option>
                         {managersList.map(m => <option key={m._id} value={m._id}>{m.fullName}</option>)}
                       </select>
                     </div>
@@ -322,9 +322,9 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
             </form>
 
             <div className="px-10 py-8 bg-slate-50 border-t border-slate-100 flex gap-6 shrink-0">
-              <button type="button" onClick={() => setShowModal(false)} className="flex-1 h-14 rounded-2xl bg-white border border-slate-200 font-black text-slate-500 text-[10px] uppercase tracking-[0.2em] hover:bg-slate-50 transition-all">Discard Changes</button>
+               <button type="button" onClick={() => setShowModal(false)} className="flex-1 h-14 rounded-2xl bg-white border border-slate-200 font-black text-slate-500 text-[10px] uppercase tracking-[0.2em] hover:bg-slate-50 transition-all">Cancel</button>
               <button onClick={handleCreateProject} className="flex-2 h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 font-black text-white text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/30 transition-all hover:scale-[1.01] active:scale-95">
-                {editingId ? 'Update Changes' : 'Create Project'}
+                 {editingId ? 'Save Changes' : 'Create Project'}
               </button>
             </div>
           </div>
@@ -348,7 +348,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
-                {['Project Name', 'Manager Assign', 'System Status', 'Actions'].map(h => (
+                 {['Project Name', 'Manager Assign', 'Status', 'Actions'].map(h => (
                   <th key={h} className="px-10 py-7 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{h}</th>
                 ))}
               </tr>
@@ -359,7 +359,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                   <td colSpan="4" className="py-24 text-center">
                     <div className="flex flex-col items-center gap-4">
                       <div className="w-10 h-10 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin"></div>
-                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Retrieving Real-time Telemetry...</p>
+                       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Loading projects...</p>
                     </div>
                   </td>
                 </tr>
@@ -396,9 +396,9 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                       <button onClick={() => onNavigate('project-detail', { projectId: prj.projectId || prj._id })} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all shadow-sm group/btn" title="View">
                         <span className="group-hover/btn:scale-125 transition-transform">👁️</span>
                       </button>
-                      {currentRole === 'manager' && (
+                       {/* {currentRole === 'manager' && (
                         <button onClick={() => handleOpenAssign(prj._id)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm" title="Assign Trainers">👥</button>
-                      )}
+                      )} */}
                       {currentRole === 'admin' && (
                         <button onClick={() => handleEditOpen(prj)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="Modify Record">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -421,26 +421,26 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[150] flex items-center justify-center p-4">
           <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-xl flex flex-col border border-white overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="px-10 py-8 bg-indigo-600 text-white flex justify-between items-center">
-              <div>
-                <h3 className="text-2xl font-black italic tracking-tighter">Deploy Personnel</h3>
-                <p className="text-indigo-100 text-[10px] font-black uppercase tracking-widest mt-1">Operational Force Assignment</p>
+               <div>
+                <h3 className="text-2xl font-black italic tracking-tighter">Assign Trainers</h3>
+                <p className="text-indigo-100 text-[10px] font-black uppercase tracking-widest mt-1">Assign trainers to this project</p>
               </div>
               <button onClick={() => setShowAssignModal(false)} className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-xl flex items-center justify-center transition-all text-xl">✕</button>
             </div>
 
             <div className="p-10 bg-slate-50/50 flex-1 min-h-[400px]">
               <div className="mb-6">
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 ml-1">Select Active Units ({selectedTrainers.length} Selected)</p>
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 ml-1">Select Trainers ({selectedTrainers.length} Selected)</p>
                 <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
                   {isAssigning ? (
                     <div className="py-20 text-center space-y-4">
                       <div className="w-8 h-8 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mx-auto"></div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Scanning Personnel records...</p>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Loading trainers...</p>
                     </div>
                   ) : allTrainers.length === 0 ? (
                     <div className="py-20 text-center bg-white rounded-3xl border-2 border-dashed border-slate-100">
                       <p className="text-2xl mb-2">👥</p>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No personnel profiles detected in your sector.</p>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No trainers found</p>
                     </div>
                   ) : allTrainers.map(t => {
                     const isSelected = selectedTrainers.includes(t._id);
@@ -468,13 +468,13 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
             </div>
 
             <div className="px-10 py-8 bg-white border-t border-slate-100 flex gap-4">
-              <button onClick={() => setShowAssignModal(false)} className="flex-1 h-14 rounded-2xl font-black text-slate-400 text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all">Abort</button>
+               <button onClick={() => setShowAssignModal(false)} className="flex-1 h-14 rounded-2xl font-black text-slate-400 text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all">Cancel</button>
               <button
                 onClick={handleAssignSave}
                 disabled={isAssigning}
                 className="flex-[2] h-14 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-black transition-all active:scale-95"
               >
-                Execute Deployment →
+                 Save Assignments
               </button>
             </div>
           </div>

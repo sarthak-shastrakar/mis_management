@@ -45,7 +45,7 @@ const ManagerProfile = () => {
                     </div>
                     <div className="text-center md:text-left space-y-2">
                         <h1 className="text-4xl font-black tracking-tight">{manager.fullName}</h1>
-                        <p className="text-blue-400 font-bold uppercase tracking-[0.3em] text-[10px]">Administrative Project Manager</p>
+                        <p className="text-blue-400 font-bold uppercase tracking-[0.3em] text-[10px]">Project Manager</p>
                         <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-4">
                             <span className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-300">
                                 ID: {manager.managerId}
@@ -62,7 +62,7 @@ const ManagerProfile = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {/* Core Performance Stats */}
                 <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm space-y-8 md:col-span-2">
-                    <h3 className="text-xs font-black text-slate-700 uppercase tracking-[0.2em] ml-1">Administrative Performance</h3>
+                    <h3 className="text-xs font-black text-slate-700 uppercase tracking-[0.2em] ml-1">Performance Stats</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                         <div className="p-8 bg-blue-50 rounded-3xl border border-blue-100 flex flex-col items-center text-center">
                             <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-2">Total Assignments</p>
@@ -70,12 +70,12 @@ const ManagerProfile = () => {
                             <p className="text-[9px] font-bold text-blue-400 mt-1">Active Projects</p>
                         </div>
                         <div className="p-8 bg-emerald-50 rounded-3xl border border-emerald-100 flex flex-col items-center text-center">
-                            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2">Personnel Assets</p>
+                            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-2">Trainers</p>
                             <p className="text-4xl font-black text-emerald-700">{manager.totalTrainersCreated || 0}</p>
                             <p className="text-[9px] font-bold text-emerald-400 mt-1">Trainers Created</p>
                         </div>
                         <div className="p-8 bg-indigo-50 rounded-3xl border border-indigo-100 flex flex-col items-center text-center">
-                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2">Deployment Base</p>
+                            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2">Location</p>
                             <p className="text-xl font-black text-indigo-700 leading-tight mt-2">{manager.district}</p>
                             <p className="text-[9px] font-bold text-indigo-400 mt-1">{manager.state}</p>
                         </div>
@@ -84,19 +84,19 @@ const ManagerProfile = () => {
 
                 {/* Contact Information */}
                 <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm space-y-8">
-                    <h3 className="text-xs font-black text-slate-700 uppercase tracking-[0.2em] ml-1">Connect Channels</h3>
+                    <h3 className="text-xs font-black text-slate-700 uppercase tracking-[0.2em] ml-1">Contact Details</h3>
                     <div className="space-y-6">
                         <div className="flex items-center gap-5">
                             <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-xl transition-colors">📱</div>
                             <div>
-                                <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mb-0.5">Mobile Contact</p>
+                                <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mb-0.5">Mobile No.</p>
                                 <p className="font-bold text-slate-900">{manager.mobileNumber}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-5">
                             <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-xl transition-colors">✉️</div>
                             <div>
-                                <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mb-0.5">Corporate Email</p>
+                                <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mb-0.5">Email</p>
                                 <p className="font-bold text-slate-900">{manager.emailAddress || 'Not Provided'}</p>
                             </div>
                         </div>
@@ -105,19 +105,19 @@ const ManagerProfile = () => {
 
                 {/* Security Access Nodes */}
                 <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm space-y-8">
-                    <h3 className="text-xs font-black text-slate-700 uppercase tracking-[0.2em] ml-1">System Security Profile</h3>
+                    <h3 className="text-xs font-black text-slate-700 uppercase tracking-[0.2em] ml-1">Login Details</h3>
                     <div className="space-y-6">
                         <div className="flex items-center gap-5">
                             <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-xl transition-colors">🆔</div>
                             <div>
-                                <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mb-0.5">Terminal Username</p>
+                                <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mb-0.5">Username</p>
                                 <p className="font-bold text-slate-900">{manager.username}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-5">
                             <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-xl transition-colors">🔑</div>
                             <div>
-                                <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mb-0.5">Access Passkey</p>
+                                <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mb-0.5">Password</p>
                                 <p className="font-bold text-slate-900 uppercase tracking-widest text-xs">{manager.plainPassword || '••••••••'}</p>
                             </div>
                         </div>
@@ -129,9 +129,9 @@ const ManagerProfile = () => {
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-3">
                             <span className="w-1.5 h-6 bg-blue-600 rounded-full"></span>
-                            <h3 className="text-lg font-black text-slate-900">Current Active Portfolio</h3>
+                            <h3 className="text-lg font-black text-slate-900">Assigned Projects</h3>
                         </div>
-                        <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-blue-100">{manager.assignedProjects?.length || 0} Assets</span>
+                        <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-black uppercase tracking-widest border border-blue-100">{manager.assignedProjects?.length || 0} Projects</span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         {manager.assignedProjects?.map(prj => (

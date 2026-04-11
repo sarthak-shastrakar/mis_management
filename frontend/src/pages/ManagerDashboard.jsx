@@ -113,11 +113,11 @@ const ManagerDashboard = ({ onNavigate }) => {
       <div className="bg-white p-10 rounded-[2rem] border border-slate-100 shadow-sm shadow-slate-2/5">
         <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-3">
           <span className="w-1.5 h-6 bg-blue-600 rounded-full"></span>
-          Assigned Projects Status
+          My Projects
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {loading ? (
-            <div className="col-span-2 py-10 text-center text-slate-400 font-bold animate-pulse">Synchronizing Terminal Data...</div>
+            <div className="col-span-2 py-10 text-center text-slate-400 font-bold animate-pulse">Loading Projects...</div>
           ) : assignedProjects.length === 0 ? (
             <div className="col-span-2 py-10 text-center text-slate-400 font-bold italic uppercase tracking-widest text-xs">No Projects Assigned Yet</div>
           ) : assignedProjects.map((prj, i) => (
@@ -155,7 +155,7 @@ const ManagerDashboard = ({ onNavigate }) => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10 pb-6 border-b border-slate-50">
           <div>
             <h3 className="text-2xl font-black text-slate-900 tracking-tight">Pending Approvals</h3>
-            <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">Reviewing requested data uploads for validation</p>
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">Review late submissions</p>
           </div>
           <span className="bg-blue-50 px-6 py-2.5 rounded-2xl text-[10px] font-black text-blue-600 uppercase tracking-widest border border-blue-100">
             {trainerApprovals.length} Active Requests
@@ -166,11 +166,11 @@ const ManagerDashboard = ({ onNavigate }) => {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-slate-50">
-                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Trainer Identity</th>
-                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Deployment</th>
-                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4 text-center">Protocol Delay</th>
-                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Justification</th>
-                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4 text-right">Operational Actions</th>
+                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Trainer Name</th>
+                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Project</th>
+                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4 text-center">Delay</th>
+                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Reason</th>
+                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -179,7 +179,7 @@ const ManagerDashboard = ({ onNavigate }) => {
                   <td colSpan="5" className="py-24 text-center">
                     <div className="flex flex-col items-center gap-4 opacity-50">
                       <span className="text-4xl">📄</span>
-                      <p className="text-slate-900 font-black uppercase tracking-widest text-xs">Zero Pending Approvals Found</p>
+                      <p className="text-slate-900 font-black uppercase tracking-widest text-xs">No Pending Approvals</p>
                     </div>
                   </td>
                 </tr>
@@ -209,7 +209,7 @@ const ManagerDashboard = ({ onNavigate }) => {
                       <button 
                         onClick={() => onNavigate && onNavigate('trainer-detail', { trainerId: req.trainer._id || req.trainer.trainerId })}
                         className="h-12 w-12 bg-white border border-slate-200 text-slate-600 rounded-xl flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all"
-                        title="Audit Profile"
+                        title="View Profile"
                       >
                         👁️
                       </button>
@@ -227,7 +227,7 @@ const ManagerDashboard = ({ onNavigate }) => {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10 pb-6 border-b border-slate-50">
           <div>
             <h3 className="text-2xl font-black text-slate-900 tracking-tight">Bulk Attendance Requests</h3>
-            <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">Multi-day attendance permission applications</p>
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">Review bulk attendance requests</p>
           </div>
           <span className="bg-purple-50 px-6 py-2.5 rounded-2xl text-[10px] font-black text-purple-600 uppercase tracking-widest border border-purple-100">
             {stats.pendingBulk} Pending Requests
@@ -239,10 +239,10 @@ const ManagerDashboard = ({ onNavigate }) => {
             <thead>
               <tr className="border-b border-slate-50">
                 <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Trainer</th>
-                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Project Scope</th>
+                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Project</th>
                 <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4 text-center">Requested Dates</th>
-                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Justification</th>
-                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4 text-right">Operational Actions</th>
+                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Reason</th>
+                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -308,7 +308,7 @@ const ManagerDashboard = ({ onNavigate }) => {
             {projectLoading ? (
                <div className="p-24 text-center flex flex-col items-center gap-6">
                  <div className="w-14 h-14 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                 <p className="text-slate-400 font-black uppercase tracking-[0.2em] text-[10px]">Accessing Project Encryption Nodes...</p>
+                 <p className="text-slate-400 font-black uppercase tracking-[0.2em] text-[10px]">Loading project details...</p>
                </div>
             ) : projectDetails && (
               <div className="flex flex-col">
@@ -326,30 +326,30 @@ const ManagerDashboard = ({ onNavigate }) => {
                 <div className="p-12 space-y-10 max-h-[70vh] overflow-y-auto custom-scrollbar bg-white">
                    <div className="grid grid-cols-2 gap-8">
                       <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 flex flex-col justify-center">
-                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Primary Node Category</p>
+                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Category</p>
                          <p className="text-xl font-black text-slate-900">{projectDetails.projectCategory || 'General STT'}</p>
                       </div>
                       <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 flex flex-col justify-center">
-                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Territorial Coverage</p>
+                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Location</p>
                          <p className="text-xl font-black text-slate-900">{projectDetails.location?.district}, {projectDetails.location?.state}</p>
                       </div>
                    </div>
 
                    <div className="space-y-6">
-                      <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em] ml-2">Mission Parameters</h4>
+                      <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em] ml-2">Project Details</h4>
                       <div className="grid grid-cols-2 gap-6">
                          <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100/50">
                             <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">Target Hours</p>
                             <p className="text-2xl font-black text-blue-700">{projectDetails.trainingHours}</p>
                          </div>
                          <div className="p-6 bg-emerald-50/50 rounded-3xl border border-emerald-100/50">
-                            <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1">Target Entities</p>
+                            <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mb-1">Target</p>
                             <p className="text-2xl font-black text-emerald-700">{projectDetails.allocatedTarget}</p>
                          </div>
                       </div>
                    </div>
 
-                   <button onClick={() => setShowProjectModal(false)} className="w-full h-16 bg-slate-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.4em] shadow-2xl hover:bg-black hover:scale-[1.01] active:scale-[0.99] transition-all">Close Inspection Port</button>
+                   <button onClick={() => setShowProjectModal(false)} className="w-full h-16 bg-slate-900 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.4em] shadow-2xl hover:bg-black hover:scale-[1.01] active:scale-[0.99] transition-all">Close</button>
                 </div>
               </div>
             )}
