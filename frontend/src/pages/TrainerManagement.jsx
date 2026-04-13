@@ -615,7 +615,7 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
 
                 <div className="mt-8 flex gap-3 relative z-10">
                   <button
-                    onClick={() => onNavigate && onNavigate('trainer-detail', { trainerId: t.trainerId })}
+                    onClick={() => onNavigate && onNavigate('trainer-detail', { trainerId: t._id })}
                     className="flex-1 py-4 bg-slate-900 hover:bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-slate-900/10 transition-all active:scale-95"
                   >View Intelligence</button>
                   <button
