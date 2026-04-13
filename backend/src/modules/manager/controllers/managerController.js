@@ -579,6 +579,7 @@ exports.getAssignedProjects = async (req, res, next) => {
     
     // Standardize the response format
     const projects = rawProjects.map(p => ({
+      _id: p._id,
       projectId: p._id,
       name: p.name,
       category: p.projectCategory,
