@@ -212,9 +212,11 @@ exports.getTrainer = async (req, res) => {
     }
 
     // Ownership check for managers (allow if creator OR reporting manager)
+    const createdById = trainer.createdBy?._id ? String(trainer.createdBy._id) : String(trainer.createdBy);
+    const reportingManagerId = trainer.reportingManager?._id ? String(trainer.reportingManager._id) : String(trainer.reportingManager);
     if (req.user.role === 'manager' && 
-        String(trainer.createdBy) !== req.user.id && 
-        String(trainer.reportingManager) !== req.user.id) {
+        createdById !== req.user.id && 
+        reportingManagerId !== req.user.id) {
       return res.status(403).json({ success: false, message: 'You are not authorized to view this trainer' });
     }
 
