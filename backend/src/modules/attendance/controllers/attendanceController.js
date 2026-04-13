@@ -313,8 +313,13 @@ exports.getAllAttendanceForManager = async (req, res) => {
   try {
     let query = {};
     if (req.user.role === 'manager') {
-      // Find trainers created by this manager
-      const trainers = await Trainer.find({ createdBy: req.user.id }).select('_id');
+      // Find trainers created by this manager OR reporting to this manager
+      const trainers = await Trainer.find({ 
+        $or: [
+          { createdBy: req.user.id },
+          { reportingManager: req.user.id }
+        ]
+      }).select('_id');
       const trainerIds = trainers.map(t => t._id);
       query = { trainerId: { $in: trainerIds } };
     } else if (req.user.role !== 'admin') {
@@ -340,6 +345,7 @@ exports.getAllAttendanceForManager = async (req, res) => {
       
       return {
         ...att,
+        id: att._id,
         projectName: projectDoc ? projectDoc.name : (attProjId.length > 10 ? 'Project Deleted' : att.projectId)
       };
     });
@@ -459,6 +465,7 @@ exports.getAllBulkRequests = async (req, res) => {
       const proj = projects.find(p => String(p._id) === String(r.projectId) || p.projectId === r.projectId || p.name === r.projectId);
       return {
         ...r,
+        id: r._id,
         projectName: proj ? proj.name : 'Unknown Project'
       };
     });

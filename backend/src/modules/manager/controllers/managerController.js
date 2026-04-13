@@ -222,14 +222,31 @@ exports.sendNotification = async (req, res, next) => {
 // ─────────────────────────────────────────────
 exports.getPendingAttendances = async (req, res, next) => {
   try {
-    const pendingList = await Attendance.find({ status: 'pending_approval' })
+    // 1. Get trainers associated with this manager
+    const trainersUnderMe = await Trainer.find({ 
+      $or: [
+        { createdBy: req.user.id },
+        { reportingManager: req.user.id }
+      ] 
+    }).select('_id');
+    const trainerIdsByMe = trainersUnderMe.map(t => t._id);
+
+    // 2. Fetch pending attendance only for these trainers
+    const pendingList = await Attendance.find({ 
+      status: 'pending_approval',
+      trainerId: { $in: trainerIdsByMe }
+    })
       .populate('trainerId', 'fullName trainerId mobileNumber assignedProjects')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
       count: pendingList.length,
-      data: pendingList,
+      data: pendingList.map(att => ({
+        ...att._doc,
+        // Ensure id field exists for frontend mapping if needed
+        id: att._id
+      })),
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
