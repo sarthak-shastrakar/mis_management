@@ -352,9 +352,13 @@ exports.getDashboard = async (req, res, next) => {
     });
 
     const assignedProjectsStatus = await Promise.all(projects.map(async (prj) => {
+      const managerId = new mongoose.Types.ObjectId(req.user.id);
       const trainersCount = await Trainer.countDocuments({ 
         assignedProjects: prj._id,
-        createdBy: req.user.id 
+        $or: [
+          { createdBy: managerId },
+          { reportingManager: managerId }
+        ]
       });
       const presentToday = todayProjectAttendance[prj._id] || todayProjectAttendance[prj.name] || 0;
       
@@ -374,7 +378,12 @@ exports.getDashboard = async (req, res, next) => {
 
     // 1. Fetch Late Attendance (Presently Attendance model)
     // Filter submissions to only show those from trainers created by this manager
-    const trainerIdsByMe = (await Trainer.find({ createdBy: req.user.id }).select('_id')).map(t => t._id);
+    const trainerIdsByMe = (await Trainer.find({ 
+      $or: [
+        { createdBy: req.user.id },
+        { reportingManager: req.user.id }
+      ]
+    }).select('_id')).map(t => t._id);
 
     const pendingSubmissions = await Attendance.find({
       status: 'pending_approval',
