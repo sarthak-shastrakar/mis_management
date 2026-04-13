@@ -150,22 +150,59 @@ exports.submitAttendance = async (req, res) => {
     }
 
     // Strict 5-day rule (e.g., if today is 10, then 10, 9, 8, 7, 6 are allowed)
-    // 10-6 = 4 days difference. So diffDays <= 4 is allowed.
+    // But if trainer has an approved bulk request for this date, allow it.
     if (diffDays > 4) {
-      return res.status(403).json({ 
-        success: false, 
-        message: `Attendance for ${diffDays + 1} days ago cannot be marked directly. Please submit an approval request through the Bulk Request section.` 
+      const dayStart = new Date(attendanceDate);
+      dayStart.setUTCHours(0, 0, 0, 0);
+      const dayEnd = new Date(attendanceDate);
+      dayEnd.setUTCHours(23, 59, 59, 999);
+
+      // DEBUG: log all params to trace mismatch
+      console.log('=== BULK APPROVAL CHECK ===');
+      console.log('trainerId:', trainerId);
+      console.log('projectId from request:', projectId);
+      console.log('foundProject._id:', foundProject._id.toString());
+      console.log('foundProject.projectId:', foundProject.projectId);
+      console.log('dayStart:', dayStart.toISOString());
+      console.log('dayEnd:', dayEnd.toISOString());
+      
+      // Also log all bulk requests for this trainer to see what's in DB
+      const allTrainerRequests = await BulkRequest.find({ trainerId: trainerId });
+      console.log('All BulkRequests for trainer:', JSON.stringify(allTrainerRequests.map(r => ({
+        projectId: r.projectId,
+        status: r.status,
+        requestedDates: r.requestedDates.map(d => d.toISOString())
+      })), null, 2));
+
+      const approvedRequest = await BulkRequest.findOne({
+        trainerId: trainerId,
+        projectId: { $in: [foundProject._id.toString(), foundProject.projectId] },
+        status: 'Approved',
+        requestedDates: { $elemMatch: { $gte: dayStart, $lte: dayEnd } }
       });
+
+      console.log('approvedRequest found:', approvedRequest ? 'YES' : 'NO');
+
+      if (!approvedRequest) {
+        return res.status(403).json({ 
+          success: false, 
+          message: `Attendance for ${diffDays + 1} days ago cannot be marked directly. Please submit an approval request through the Bulk Request section.` 
+        });
+      }
     }
 
     // 4. Auto-Remark and Status
     const autoRemark = " - Marked";
     const finalRemarks = remarks ? `${remarks}${autoRemark}` : 'Marked';
 
-    // 5. Check for duplicate
-    const existingEntry = await Attendance.findOne({ trainerId, projectId, date: attendanceDate });
+    // 5. Check for duplicate (by ObjectId AND custom projectId to catch auto-created records)
+    const existingEntry = await Attendance.findOne({ 
+      trainerId, 
+      projectId: { $in: [projectId, foundProject.projectId, foundProject._id.toString()] }, 
+      date: attendanceDate 
+    });
     if (existingEntry) {
-      return res.status(400).json({ success: false, message: 'Attendance already marked for this date and project' });
+      return res.status(200).json({ success: true, message: 'Attendance already marked for this date and project', data: existingEntry });
     }
 
     // 6. Create record
@@ -393,7 +430,7 @@ exports.approveBulkRequest = async (req, res) => {
       try {
         await Attendance.create({
           trainerId: request.trainerId,
-          projectId: request.projectId, // Store as custom string (consistent with BulkRequest)
+          projectId: foundProject ? foundProject._id.toString() : request.projectId, // Use ObjectId for consistency with history API
           date: attendanceDate,
           status: 'approved',
           requiresApproval: false,
