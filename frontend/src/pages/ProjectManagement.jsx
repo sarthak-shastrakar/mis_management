@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import API from '../api/api';
+import { useModal } from '../context/ModalContext';
 
 const statusColors = {
   Active: 'bg-emerald-100 text-emerald-700',
@@ -22,8 +23,10 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  
   const startDateRef = useRef(null);
   const endDateRef = useRef(null);
+  const { showConfirm, showAlert } = useModal();
 
   // For Project Creation Form
   const [formData, setFormData] = useState({
@@ -114,22 +117,35 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
         fetchProjects();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Action failed');
+      showAlert({
+        title: 'Action Failed',
+        message: err.response?.data?.message || 'Provisioning protocol failure',
+        variant: 'danger'
+      });
     }
   };
 
   const handleDeleteProject = async (id) => {
-    if (window.confirm('Are you sure you want to delete this record? Once deleted this cannot be undone.')) {
-      try {
-        const endpoint = currentRole === 'admin' ? `/admin/projects/${id}` : `/manager/projects/${id}`;
-        const response = await API.delete(endpoint);
-        if (response.data.success) {
-          fetchProjects();
+    showConfirm({
+      title: 'Purge Project',
+      message: 'Are you sure you want to delete this record? Once deleted this cannot be undone.',
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const endpoint = currentRole === 'admin' ? `/admin/projects/${id}` : `/manager/projects/${id}`;
+          const response = await API.delete(endpoint);
+          if (response.data.success) {
+            fetchProjects();
+          }
+        } catch (err) {
+          showAlert({
+            title: 'Delete Failed',
+            message: err.response?.data?.message || 'Delete protocol failed',
+            variant: 'danger'
+          });
         }
-      } catch (err) {
-        alert(err.response?.data?.message || 'Delete protocol failed');
       }
-    }
+    });
   };
 
   const handleOpenAssign = async (projectId) => {
@@ -165,7 +181,11 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
         fetchProjects();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Synchronization failure');
+      showAlert({
+        title: 'Sync Failed',
+        message: err.response?.data?.message || 'Synchronization failure',
+        variant: 'danger'
+      });
     }
   };
 
@@ -418,7 +438,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                       </button>
                        {/* {currentRole === 'manager' && (
                         <button onClick={() => handleOpenAssign(prj._id)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-indigo-600 hover:text-white transition-all shadow-sm" title="Assign Trainers">👥</button>
-                      )} */}
+                       )} */}
                       {currentRole === 'admin' && (
                         <button onClick={() => handleEditOpen(prj)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="Modify Record">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>

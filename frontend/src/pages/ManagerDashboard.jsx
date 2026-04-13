@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import API from '../api/api';
+import { useModal } from '../context/ModalContext';
 
 const ManagerDashboard = ({ onNavigate }) => {
   const [assignedProjects, setAssignedProjects] = useState([]);
@@ -17,6 +18,7 @@ const ManagerDashboard = ({ onNavigate }) => {
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [projectDetails, setProjectDetails] = useState(null);
   const [projectLoading, setProjectLoading] = useState(false);
+  const { showConfirm, showAlert } = useModal();
 
   React.useEffect(() => {
     fetchDashboardData();
@@ -58,7 +60,11 @@ const ManagerDashboard = ({ onNavigate }) => {
       }
     } catch (err) {
       console.error('Project details fetch failed', err);
-      alert('Failed to load project details');
+      showAlert({
+        title: 'Fetch Failed',
+        message: 'Failed to load project details from the intelligence node.',
+        variant: 'danger'
+      });
       setShowProjectModal(false);
     } finally {
       setProjectLoading(false);
@@ -66,45 +72,87 @@ const ManagerDashboard = ({ onNavigate }) => {
   };
 
   const handleApprove = async (attendanceId) => {
-    if (window.confirm('Are you sure you want to approve this late submission?')) {
-      try {
-        const response = await API.put(`/manager/approve-attendance/${attendanceId}`);
-        if (response.data.success) {
-          alert('Attendance approved successfully');
-          fetchDashboardData();
+    showConfirm({
+      title: 'Authorize Submission',
+      message: 'Are you sure you want to approve this late submission? This will validate the trainer\'s records.',
+      variant: 'success',
+      confirmText: 'Approve Submission',
+      onConfirm: async () => {
+        try {
+          const response = await API.put(`/manager/approve-attendance/${attendanceId}`);
+          if (response.data.success) {
+            showAlert({
+              title: 'Success',
+              message: 'Attendance approved successfully',
+              variant: 'success'
+            });
+            fetchDashboardData();
+          }
+        } catch (err) {
+          showAlert({
+            title: 'Approval Failed',
+            message: err.response?.data?.message || 'Approval protocol failure',
+            variant: 'danger'
+          });
         }
-      } catch (err) {
-        alert(err.response?.data?.message || 'Approval failed');
       }
-    }
+    });
   };
 
   const handleApproveBulk = async (requestId) => {
-    if (window.confirm('Are you sure you want to APPROVE this bulk request? This will automatically mark attendance for all requested dates.')) {
-      try {
-        const response = await API.put(`/attendance/bulk-request/${requestId}/approve`);
-        if (response.data.success) {
-          alert('Bulk request approved. Attendance records generated.');
-          fetchDashboardData();
+    showConfirm({
+      title: 'Bulk Authorization',
+      message: 'Are you sure you want to APPROVE this bulk request? This will grant the trainer permission to manually mark their attendance for the requested dates.',
+      variant: 'success',
+      confirmText: 'Execute Approval',
+      onConfirm: async () => {
+        try {
+          const response = await API.put(`/attendance/bulk-request/${requestId}/approve`);
+          if (response.data.success) {
+            showAlert({
+              title: 'Bulk Processed',
+              message: 'Bulk request approved. The trainer can now mark attendance for the requested dates.',
+              variant: 'success'
+            });
+            fetchDashboardData();
+          }
+        } catch (err) {
+          showAlert({
+            title: 'Process Failed',
+            message: err.response?.data?.message || 'Bulk synchronization failure',
+            variant: 'danger'
+          });
         }
-      } catch (err) {
-        alert(err.response?.data?.message || 'Approval failed');
       }
-    }
+    });
   };
 
   const handleRejectBulk = async (requestId) => {
-    if (window.confirm('Are you sure you want to REJECT this bulk request?')) {
-      try {
-        const response = await API.put(`/attendance/bulk-request/${requestId}/reject`);
-        if (response.data.success) {
-          alert('Bulk request rejected');
-          fetchDashboardData();
+    showConfirm({
+      title: 'Reject Request',
+      message: 'Are you sure you want to REJECT this bulk request? The trainer will need to resubmit their application.',
+      variant: 'danger',
+      confirmText: 'Confirm Rejection',
+      onConfirm: async () => {
+        try {
+          const response = await API.put(`/attendance/bulk-request/${requestId}/reject`);
+          if (response.data.success) {
+            showAlert({
+              title: 'Request Purged',
+              message: 'Bulk request rejected successfully.',
+              variant: 'info'
+            });
+            fetchDashboardData();
+          }
+        } catch (err) {
+          showAlert({
+            title: 'Action Failed',
+            message: err.response?.data?.message || 'Rejection protocol failure',
+            variant: 'danger'
+          });
         }
-      } catch (err) {
-        alert(err.response?.data?.message || 'Rejection failed');
       }
-    }
+    });
   };
 
   return (

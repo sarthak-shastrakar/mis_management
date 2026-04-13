@@ -211,6 +211,11 @@ exports.getTrainer = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Trainer not found' });
     }
 
+    // Ownership check for managers
+    if (req.user.role === 'manager' && String(trainer.createdBy) !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'You are not authorized to view this trainer' });
+    }
+
     // Add real stats for this specific trainer
     const attendanceCount = await Attendance.countDocuments({ 
       trainerId: trainer._id,
@@ -248,6 +253,11 @@ exports.updateTrainer = async (req, res) => {
 
     let trainer = await Trainer.findById(req.params.id);
     if (!trainer) return res.status(404).json({ success: false, message: 'Trainer not found' });
+
+    // Ownership check for managers
+    if (req.user.role === 'manager' && String(trainer.createdBy) !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'You are not authorized to update this trainer' });
+    }
 
     if (mobileNumber && mobileNumber !== trainer.mobileNumber) {
       const existing = await Trainer.findOne({ mobileNumber });
@@ -305,6 +315,11 @@ exports.deleteTrainer = async (req, res) => {
   try {
     const trainer = await Trainer.findById(req.params.id);
     if (!trainer) return res.status(404).json({ success: false, message: 'Trainer not found' });
+
+    // Ownership check for managers
+    if (req.user.role === 'manager' && String(trainer.createdBy) !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'You are not authorized to delete this trainer' });
+    }
 
     await Trainer.findByIdAndDelete(req.params.id);
     res.status(200).json({ success: true, message: 'Trainer deleted successfully', data: {} });

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api/api';
+import { useModal } from '../context/ModalContext';
 
 const statusColors = {
   Active: 'bg-emerald-100 text-emerald-700',
@@ -311,6 +312,7 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
   const [projectsList, setProjectsList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [successData, setSuccessData] = useState(null);
+  const { showConfirm, showAlert } = useModal();
 
   useEffect(() => {
     fetchTrainers();
@@ -357,17 +359,25 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
   };
 
   const handleDeleteTrainer = async (id) => {
-    if (window.confirm('Are you sure you want to remove this staff member from the database?')) {
-      try {
-        const endpoint = currentRole === 'admin' ? `/admin/trainers/${id}` : `/manager/trainers/${id}`;
-        const response = await API.delete(endpoint);
-        if (response.data.success) {
-          fetchTrainers();
+    showConfirm({
+      title: 'Purge Profile',
+      message: 'Are you sure you want to remove this staff member from the database? This action is irreversible.',
+      onConfirm: async () => {
+        try {
+          const endpoint = currentRole === 'admin' ? `/admin/trainers/${id}` : `/manager/trainers/${id}`;
+          const response = await API.delete(endpoint);
+          if (response.data.success) {
+            fetchTrainers();
+          }
+        } catch (err) {
+          showAlert({
+            title: 'Deletion Failed',
+            message: err.response?.data?.message || 'Deletion protocol failed',
+            variant: 'danger'
+          });
         }
-      } catch (err) {
-        alert(err.response?.data?.message || 'Deletion failed');
       }
-    }
+    });
   };
 
   const handleToggleStatus = async (id, currentStatus) => {
@@ -379,7 +389,11 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
         fetchTrainers();
       }
     } catch (err) {
-      alert('Status update protocol failed');
+      showAlert({
+        title: 'Update Failed',
+        message: 'Status update protocol failed',
+        variant: 'danger'
+      });
     }
   };
 
@@ -418,7 +432,11 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
         }
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Staff authentication record failed to save');
+      showAlert({
+        title: 'Sync Failed',
+        message: err.response?.data?.message || 'Staff authentication record failed to save',
+        variant: 'danger'
+      });
       return false;
     }
   };

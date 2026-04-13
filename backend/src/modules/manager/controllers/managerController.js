@@ -352,7 +352,10 @@ exports.getDashboard = async (req, res, next) => {
     });
 
     const assignedProjectsStatus = await Promise.all(projects.map(async (prj) => {
-      const trainersCount = await Trainer.countDocuments({ assignedProjects: prj._id });
+      const trainersCount = await Trainer.countDocuments({ 
+        assignedProjects: prj._id,
+        createdBy: req.user.id 
+      });
       const presentToday = todayProjectAttendance[prj._id] || todayProjectAttendance[prj.name] || 0;
       
       return {
@@ -370,9 +373,12 @@ exports.getDashboard = async (req, res, next) => {
     const projectCustomIds = projects.map(p => p.projectId).filter(Boolean);
 
     // 1. Fetch Late Attendance (Presently Attendance model)
+    // Filter submissions to only show those from trainers created by this manager
+    const trainerIdsByMe = (await Trainer.find({ createdBy: req.user.id }).select('_id')).map(t => t._id);
+
     const pendingSubmissions = await Attendance.find({
       status: 'pending_approval',
-      projectId: { $in: [...projectIds, ...projectCustomIds] }
+      trainerId: { $in: trainerIdsByMe }
     })
       .populate('trainerId', 'fullName trainerId mobileNumber assignedProject district')
       .sort({ createdAt: -1 });

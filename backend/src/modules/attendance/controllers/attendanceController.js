@@ -150,29 +150,12 @@ exports.submitAttendance = async (req, res) => {
     }
 
     // Strict 5-day rule (e.g., if today is 10, then 10, 9, 8, 7, 6 are allowed)
-    // But if trainer has an approved bulk request for this date, allow it.
     if (diffDays > 4) {
+      // Robust Date Range Check for Bulk Approval
       const dayStart = new Date(attendanceDate);
       dayStart.setUTCHours(0, 0, 0, 0);
       const dayEnd = new Date(attendanceDate);
       dayEnd.setUTCHours(23, 59, 59, 999);
-
-      // DEBUG: log all params to trace mismatch
-      console.log('=== BULK APPROVAL CHECK ===');
-      console.log('trainerId:', trainerId);
-      console.log('projectId from request:', projectId);
-      console.log('foundProject._id:', foundProject._id.toString());
-      console.log('foundProject.projectId:', foundProject.projectId);
-      console.log('dayStart:', dayStart.toISOString());
-      console.log('dayEnd:', dayEnd.toISOString());
-      
-      // Also log all bulk requests for this trainer to see what's in DB
-      const allTrainerRequests = await BulkRequest.find({ trainerId: trainerId });
-      console.log('All BulkRequests for trainer:', JSON.stringify(allTrainerRequests.map(r => ({
-        projectId: r.projectId,
-        status: r.status,
-        requestedDates: r.requestedDates.map(d => d.toISOString())
-      })), null, 2));
 
       const approvedRequest = await BulkRequest.findOne({
         trainerId: trainerId,
@@ -180,8 +163,6 @@ exports.submitAttendance = async (req, res) => {
         status: 'Approved',
         requestedDates: { $elemMatch: { $gte: dayStart, $lte: dayEnd } }
       });
-
-      console.log('approvedRequest found:', approvedRequest ? 'YES' : 'NO');
 
       if (!approvedRequest) {
         return res.status(403).json({ 
@@ -208,7 +189,7 @@ exports.submitAttendance = async (req, res) => {
     // 6. Create record
     const attendance = await Attendance.create({
       trainerId,
-      projectId,
+      projectId: foundProject._id.toString(), // Use ObjectId for consistency
       date: attendanceDate,
       photos: photoUrls,
       videos: videoUrls,
@@ -267,11 +248,17 @@ exports.submitBulkRequest = async (req, res) => {
       return res.status(400).json({ success: false, message: 'No manager is currently assigned to this project. Cannot send request.' });
     }
 
-    // 2. Create the bulk request record (No validations as per request)
+    // 2. Create the bulk request record (Normalize dates to midnight)
+    const normalizedDates = requestedDates.map(d => {
+      const dateObj = new Date(d);
+      dateObj.setHours(0, 0, 0, 0);
+      return dateObj;
+    });
+
     const request = await BulkRequest.create({
       trainerId,
       projectId: foundProject.projectId, // Store custom ID for display
-      requestedDates: requestedDates.map(d => new Date(d)),
+      requestedDates: normalizedDates,
       managerId: foundProject.manager,
       remarks,
       status: 'Pending Approval'
@@ -389,67 +376,24 @@ exports.approveBulkRequest = async (req, res) => {
     request.approvedAt = new Date();
     await request.save();
 
-    // 2. Resolve the project to get its ObjectId (attendance may be stored with ObjectId OR custom string)
-    const foundProject = await Project.findOne({
-      $or: [
-        { projectId: request.projectId },
-        { _id: mongoose.Types.ObjectId.isValid(request.projectId) ? request.projectId : null }
-      ].filter(q => Object.values(q)[0] !== null)
+    // 2. Clear any existing "placeholder" attendance records for these dates
+    // This allows the trainer to mark them properly with their actual location/photos.
+    const dayDates = request.requestedDates.map(d => {
+      const dt = new Date(d);
+      dt.setHours(0,0,0,0);
+      return dt;
     });
 
-    // Build all possible projectId variants used when storing attendance
-    const projectIdVariants = [request.projectId];
-    if (foundProject) {
-      projectIdVariants.push(String(foundProject._id));
-      if (foundProject.projectId && !projectIdVariants.includes(foundProject.projectId)) {
-        projectIdVariants.push(foundProject.projectId);
-      }
-    }
+    await Attendance.deleteMany({
+      trainerId: request.trainerId,
+      projectId: { $in: [request.projectId] }, // May need variant check but this is the primary ID
+      date: { $in: dayDates }
+    });
 
-    // 3. Auto-create attendance records for each requested date
-    // We try to find existing record with ANY known projectId variant, then upsert with the string projectId
-    let created = 0;
-    let skipped = 0;
-
-    for (const rawDate of request.requestedDates) {
-      const attendanceDate = new Date(rawDate);
-      attendanceDate.setHours(0, 0, 0, 0);
-
-      // Check if attendance already exists (by any projectId variant)
-      const existing = await Attendance.findOne({
-        trainerId: request.trainerId,
-        projectId: { $in: projectIdVariants },
-        date: attendanceDate
-      });
-
-      if (existing) {
-        skipped++;
-        continue; // Already exists — skip silently
-      }
-
-      try {
-        await Attendance.create({
-          trainerId: request.trainerId,
-          projectId: foundProject ? foundProject._id.toString() : request.projectId, // Use ObjectId for consistency with history API
-          date: attendanceDate,
-          status: 'approved',
-          requiresApproval: false,
-          approvedBy: req.user.id,
-          approvedAt: new Date(),
-          remarks: `Bulk approved by manager — ${request.remarks || ''}`.trim(),
-          photos: [],
-          videos: [],
-        });
-        created++;
-      } catch (dupErr) {
-        // Silently skip any remaining race-condition duplicates
-        skipped++;
-      }
-    }
-
+    // 3. We NO LONGER automatically create Attendance records.
     res.status(200).json({
       success: true,
-      message: `Bulk Request approved. ${created} attendance record(s) created, ${skipped} already existed.`,
+      message: 'Bulk Request approved. The trainer can now mark attendance for the requested dates.',
       data: request
     });
   } catch (err) {

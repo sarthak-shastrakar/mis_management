@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import { managersData } from './data/mockData';
+import { ModalProvider } from './context/ModalContext';
+import UniversalModal from './components/UniversalModal';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
@@ -65,23 +67,25 @@ function App() {
   }
 
   return (
-    <div className="antialiased font-sans transition-all duration-500">
-      {!isAuthenticated ? (
-        <Login onLogin={handleLogin} managersList={managersList} />
-      ) : (
-        <Layout
-          currentRole={userRole}
-          currentUser={currentUser}
-          userStatus={userStatus}
-          setUserStatus={setUserStatus}
-          onLogout={handleLogout}
-          managersList={managersList}
-          setManagersList={setManagersList}
-        />
-      )}
-    </div>
+    <ModalProvider>
+      <div className="antialiased font-sans transition-all duration-500">
+        {!isAuthenticated ? (
+          <Login onLogin={handleLogin} managersList={managersList} />
+        ) : (
+          <Layout 
+            currentRole={userRole} 
+            currentUser={currentUser} 
+            userStatus={userStatus}
+            setUserStatus={setUserStatus}
+            onLogout={handleLogout} 
+            managersList={managersList} 
+            setManagersList={setManagersList} 
+          />
+        )}
+      </div>
+      <UniversalModal />
+    </ModalProvider>
   )
 }
 
 export default App
-

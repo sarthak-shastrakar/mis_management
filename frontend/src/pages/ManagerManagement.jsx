@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api/api';
+import { useModal } from '../context/ModalContext';
 
 const ManagerManagement = () => {
   const [managersList, setManagersList] = useState([]);
   const [projectsList, setProjectsList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { showConfirm, showAlert } = useModal();
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [viewOnly, setViewOnly] = useState(false);
@@ -86,7 +88,11 @@ const ManagerManagement = () => {
           fetchManagers();
         }
       } catch (err) {
-        alert(err.response?.data?.message || 'Failed to update manager');
+        showAlert({
+          title: 'Update Failed',
+          message: err.response?.data?.message || 'Access modification protocol failed',
+          variant: 'danger'
+        });
       }
       return;
     }
@@ -109,7 +115,11 @@ const ManagerManagement = () => {
         fetchManagers();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to create manager');
+      showAlert({
+        title: 'Provisioning Failed',
+        message: err.response?.data?.message || 'Initial access authorization failed',
+        variant: 'danger'
+      });
     }
   };
 
@@ -150,16 +160,24 @@ const ManagerManagement = () => {
   };
 
   const handleDeleteManager = async (id) => {
-    if (window.confirm('Are you sure you want to delete this manager? This action is irreversible.')) {
-      try {
-        const response = await API.delete(`/admin/managers/${id}`);
-        if (response.data.success) {
-          fetchManagers();
+    showConfirm({
+      title: 'Revoke Access',
+      message: 'Are you sure you want to delete this manager? This action is irreversible and will purge all administrative privileges.',
+      onConfirm: async () => {
+        try {
+          const response = await API.delete(`/admin/managers/${id}`);
+          if (response.data.success) {
+            fetchManagers();
+          }
+        } catch (err) {
+          showAlert({
+            title: 'Revocation Failed',
+            message: err.response?.data?.message || 'Failed to delete manager record',
+            variant: 'danger'
+          });
         }
-      } catch (err) {
-        alert(err.response?.data?.message || 'Failed to delete manager');
       }
-    }
+    });
   };
 
   return (
@@ -317,7 +335,11 @@ const ManagerManagement = () => {
                       onClick={() => {
                         const text = `MIS Management - Manager Credentials\n\nName: ${managerForm.fullName}\nUsername: ${managerForm.username}\nPassword: ${managerForm.password}\nLogin: ${window.location.origin}/login`;
                         navigator.clipboard.writeText(text);
-                        alert('📋 Details locked to clipboard!');
+                        showAlert({
+                          title: 'Data Locked',
+                          message: 'Terminal credentials successfully copied to clipboard.',
+                          variant: 'success'
+                        });
                       }}
                       className="flex-1 h-16 bg-white border border-slate-200 text-slate-900 font-black rounded-2xl text-[11px] uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-slate-50 transition-all shadow-sm"
                     >
