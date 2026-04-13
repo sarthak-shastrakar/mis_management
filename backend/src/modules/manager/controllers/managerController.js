@@ -623,9 +623,12 @@ exports.getProjectDetails = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
 
-    // Security: Allow if manager is owner OR explicitly assigned
+    // Security: check if this project is assigned to the manager (fetch fresh from DB)
+    const Manager = require('../models/managerModel');
+    const managerDoc = await Manager.findById(req.user.id).select('assignedProjects');
+    const isAssigned = managerDoc && managerDoc.assignedProjects &&
+      managerDoc.assignedProjects.some(pid => pid.toString() === project._id.toString());
     const isOwner = project.manager && project.manager.toString() === req.user.id;
-    const isAssigned = req.user.assignedProjects && req.user.assignedProjects.some(pid => pid.toString() === project._id.toString());
 
     if (!isOwner && !isAssigned) {
       return res.status(401).json({ success: false, message: 'Not authorized to view this project' });
