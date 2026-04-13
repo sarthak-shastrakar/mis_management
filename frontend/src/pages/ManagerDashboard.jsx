@@ -265,15 +265,26 @@ const ManagerDashboard = ({ onNavigate }) => {
                     <p className="text-sm font-bold text-slate-700">{req.projectName}</p>
                   </td>
                   <td className="py-8 px-4 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                       <span className="px-3 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-black border border-purple-100">{req.requestedDates.length} Days</span>
-                       <div className="flex flex-wrap gap-1 justify-center max-w-[150px]">
-                          {req.requestedDates.slice(0, 3).map(d => (
-                             <span key={d} className="text-[8px] font-bold text-slate-400">{new Date(d).toLocaleDateString()}</span>
-                          ))}
-                          {req.requestedDates.length > 3 && <span className="text-[8px] font-bold text-slate-400">+{req.requestedDates.length - 3} more</span>}
-                       </div>
-                    </div>
+                    {(() => {
+                      const sorted = [...req.requestedDates].map(d => new Date(d)).sort((a, b) => a - b);
+                      const fmt = (d) => d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+                      const isConsecutive = sorted.every((d, i) => i === 0 || (d - sorted[i-1]) === 86400000);
+                      return (
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="px-3 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-black border border-purple-100">{req.requestedDates.length} Days</span>
+                          {isConsecutive && sorted.length > 1 ? (
+                            <span className="text-[10px] font-bold text-slate-500">{fmt(sorted[0])} – {fmt(sorted[sorted.length - 1])}</span>
+                          ) : (
+                            <div className="flex flex-wrap gap-1 justify-center max-w-[160px]">
+                              {sorted.slice(0, 4).map((d, i) => (
+                                <span key={i} className="text-[9px] font-bold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded-md border border-slate-100">{fmt(d)}</span>
+                              ))}
+                              {sorted.length > 4 && <span className="text-[9px] font-bold text-slate-400">+{sorted.length - 4} more</span>}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="py-8 px-4">
                     <p className="text-xs font-bold text-slate-500 italic max-w-xs leading-relaxed">"{req.reason || 'Verification required'}"</p>

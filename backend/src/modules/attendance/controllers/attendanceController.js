@@ -352,29 +352,67 @@ exports.approveBulkRequest = async (req, res) => {
     request.approvedAt = new Date();
     await request.save();
 
-    // 2. Automatically create Attendance records for each requested date
-    const attendancePromises = request.requestedDates.map(date => {
-      return Attendance.create({
-        trainerId: request.trainerId,
-        projectId: request.projectId,
-        date: date,
-        status: 'approved',
-        requiresApproval: false,
-        remarks: 'Directly marked via Bulk Approval Request',
-        location: {
-          latitude: 0,
-          longitude: 0,
-          type: 'Point',
-          coordinates: [0, 0]
-        }
-      });
+    // 2. Resolve the project to get its ObjectId (attendance may be stored with ObjectId OR custom string)
+    const foundProject = await Project.findOne({
+      $or: [
+        { projectId: request.projectId },
+        { _id: mongoose.Types.ObjectId.isValid(request.projectId) ? request.projectId : null }
+      ].filter(q => Object.values(q)[0] !== null)
     });
 
-    await Promise.all(attendancePromises);
+    // Build all possible projectId variants used when storing attendance
+    const projectIdVariants = [request.projectId];
+    if (foundProject) {
+      projectIdVariants.push(String(foundProject._id));
+      if (foundProject.projectId && !projectIdVariants.includes(foundProject.projectId)) {
+        projectIdVariants.push(foundProject.projectId);
+      }
+    }
+
+    // 3. Auto-create attendance records for each requested date
+    // We try to find existing record with ANY known projectId variant, then upsert with the string projectId
+    let created = 0;
+    let skipped = 0;
+
+    for (const rawDate of request.requestedDates) {
+      const attendanceDate = new Date(rawDate);
+      attendanceDate.setHours(0, 0, 0, 0);
+
+      // Check if attendance already exists (by any projectId variant)
+      const existing = await Attendance.findOne({
+        trainerId: request.trainerId,
+        projectId: { $in: projectIdVariants },
+        date: attendanceDate
+      });
+
+      if (existing) {
+        skipped++;
+        continue; // Already exists — skip silently
+      }
+
+      try {
+        await Attendance.create({
+          trainerId: request.trainerId,
+          projectId: request.projectId, // Store as custom string (consistent with BulkRequest)
+          date: attendanceDate,
+          status: 'approved',
+          requiresApproval: false,
+          approvedBy: req.user.id,
+          approvedAt: new Date(),
+          remarks: `Bulk approved by manager — ${request.remarks || ''}`.trim(),
+          photos: [],
+          videos: [],
+        });
+        created++;
+      } catch (dupErr) {
+        // Silently skip any remaining race-condition duplicates
+        skipped++;
+      }
+    }
 
     res.status(200).json({
       success: true,
-      message: 'Bulk Request approved and attendance records generated.',
+      message: `Bulk Request approved. ${created} attendance record(s) created, ${skipped} already existed.`,
       data: request
     });
   } catch (err) {
