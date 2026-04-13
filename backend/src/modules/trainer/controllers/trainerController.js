@@ -211,8 +211,10 @@ exports.getTrainer = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Trainer not found' });
     }
 
-    // Ownership check for managers
-    if (req.user.role === 'manager' && String(trainer.createdBy) !== req.user.id) {
+    // Ownership check for managers (allow if creator OR reporting manager)
+    if (req.user.role === 'manager' && 
+        String(trainer.createdBy) !== req.user.id && 
+        String(trainer.reportingManager) !== req.user.id) {
       return res.status(403).json({ success: false, message: 'You are not authorized to view this trainer' });
     }
 
@@ -254,8 +256,10 @@ exports.updateTrainer = async (req, res) => {
     let trainer = await Trainer.findById(req.params.id);
     if (!trainer) return res.status(404).json({ success: false, message: 'Trainer not found' });
 
-    // Ownership check for managers
-    if (req.user.role === 'manager' && String(trainer.createdBy) !== req.user.id) {
+    // Ownership check for managers (allow if creator OR reporting manager)
+    if (req.user.role === 'manager' && 
+        String(trainer.createdBy) !== req.user.id && 
+        String(trainer.reportingManager) !== req.user.id) {
       return res.status(403).json({ success: false, message: 'You are not authorized to update this trainer' });
     }
 
@@ -316,8 +320,10 @@ exports.deleteTrainer = async (req, res) => {
     const trainer = await Trainer.findById(req.params.id);
     if (!trainer) return res.status(404).json({ success: false, message: 'Trainer not found' });
 
-    // Ownership check for managers
-    if (req.user.role === 'manager' && String(trainer.createdBy) !== req.user.id) {
+    // Ownership check for managers (allow if creator OR reporting manager)
+    if (req.user.role === 'manager' && 
+        String(trainer.createdBy) !== req.user.id && 
+        String(trainer.reportingManager) !== req.user.id) {
       return res.status(403).json({ success: false, message: 'You are not authorized to delete this trainer' });
     }
 
