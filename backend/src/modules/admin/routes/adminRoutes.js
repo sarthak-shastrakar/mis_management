@@ -26,6 +26,12 @@ const {
   exchangeTrainerProject,
 } = require("../controllers/adminController");
 const { 
+  addExpense,
+  getProjectExpenses,
+  deleteExpense,
+  updateProjectFinancials
+} = require("../controllers/expenseController");
+const { 
   addNewTrainer 
 } = require("../../trainer/controllers/trainerController");
 const { 
@@ -59,6 +65,17 @@ router.route("/projects/:id")
   .get(protect, adminOnly, getProject)
   .put(protect, adminOnly, updateProject)
   .delete(protect, adminOnly, deleteProject);
+
+router.put("/projects/:id/financials", protect, adminOnly, updateProjectFinancials);
+
+// Expense Routes
+router.route("/expenses")
+  .post(protect, adminOnly, addExpense);
+
+router.route("/expenses/:projectId")
+  .get(protect, adminOnly, getProjectExpenses);
+
+router.delete("/expenses/record/:id", protect, adminOnly, deleteExpense);
 
 // ─────────────────────────────────────────────
 // Manager CRUD

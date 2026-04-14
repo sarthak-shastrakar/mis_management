@@ -20,6 +20,7 @@ const Sidebar = ({ currentRole, activePage, setActivePage, onLogout, isOpen, onC
     { id: 'dashboard',  label: 'Dashboard',  icon: '📊' },
     { id: 'projects',   label: 'Projects',   icon: '📁' },
     ...(currentRole === 'admin'   ? [{ id: 'managers',  label: 'Managers',  icon: '👔' }] : []),
+    ...(currentRole === 'admin'   ? [{ id: 'expenses',  label: 'Expenses',  icon: '💸' }] : []),
     ...(currentRole !== 'trainer' ? [{ id: 'trainers',  label: 'Trainers',  icon: '👥' }] : []),
     { id: 'attendance', label: 'Attendance', icon: '📅' },
     ...(currentRole !== 'admin'   ? [{ id: 'profile',   label: 'My Profile', icon: '👤' }] : []),
