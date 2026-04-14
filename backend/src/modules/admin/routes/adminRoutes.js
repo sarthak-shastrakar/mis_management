@@ -29,7 +29,8 @@ const {
   addExpense,
   getProjectExpenses,
   deleteExpense,
-  updateProjectFinancials
+  updateProjectFinancials,
+  updateExpense
 } = require("../controllers/expenseController");
 const { 
   addNewTrainer 
