@@ -586,28 +586,41 @@ exports.getAssignedProjects = async (req, res, next) => {
     const Project = require('../../project/models/projectModel');
     let rawProjects;
 
+    const managerId = new mongoose.Types.ObjectId(req.user.id);
+
     if (req.user.role === 'trainer') {
       const trainer = await Trainer.findById(req.user.id).populate('assignedProjects');
       rawProjects = (trainer && trainer.assignedProjects) ? trainer.assignedProjects : [];
     } else {
-      // Find all projects where this manager is assigned
-      rawProjects = await Project.find({ manager: req.user.id });
+      // DUAL CHECK LOGIC:
+      // 1. Projects where this manager is the primary contact
+      // 2. Projects in this manager's assignedProjects list (fallback)
+      const currentManager = await Manager.findById(managerId).populate('assignedProjects');
+      const listFromManager = currentManager ? currentManager.assignedProjects : [];
+      
+      const listFromProject = await Project.find({ manager: managerId }).populate('manager', 'fullName managerId emailAddress');
+      
+      // Merge unique projects
+      const combined = [...listFromProject];
+      listFromManager.forEach(p => {
+        if (!combined.some(cp => cp._id.toString() === p._id.toString())) {
+          combined.push(p);
+        }
+      });
+      
+      rawProjects = combined;
     }
     
-    // Standardize the response format
+    // Standardize the response format to match Admin's response
     const projects = rawProjects.map(p => ({
+      ...p._doc,
       _id: p._id,
-      projectId: p._id,
-      name: p.name,
-      category: p.projectCategory,
-      workOrderNo: p.workOrderNo,
-      status: p.status,
-      address: p.projectAddress,
-      location: p.location,
-      startDate: p.startDate,
-      endDate: p.endDate,
-      progress: p.progressStatus,
-      isLocked: p.isLocked
+      id: p.projectId || p._id.toString().slice(-6).toUpperCase(),
+      mongoId: p._id,
+      managerName: p.manager ? (p.manager.fullName || p.manager) : 'Assigned to You',
+      managerPopulated: p.manager,
+      displayLocation: p.location ? `${p.location.village}, ${p.location.district}` : 'N/A',
+      statusDisplay: p.status === 'active' ? 'Active' : 'Closed'
     }));
 
     res.status(200).json({
@@ -617,6 +630,40 @@ exports.getAssignedProjects = async (req, res, next) => {
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Delete Project (Manager self-service)
+// @route   DELETE /api/v1/manager/projects/:id
+// @access  Private (Manager only)
+exports.deleteProject = async (req, res, next) => {
+  try {
+    const Project = require('../../project/models/projectModel');
+    const project = await Project.findById(req.params.id);
+
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found' });
+    }
+
+    // Security check: Only manager assigned to this project can delete it
+    if (project.manager && project.manager.toString() !== req.user.id) {
+      return res.status(401).json({ success: false, message: 'Not authorized to delete this project' });
+    }
+
+    await Project.deleteOne({ _id: req.params.id });
+    
+    // Also remove from Manager's assigned list
+    await Manager.updateMany(
+      { assignedProjects: req.params.id },
+      { $pull: { assignedProjects: req.params.id } }
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {}
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
   }
 };
 

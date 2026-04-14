@@ -16,60 +16,75 @@ import MarkAttendance from '../pages/MarkAttendance';
 import TrainerHistory from '../pages/TrainerHistory';
 import ManagerProfile from '../pages/ManagerProfile';
 
+// Sidebar is w-[260px] = 260px
+const SIDEBAR_OFFSET = 'lg:pl-[260px]';
+
 const Layout = ({ currentRole, currentUser, userStatus, setUserStatus, onLogout, managersList, setManagersList }) => {
-  const [activePage, setActivePage] = useState('dashboard');
-  const [pageProps, setPageProps] = useState({});
+  const [activePage, setActivePage]   = useState('dashboard');
+  const [pageProps, setPageProps]     = useState({});
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleNavigate = (page, props = {}) => {
     setActivePage(page);
     setPageProps(props);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // If trainer and not in dashboard status, force onboarding
+  // Trainer onboarding gate
   if (currentRole === 'trainer' && userStatus !== 'DASHBOARD') {
     return (
-      <TrainerOnboarding 
-        userStatus={userStatus} 
-        onComplete={(newStatus) => setUserStatus(newStatus)} 
-        onLogout={onLogout} 
+      <TrainerOnboarding
+        userStatus={userStatus}
+        onComplete={(newStatus) => setUserStatus(newStatus)}
+        onLogout={onLogout}
       />
     );
   }
 
   return (
     <div className="flex bg-slate-50 min-h-screen">
-      {/* Sidebar - Fixed */}
+
+      {/* Sidebar */}
       <Sidebar
         currentRole={currentRole}
         activePage={activePage}
         setActivePage={(page) => handleNavigate(page)}
         onLogout={onLogout}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
 
-      {/* Main Content Area */}
-      <div className="flex-1 ml-64 min-h-screen">
+      {/* Main content — shifts right by sidebar width on lg+ */}
+      <div className={`flex-1 flex flex-col min-h-screen ${SIDEBAR_OFFSET} w-full`}>
+
         <Header
           currentRole={currentRole}
           activePage={activePage}
           currentUser={currentUser}
+          onMenuToggle={() => setSidebarOpen(true)}
         />
 
-        <main className="p-10">
-          <div className="max-w-[1400px] mx-auto">
+        {/* Page content */}
+        <main className="flex-1 w-full p-3 sm:p-5 md:p-6 lg:p-8">
+          <div className="w-full max-w-[1400px] mx-auto">
+
+            {/* Dashboard */}
             {activePage === 'dashboard' && (
-              currentRole === 'admin' ? <AdminDashboard onAddManager={(mgr) => setManagersList(prev => [mgr, ...prev])} onNavigate={handleNavigate} /> : 
-              currentRole === 'manager' ? <ManagerDashboard onNavigate={handleNavigate} /> :
-              <TrainerDashboard />
+              currentRole === 'admin'
+                ? <AdminDashboard onAddManager={(mgr) => setManagersList(prev => [mgr, ...prev])} onNavigate={handleNavigate} />
+                : currentRole === 'manager'
+                  ? <ManagerDashboard onNavigate={handleNavigate} />
+                  : <TrainerDashboard />
             )}
-            {activePage === 'projects' && <ProjectManagement currentRole={currentRole} onNavigate={handleNavigate} />}
-            {activePage === 'managers' && currentRole === 'admin' && <ManagerManagement managersList={managersList} setManagersList={setManagersList} />}
-            {activePage === 'trainers' && <TrainerManagement currentRole={currentRole} onNavigate={handleNavigate} />}
-            {activePage === 'attendance' && <AttendanceManagement currentRole={currentRole} currentUser={currentUser} />}
-            {activePage === 'mark-attendance' && <MarkAttendance currentRole={currentRole} currentUser={currentUser} />}
-            {activePage === 'my-history' && <TrainerHistory currentRole={currentRole} currentUser={currentUser} />}
-            {activePage === 'profile' && (
-              currentRole === 'manager' ? <ManagerProfile /> : <TrainerProfile />
-            )}
+
+            {activePage === 'projects'          && <ProjectManagement currentRole={currentRole} onNavigate={handleNavigate} />}
+            {activePage === 'managers'          && currentRole === 'admin' && <ManagerManagement managersList={managersList} setManagersList={setManagersList} />}
+            {activePage === 'trainers'          && <TrainerManagement currentRole={currentRole} onNavigate={handleNavigate} />}
+            {activePage === 'attendance'        && <AttendanceManagement currentRole={currentRole} currentUser={currentUser} />}
+            {activePage === 'mark-attendance'   && <MarkAttendance currentRole={currentRole} currentUser={currentUser} />}
+            {activePage === 'my-history'        && <TrainerHistory currentRole={currentRole} currentUser={currentUser} />}
+            {activePage === 'profile'           && (currentRole === 'manager' ? <ManagerProfile /> : <TrainerProfile />)}
+
             {activePage === 'project-detail' && (
               <ProjectDetail
                 projectId={pageProps.projectId}
@@ -77,6 +92,7 @@ const Layout = ({ currentRole, currentUser, userStatus, setUserStatus, onLogout,
                 onBack={() => handleNavigate('projects')}
               />
             )}
+
             {activePage === 'trainer-detail' && (
               <TrainerDetail
                 trainerId={pageProps.trainerId}
@@ -85,19 +101,21 @@ const Layout = ({ currentRole, currentUser, userStatus, setUserStatus, onLogout,
                 onBack={() => handleNavigate('trainers')}
               />
             )}
-            {!['dashboard', 'projects', 'managers', 'trainers', 'attendance', 'project-detail', 'trainer-detail', 'profile', 'mark-attendance', 'my-history'].includes(activePage) && (
-              <div className="flex flex-col items-center justify-center h-[60vh] text-center border-2 border-dashed border-slate-200 rounded-3xl bg-white shadow-sm">
-                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-3xl mb-4">📁</div>
-                <h3 className="text-xl font-bold mb-2 text-slate-900">Coming Soon</h3>
-                <p className="text-slate-500">This module is under development.</p>
+
+            {/* 404 fallback */}
+            {!['dashboard','projects','managers','trainers','attendance','project-detail','trainer-detail','profile','mark-attendance','my-history'].includes(activePage) && (
+              <div className="flex flex-col items-center justify-center min-h-[60vh] text-center border-2 border-dashed border-slate-200 rounded-3xl bg-white shadow-sm p-10">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-50 rounded-full flex items-center justify-center text-3xl sm:text-4xl mb-4">📁</div>
+                <h3 className="text-lg sm:text-xl font-black mb-2 text-slate-900">Coming Soon</h3>
+                <p className="text-sm text-slate-500">This module is under development.</p>
               </div>
             )}
+
           </div>
         </main>
       </div>
     </div>
   );
 };
-
 
 export default Layout;

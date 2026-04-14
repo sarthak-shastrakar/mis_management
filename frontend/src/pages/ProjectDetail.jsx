@@ -26,20 +26,24 @@ const Field = ({ label, value, editMode, onChange, type = 'text', options }) => 
     }
     return (
       <div>
-        <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-1.5">{label}</label>
-        <input type={type} value={value} onChange={e => onChange(e.target.value)} className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all" />
+        <label className="block text-xs font-black text-slate-800 uppercase tracking-widest mb-1.5">{label}</label>
+        <input type={type} value={value} onChange={e => onChange(e.target.value)} className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 placeholder:text-slate-600 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all" />
       </div>
     );
   }
   return (
     <div>
-      <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest mb-1">{label}</p>
+      <p className="text-[10px] font-black text-slate-900 uppercase tracking-widest mb-1">{label}</p>
       <p className="text-sm font-bold text-slate-900">{value || '—'}</p>
     </div>
   );
 };
 
 const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  const isAdmin = user?.role === 'admin';
+  const isManager = user?.role === 'manager';
+
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(initialEditMode);
@@ -50,8 +54,6 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
 
   const fetchProject = async () => {
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      const isAdmin = user?.role === 'admin';
       const endpoint = isAdmin ? `/admin/projects/${projectId}` : `/manager/projects/${projectId}`;
 
       const response = await API.get(endpoint);
@@ -67,9 +69,6 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
 
   const handleUpdate = async () => {
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      const isManager = user?.role === 'manager';
-
       let response;
       if (isManager) {
         response = await API.put(`/manager/projects/${projectId}/setup`, project);
@@ -90,14 +89,14 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
   if (loading) return (
     <div className="flex flex-col items-center justify-center h-60 space-y-4">
       <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-      <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Loading project details...</p>
+      <p className="text-xs font-black text-slate-700 uppercase tracking-widest">Loading project details...</p>
     </div>
   );
 
   if (!project) return (
     <div className="flex flex-col items-center justify-center h-60 text-center">
       <p className="text-4xl mb-4">🚫</p>
-      <p className="text-sm font-black text-slate-400 uppercase tracking-widest">Project Not Found</p>
+      <p className="text-sm font-black text-slate-700 uppercase tracking-widest">Project Not Found</p>
       <button onClick={onBack} className="mt-4 px-6 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest">Back to Page</button>
     </div>
   );
@@ -105,17 +104,17 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
   return (
     <div className="space-y-8">
       {/* Top Bar */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-6">
-          <button onClick={onBack} className="w-12 h-12 flex items-center justify-center bg-white border border-slate-200 rounded-2xl transition-all text-slate-600 font-bold text-xl shadow-sm">
+      <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <button onClick={onBack} className="w-10 h-10 flex-shrink-0 flex items-center justify-center bg-white border border-slate-200 rounded-2xl transition-all text-slate-600 font-bold text-xl shadow-sm">
             <span>✕</span>
           </button>
-          <div>
-            <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.4em] mb-1">{project.workOrderNo || 'NO-WO-ID'}</p>
-            <h2 className="text-3xl font-black text-slate-900 tracking-tight">{project.name}</h2>
+          <div className="min-w-0">
+            <p className="text-[10px] font-black text-slate-900 uppercase tracking-[0.4em] mb-1 truncate">{project.workOrderNo || 'NO-WO-ID'}</p>
+            <h2 className="text-xl md:text-3xl font-black text-slate-900 tracking-tight truncate">{project.name}</h2>
           </div>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-3 flex-wrap">
           {(() => {
             const user = JSON.parse(localStorage.getItem('user'));
             const isAdmin = user?.role === 'admin';
@@ -197,31 +196,39 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
       {/* Main Detail Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
         {/* Core Details */}
-        <div className="xl:col-span-2 bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm">
-          <div className="flex items-center gap-3 mb-8 pb-6 border-b border-slate-50">
+        <div className="xl:col-span-2 bg-white rounded-3xl sm:rounded-[2.5rem] border border-slate-100 p-6 sm:p-10 shadow-sm">
+          <div className="flex items-center gap-3 mb-6 sm:mb-8 pb-6 border-b border-slate-50">
             <span className="w-1.5 h-6 bg-blue-600 rounded-full"></span>
             <h3 className="text-lg font-black text-slate-900">Project Details</h3>
           </div>
-          <div className="grid grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
             <Field label="Project Name" value={project.name} editMode={editMode} onChange={v => setProject({ ...project, name: v })} />
             <Field label="Work Order No" value={project.workOrderNo} editMode={editMode} onChange={v => setProject({ ...project, workOrderNo: v })} />
             <Field label="Category" value={project.projectCategory} editMode={editMode} options={['PMAY-G STT Mode', 'PMAY-G RPL Mode', 'MoRTH RPL', 'BoCW RPL', 'None']} onChange={v => setProject({ ...project, projectCategory: v })} />
             <Field label="District" value={project.location?.district} editMode={editMode} onChange={v => setProject({ ...project, location: { ...project.location, district: v } })} />
             <Field label="Target" value={project.allocatedTarget} editMode={editMode} type="number" onChange={v => setProject({ ...project, allocatedTarget: v })} />
             <Field label="Hours" value={project.trainingHours} editMode={editMode} options={['360', '390', '72', '168', '120']} onChange={v => setProject({ ...project, trainingHours: v })} />
-            <Field label="Rate per Hour" value={project.trainingCostPerHour} editMode={editMode} options={['38.5', '46.5', '53.5']} onChange={v => setProject({ ...project, trainingCostPerHour: v })} />
-            <Field label="Total Budget (Lakhs)" value={project.totalProjectCost} editMode={editMode} type="number" onChange={v => setProject({ ...project, totalProjectCost: v })} />
+            
+            {isAdmin && (
+              <>
+                <Field label="Rate per Hour" value={project.trainingCostPerHour} editMode={editMode} options={['38.5', '46.5', '53.5']} onChange={v => setProject({ ...project, trainingCostPerHour: v })} />
+                <Field label="Total Budget" value={project.totalProjectCost} editMode={editMode} type="number" onChange={v => setProject({ ...project, totalProjectCost: v })} />
+              </>
+            )}
+
+            <Field label="Project Expenses" value={project.expenses} editMode={editMode} type="number" onChange={v => setProject({ ...project, expenses: v })} />
 
             <Field label="Start Date" value={project.startDate?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({ ...project, startDate: v })} />
             <Field label="End Date" value={project.endDate?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({ ...project, endDate: v })} />
+            
             <Field
               label="Operational Status"
               value={project.status}
-              editMode={editMode}
+              editMode={isAdmin ? editMode : false}
               options={['Active', 'Closed']}
               onChange={v => setProject({ ...project, status: v })}
             />
-            <div className="col-span-2">
+            <div className="col-span-1 sm:col-span-2">
               {editMode ? (
                 <div>
                   <label className="block text-xs font-black text-slate-600 uppercase tracking-widest mb-1.5">Description</label>
@@ -229,7 +236,7 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
                 </div>
               ) : (
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Description</p>
+                  <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-1.5">Description</p>
                   <p className="text-sm font-bold text-slate-700 leading-relaxed">{project.description || 'No description provided.'}</p>
                 </div>
               )}
@@ -240,30 +247,32 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
         {/* Side Panel */}
         <div className="space-y-8">
           {/* Manager Info */}
-          <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-[0.03] transition-all transform">
-              <span className="text-8xl">👔</span>
-            </div>
-            <h3 className="text-base font-black text-slate-900 mb-6 pb-4 border-b border-slate-50">Manager</h3>
-            <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-black text-2xl shadow-xl">
-                {project.manager?.fullName?.charAt(0) || 'M'}
+          {isAdmin && (
+            <div className="bg-white rounded-3xl sm:rounded-[2.5rem] border border-slate-100 p-8 sm:p-10 shadow-sm relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 opacity-[0.03] transition-all transform">
+                <span className="text-8xl">👔</span>
               </div>
-              <div>
-                <p className="font-black text-slate-900 text-lg">{project.manager?.fullName || 'Not Assigned'}</p>
-                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">{project.manager?.managerId || 'NO-ID'}</p>
+              <h3 className="text-base font-black text-slate-900 mb-6 pb-4 border-b border-slate-50">Manager</h3>
+              <div className="flex items-center gap-5">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-black text-xl sm:text-2xl shadow-xl">
+                  {project.manager?.fullName?.charAt(0) || 'M'}
+                </div>
+                <div>
+                  <p className="font-black text-slate-900 text-base sm:text-lg">{project.manager?.fullName || 'Not Assigned'}</p>
+                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">{project.manager?.managerId || 'NO-ID'}</p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Logistics Timeline */}
-          <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm">
+          <div className="bg-white rounded-3xl sm:rounded-[2.5rem] border border-slate-100 p-8 sm:p-10 shadow-sm">
             <h3 className="text-base font-black text-slate-900 mb-6 pb-4 border-b border-slate-50">Timeline</h3>
             <div className="space-y-6">
               <div className="flex items-center gap-4">
                 <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-lg shadow-emerald-500/20"></div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Start Date</p>
+                  <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-0.5">Start Date</p>
                   <p className="text-sm font-black text-slate-800">{new Date(project.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                 </div>
               </div>
@@ -271,7 +280,7 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
               <div className="flex items-center gap-4">
                 <div className="w-3 h-3 rounded-full bg-rose-500 shadow-lg shadow-rose-500/20"></div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">End Date</p>
+                  <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-0.5">End Date</p>
                   <p className="text-sm font-black text-slate-800">{new Date(project.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                 </div>
               </div>

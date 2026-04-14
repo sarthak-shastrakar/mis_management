@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import API from '../api/api';
 import { useModal } from '../context/ModalContext';
+import SearchableDropdown from '../components/SearchableDropdown';
+import { statesAndDistricts } from '../data/indiaData';
 
 const statusColors = {
   Active: 'bg-emerald-100 text-emerald-700',
@@ -40,10 +42,13 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
     endDate: '',
     managerId: '',
     description: '',
-    location: { state: 'Maharashtra', district: '', taluka: '', village: '' }
+    location: { state: '', district: '', taluka: '', village: '' }
   });
 
   const [editingId, setEditingId] = useState(null);
+
+  const states = Object.keys(statesAndDistricts);
+  const districts = formData.location.state ? statesAndDistricts[formData.location.state] : [];
 
   // Assign Trainer States
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -217,7 +222,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
       installment2Date: '',
       maxDemonstrators: '1',
       projectAddress: '',
-      location: { state: 'Maharashtra', district: '', taluka: '', village: '' }
+      location: { state: '', district: '', taluka: '', village: '' }
     });
   };
 
@@ -244,7 +249,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
       installment2Date: prj.installment2Date ? prj.installment2Date.split('T')[0] : '',
       maxDemonstrators: prj.maxDemonstrators || '1',
       projectAddress: prj.projectAddress || '',
-      location: prj.location || { state: 'Maharashtra', district: '', taluka: '', village: '' }
+      location: prj.location || { state: '', district: '', taluka: '', village: '' }
     });
     setShowModal(true);
   };
@@ -262,31 +267,31 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col border border-white">
-            <div className="px-10 py-8 bg-gradient-to-r from-blue-600 to-indigo-700 text-white flex justify-between items-center shrink-0 shadow-lg">
+            <div className="px-6 sm:px-10 py-6 sm:py-8 bg-gradient-to-r from-blue-600 to-indigo-700 text-white flex justify-between items-center shrink-0 shadow-lg">
               <div>
-                <h2 className="text-3xl font-black tracking-tight">{editingId ? 'Edit Project' : 'Add New Project'}</h2>
-                <p className="text-blue-100/80 font-bold text-xs uppercase tracking-[0.2em] mt-1">Project Details</p>
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight">{editingId ? 'Edit Project' : 'Add New Project'}</h2>
+                <p className="text-blue-100/80 font-bold text-[10px] sm:text-xs uppercase tracking-[0.2em] mt-1">Project Details</p>
               </div>
-              <button type="button" onClick={() => setShowModal(false)} className="w-12 h-12 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-center transition-all">
-                <span className="text-2xl">✕</span>
+              <button type="button" onClick={() => setShowModal(false)} className="w-10 h-10 sm:w-12 sm:h-12 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-center transition-all">
+                <span className="text-xl sm:text-2xl">✕</span>
               </button>
             </div>
 
-            <form onSubmit={handleCreateProject} className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar bg-slate-50/20">
+            <form onSubmit={handleCreateProject} className="flex-1 overflow-y-auto p-6 sm:p-10 space-y-8 sm:space-y-10 custom-scrollbar bg-slate-50/20">
               {/* Section 1: Core Info */}
               <div className="space-y-6">
-                <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center gap-3 mb-4 sm:mb-6">
                   <span className="w-2 h-7 bg-blue-600 rounded-full shadow-lg shadow-blue-500/20"></span>
-                  <h3 className="text-xl font-black text-slate-900">General Information</h3>
+                  <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">General Information</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="md:col-span-2">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Project Name</label>
-                    <input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 shadow-sm transition-all" placeholder="Enter Project Name" />
+                    <input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 shadow-sm transition-all" placeholder="Enter Project Name" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Category</label>
-                    <select value={formData.projectCategory} onChange={e => setFormData({ ...formData, projectCategory: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm focus:ring-4 focus:ring-blue-500/5">
+                    <select value={formData.projectCategory} onChange={e => setFormData({ ...formData, projectCategory: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm focus:ring-4 focus:ring-blue-500/5">
                       <option value="PMAY-G STT Mode">PMAY-G STT Mode</option>
                       <option value="PMAY-G RPL Mode">PMAY-G RPL Mode</option>
                       <option value="MoRTH RPL">MoRTH RPL</option>
@@ -296,33 +301,34 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                   </div>
                   <div>
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Work Order No</label>
-                    <input value={formData.workOrderNo} onChange={e => setFormData({ ...formData, workOrderNo: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" placeholder="e.g. WO-MSRLM-2026-001" />
+                    <input value={formData.workOrderNo} onChange={e => setFormData({ ...formData, workOrderNo: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm" placeholder="e.g. WO-MSRLM-2026-001" />
                   </div>
                 </div>
               </div>
 
               {/* Section 2: Logistics & Finance */}
               <div className="space-y-6">
-                <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center gap-3 mb-4 sm:mb-6">
                   <span className="w-2 h-7 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/20"></span>
-                  <h3 className="text-xl font-black text-slate-900">Project Details</h3>
+                  <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Project Details</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  <div className="col-span-1">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Target</label>
-                    <input type="number" value={formData.allocatedTarget} onChange={e => setFormData({ ...formData, allocatedTarget: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" placeholder="000" />
+                    <input type="number" value={formData.allocatedTarget} onChange={e => setFormData({ ...formData, allocatedTarget: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm" placeholder="000" />
                   </div>
-                  <div>
+                  <div className="col-span-1">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Hours</label>
-                    <select value={formData.trainingHours} onChange={e => setFormData({ ...formData, trainingHours: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm">
+                    <select value={formData.trainingHours} onChange={e => setFormData({ ...formData, trainingHours: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm">
                       {[360, 390, 72, 168, 120].map(h => <option key={h} value={h}>{h} Hours</option>)}
                     </select>
                   </div>
-                  <div>
+                  <div className="sm:col-span-2 md:col-span-1">
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Total Budget (Lakhs)</label>
-                    <input type="number" step="0.01" value={formData.totalProjectCost} onChange={e => setFormData({ ...formData, totalProjectCost: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm" placeholder="e.g. 45.50" />
+                    <input type="number" step="0.01" value={formData.totalProjectCost} onChange={e => setFormData({ ...formData, totalProjectCost: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm" placeholder="e.g. 45.50" />
                   </div>
                   <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Start Date</label>
                     <input 
                       ref={startDateRef}
                       type="date" 
@@ -332,10 +338,11 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                         try { startDateRef.current?.showPicker(); }
                         catch (e) { startDateRef.current?.click(); }
                       }}
-                      className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm cursor-pointer" 
+                      className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm cursor-pointer" 
                     />
                   </div>
                   <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">End Date</label>
                     <input 
                       ref={endDateRef}
                       type="date" 
@@ -345,18 +352,61 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                         try { endDateRef.current?.showPicker(); }
                         catch (e) { endDateRef.current?.click(); }
                       }}
-                      className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 shadow-sm cursor-pointer" 
+                      className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm cursor-pointer" 
                     />
                   </div>
                   {currentRole === 'admin' && (
-                    <div>
-                       <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Manager</label>
-                      <select value={formData.managerId} onChange={e => setFormData({ ...formData, managerId: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-xs font-bold text-slate-900 shadow-sm">
+                    <div className="col-span-1 sm:col-span-2 md:col-span-1">
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Manager</label>
+                      <select value={formData.managerId} onChange={e => setFormData({ ...formData, managerId: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[11px] sm:text-xs font-black text-slate-900 shadow-sm uppercase tracking-widest">
                         <option value="">Select Manager</option>
                         {managersList.map(m => <option key={m._id} value={m._id}>{m.fullName}</option>)}
                       </select>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Section 3: Location Information */}
+              <div className="space-y-6 pb-10">
+                <div className="flex items-center gap-3 mb-4 sm:mb-6">
+                  <span className="w-2 h-7 bg-amber-500 rounded-full shadow-lg shadow-amber-500/20"></span>
+                  <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Location Information</h3>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <SearchableDropdown 
+                    label="State"
+                    placeholder="Select State"
+                    options={states}
+                    value={formData.location.state}
+                    onChange={(val) => setFormData({ 
+                      ...formData, 
+                      location: { ...formData.location, state: val, district: '', taluka: '' } 
+                    })}
+                  />
+                  <SearchableDropdown 
+                    label="District"
+                    placeholder="Select District"
+                    options={districts}
+                    value={formData.location.district}
+                    disabled={!formData.location.state}
+                    onChange={(val) => setFormData({ 
+                      ...formData, 
+                      location: { ...formData.location, district: val } 
+                    })}
+                  />
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Taluka / Block</label>
+                    <input value={formData.location.taluka} onChange={e => setFormData({ ...formData, location: { ...formData.location, taluka: e.target.value } })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm" placeholder="Enter Taluka" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Village / Town</label>
+                    <input value={formData.location.village} onChange={e => setFormData({ ...formData, location: { ...formData.location, village: e.target.value } })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm" placeholder="Enter Village" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Site Address / Remarks</label>
+                    <textarea value={formData.projectAddress} onChange={e => setFormData({ ...formData, projectAddress: e.target.value })} className="w-full p-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm focus:ring-4 focus:ring-blue-500/5 min-h-[100px]" placeholder="Detailed site address or specific location instructions..." />
+                  </div>
                 </div>
               </div>
             </form>
@@ -372,24 +422,24 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
       )}
 
       {/* Main Content Actions - Light Theme Header */}
-      <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center justify-between">
-        <div>
-          <h3 className="text-4xl text-slate-900 font-black tracking-tight">Project Management</h3>
+      <div className="flex flex-col sm:flex-row gap-6 sm:items-center justify-between">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-2xl sm:text-4xl text-slate-900 font-black tracking-tight truncate">Project Management</h3>
         </div>
         <div className="flex gap-4 w-full sm:w-auto">
           {currentRole === 'admin' && (
-            <button onClick={() => { resetForm(); setEditingId(null); setShowModal(true); }} className="h-14 px-8 bg-slate-900 text-white font-black rounded-2xl shadow-2xl shadow-black/20 hover:bg-black transition-all hover:scale-105 active:scale-95 text-[10px] uppercase tracking-widest shrink-0">＋ New Project</button>
+            <button onClick={() => { resetForm(); setEditingId(null); setShowModal(true); }} className="w-full sm:w-auto h-14 px-8 bg-slate-900 text-white font-black rounded-2xl shadow-xl sm:shadow-2xl shadow-black/20 hover:bg-black transition-all hover:scale-105 active:scale-95 text-[10px] uppercase tracking-widest shrink-0">＋ New Project</button>
           )}
         </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] border border-slate-200/60 overflow-hidden">
+      <div className="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] border border-slate-200/60 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[700px] sm:min-w-0">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
                  {['Project Name', 'Manager Assign', 'Status', 'Actions'].map(h => (
-                  <th key={h} className="px-10 py-7 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{h}</th>
+                  <th key={h} className="px-6 sm:px-10 py-5 sm:py-7 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -411,29 +461,29 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                 </tr>
               ) : filtered.map((prj) => (
                 <tr key={prj._id} className="border-b border-slate-100 hover:bg-slate-50/80 transition-all group">
-                  <td className="px-10 py-8">
+                  <td className="px-6 sm:px-10 py-6 sm:py-8">
                     <div>
-                      <p className="font-black text-slate-800 group-hover:text-blue-600 transition-colors text-base tracking-tight">{prj.name}</p>
+                      <p className="font-black text-slate-800 group-hover:text-blue-600 transition-colors text-sm sm:text-base tracking-tight">{prj.name}</p>
                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1.5 flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
                         {prj.projectCategory || 'General Mode'}
                       </p>
                     </div>
                   </td>
-                  <td className="px-10 py-8">
+                  <td className="px-6 sm:px-10 py-6 sm:py-8">
                     <div className="flex items-center gap-3">
                       <div className={`w-3.5 h-3.5 rounded-full border-2 border-white ${prj.manager === 'Not Assigned' ? 'bg-slate-200' : 'bg-emerald-500 shadow-lg shadow-emerald-500/20'}`}></div>
-                      <span className="text-sm font-bold text-slate-700">{currentRole === 'manager' ? 'Assigned to You' : (prj.manager || 'Unassigned')}</span>
+                      <span className="text-xs sm:text-sm font-bold text-slate-700">{currentRole === 'manager' ? 'Assigned' : (prj.manager || 'Unassigned')}</span>
                     </div>
                   </td>
-                  <td className="px-10 py-8">
-                    <span className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest ${prj.status === 'Active' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}>
+                  <td className="px-6 sm:px-10 py-6 sm:py-8">
+                    <span className={`px-4 sm:px-5 py-2 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-widest ${prj.status === 'Active' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}>
                       {prj.status}
                     </span>
                   </td>
-                  <td className="px-10 py-8">
+                  <td className="px-6 sm:px-10 py-6 sm:py-8">
                     <div className="flex items-center gap-2">
-                      <button onClick={() => onNavigate('project-detail', { projectId: prj._id })} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all shadow-sm group/btn" title="View">
+                      <button onClick={() => onNavigate('project-detail', { projectId: prj._id })} className="w-10 h-10 sm:w-11 sm:h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all shadow-sm group/btn" title="View">
                         <span className="group-hover/btn:scale-125 transition-transform">👁️</span>
                       </button>
                        {/* {currentRole === 'manager' && (

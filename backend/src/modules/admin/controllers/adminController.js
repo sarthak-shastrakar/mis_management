@@ -600,10 +600,23 @@ exports.updateManager = async (req, res, next) => {
     if (req.body.assignedProjects !== undefined) {
       const newProjectIds = Array.isArray(req.body.assignedProjects) ? req.body.assignedProjects : [];
       
+      // 1. Find projects currently assigned to this manager
+      const previouslyAssigned = await Project.find({ manager: manager._id });
+      const previousIds = previouslyAssigned.map(p => p._id.toString());
+      
+      // 2. Identify projects to unassign (in previous but not in new)
+      const toUnassign = previousIds.filter(id => !newProjectIds.includes(id));
+      if (toUnassign.length > 0) {
+        await Project.updateMany(
+          { _id: { $in: toUnassign } },
+          { $set: { manager: null } }
+        );
+      }
+
       // 3. Set manager for projects that are in the newProjectIds list
       await Project.updateMany(
         { _id: { $in: newProjectIds } },
-        { manager: manager._id }
+        { $set: { manager: manager._id } }
       );
 
       // 4. Update the manager's assignedProjects array

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api/api';
 import { useModal } from '../context/ModalContext';
+import SearchableDropdown from '../components/SearchableDropdown';
+import { statesAndDistricts } from '../data/indiaData';
 
 const ManagerManagement = () => {
   const [managersList, setManagersList] = useState([]);
@@ -24,6 +26,9 @@ const ManagerManagement = () => {
     assignedProjects: [],
     status: 'active'
   });
+
+  const states = Object.keys(statesAndDistricts);
+  const districts = managerForm.state ? statesAndDistricts[managerForm.state] : [];
 
   useEffect(() => {
     fetchManagers();
@@ -181,28 +186,28 @@ const ManagerManagement = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8 space-y-10">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-8 space-y-6 sm:space-y-10">
       {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-200">
-        <div>
-          <h2 className="text-4xl font-black text-slate-900 tracking-tight">Manager Directory</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 bg-white p-6 sm:p-10 rounded-3xl sm:rounded-[2.5rem] shadow-sm border border-slate-200">
+        <div className="min-w-0 flex-1">
+          <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight truncate">Manager Directory</h2>
         </div>
         <button
           onClick={() => { resetForm(); setShowModal(true); }}
-          className="h-16 px-10 bg-blue-600 text-white font-black rounded-2xl shadow-2xl shadow-blue-500/20 transition-all hover:scale-105 active:scale-95 text-[11px] uppercase tracking-[0.2em] flex items-center gap-3"
+          className="w-full sm:w-auto h-14 sm:h-16 px-6 sm:px-10 bg-blue-600 text-white font-black rounded-2xl shadow-xl sm:shadow-2xl shadow-blue-500/20 transition-all hover:scale-105 active:scale-95 text-[10px] sm:text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3"
         >
           <span className="text-xl">+</span> Add New Manager
         </button>
       </div>
 
       {/* Managers Table Container */}
-      <div className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+      <div className="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[800px] sm:min-w-0">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
                 {['ID Reference', 'Profile Information', 'Regional Base', 'Active Task', 'Actions'].map(h => (
-                  <th key={h} className="px-10 py-8 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{h}</th>
+                  <th key={h} className="px-6 sm:px-10 py-6 sm:py-8 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -212,40 +217,40 @@ const ManagerManagement = () => {
                   <td colSpan="5" className="py-24 text-center">
                     <div className="flex flex-col items-center gap-4">
                       <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-                      <p className="text-slate-300 font-black uppercase tracking-widest text-xs">Synchronizing Manager Database...</p>
+                      <p className="text-slate-700 font-black uppercase tracking-widest text-xs">Synchronizing Manager Database...</p>
                     </div>
                   </td>
                 </tr>
               ) : managersList.length === 0 ? (
-                <tr><td colSpan="5" className="py-24 text-center text-slate-300 font-black uppercase tracking-widest text-xs">Zero administrative accounts detected</td></tr>
+                <tr><td colSpan="5" className="py-24 text-center text-slate-500 font-black uppercase tracking-widest text-xs">Zero administrative accounts detected</td></tr>
               ) : managersList.map((m) => (
                 <tr key={m._id} className="hover:bg-blue-50/30 transition-all group">
-                  <td className="px-10 py-8 whitespace-nowrap">
-                    <span className="font-bold text-slate-400 font-mono tracking-tighter text-xs bg-slate-100 px-3 py-1.5 rounded-lg">{m.managerId}</span>
+                  <td className="px-6 sm:px-10 py-6 sm:py-8 whitespace-nowrap">
+                    <span className="font-bold text-slate-600 font-mono tracking-tighter text-[10px] sm:text-xs bg-slate-100 px-3 py-1.5 rounded-lg">{m.managerId}</span>
                   </td>
-                  <td className="px-10 py-8">
-                    <p className="font-extrabold text-slate-900 text-lg group-hover:text-blue-600 transition-colors">{m.fullName}</p>
-                    <p className="text-[11px] font-bold text-slate-400 mt-1">{m.emailAddress || 'No email associated'}</p>
+                  <td className="px-6 sm:px-10 py-6 sm:py-8">
+                    <p className="font-extrabold text-slate-900 text-base sm:text-lg group-hover:text-blue-600 transition-colors">{m.fullName}</p>
+                    <p className="text-[10px] sm:text-[11px] font-bold text-slate-600 mt-1">{m.emailAddress || 'No email associated'}</p>
                   </td>
-                  <td className="px-10 py-8">
+                  <td className="px-6 sm:px-10 py-6 sm:py-8">
                     <div className="flex flex-col">
-                      <span className="text-xs font-black text-slate-700 uppercase tracking-tight">{m.district || 'N/A'}</span>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{m.state}</span>
+                      <span className="text-[10px] sm:text-xs font-black text-slate-700 uppercase tracking-tight">{m.district || 'N/A'}</span>
+                      <span className="text-[9px] sm:text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-0.5">{m.state}</span>
                     </div>
                   </td>
-                  <td className="px-10 py-8">
-                    <span className={`inline-flex px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] border ${m.assignedProjectsNames !== 'None' ? 'bg-blue-50 text-blue-600 border-blue-100 shadow-sm shadow-blue-500/10' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
+                  <td className="px-6 sm:px-10 py-6 sm:py-8">
+                    <span className={`inline-flex px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-[0.1em] border ${m.assignedProjectsNames !== 'None' ? 'bg-blue-50 text-blue-600 border-blue-100 shadow-sm shadow-blue-500/10' : 'bg-slate-100 text-slate-700 border-slate-200'}`}>
                       {m.assignedProjectsNames}
                     </span>
                   </td>
-                  <td className="px-10 py-8">
-                    <div className="flex items-center gap-3">
-                      <button onClick={() => handleViewOpen(m)} className="w-11 h-11 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm border border-slate-200" title="View">👁️</button>
-                      <button onClick={() => handleEditOpen(m)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="Edit">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  <td className="px-6 sm:px-10 py-6 sm:py-8">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <button onClick={() => handleViewOpen(m)} className="w-10 h-10 sm:w-11 sm:h-11 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm border border-slate-200" title="View">👁️</button>
+                      <button onClick={() => handleEditOpen(m)} className="w-10 h-10 sm:w-11 sm:h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="Edit">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                       </button>
-                      <button onClick={() => handleDeleteManager(m._id)} className="w-11 h-11 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm border border-rose-100" title="Delete">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                      <button onClick={() => handleDeleteManager(m._id)} className="w-10 h-10 sm:w-11 sm:h-11 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm border border-rose-100" title="Delete">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                       </button>
                     </div>
                   </td>
@@ -261,20 +266,20 @@ const ManagerManagement = () => {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4 overflow-y-auto cursor-pointer" onClick={(e) => { if (e.target === e.currentTarget) { setShowModal(false); resetForm(); } }}>
           <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in duration-300 cursor-default my-auto max-h-[90vh] flex flex-col hover:shadow-blue-500/10 transition-shadow">
             {/* STICKY HEADER WITH CROSS SIGN */}
-            <div className={`sticky top-0 z-30 px-12 py-10 ${isCreated ? 'bg-emerald-900' : 'bg-slate-900'} text-white flex justify-between items-center relative overflow-hidden transition-colors duration-500 shrink-0 border-b border-white/5`}>
+            <div className={`sticky top-0 z-30 px-8 sm:px-12 py-8 sm:py-10 ${isCreated ? 'bg-emerald-900' : 'bg-slate-900'} text-white flex justify-between items-center relative overflow-hidden transition-colors duration-500 shrink-0 border-b border-white/5`}>
               <div className={`absolute top-0 right-0 w-64 h-64 ${isCreated ? 'bg-emerald-500/20' : 'bg-blue-600/20'} blur-[100px] rounded-full`}></div>
               <div className="relative z-10">
-                <h2 className="text-3xl font-black tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
                   {isCreated ? 'Account Created' : viewOnly ? 'Manager Profile' : editingId ? 'Edit Manager' : 'Add New Manager'}
                 </h2>
-                <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.3em] mt-1">
+                <p className="text-slate-400 font-bold text-[9px] sm:text-[10px] uppercase tracking-[0.3em] mt-1">
                   {isCreated ? 'Credentials Generated Successfully' : viewOnly ? 'View Manager Details' : 'Enter Manager Details Below'}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => { setShowModal(false); resetForm(); }}
-                className="w-12 h-12 bg-white/10 hover:bg-rose-600 rounded-2xl flex items-center justify-center transition-all text-xl relative z-10 group shadow-lg border border-white/10 active:scale-90"
+                className="w-10 h-10 sm:w-12 sm:h-12 bg-white/10 hover:bg-rose-600 rounded-2xl flex items-center justify-center transition-all text-xl relative z-10 group shadow-lg border border-white/10 active:scale-90"
               >
                 <span className="group-hover:rotate-90 transition-transform block">✕</span>
               </button>
@@ -289,14 +294,14 @@ const ManagerManagement = () => {
                     </div>
                     <div>
                       <h3 className="text-2xl font-black text-slate-900">Provisioning Complete</h3>
-                      <p className="text-sm text-slate-500 font-bold mt-1 uppercase tracking-widest">Administrative Access Credentials Generated</p>
+                      <p className="text-sm text-slate-700 font-bold mt-1 uppercase tracking-widest">Administrative Access Credentials Generated</p>
                     </div>
                   </div>
 
                   <div className="space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="p-8 bg-slate-900 rounded-[2.5rem] relative overflow-hidden group border border-slate-800">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-2 relative z-10">Terminal ID</p>
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] mb-2 relative z-10">Terminal ID</p>
                         <p className="text-2xl font-black text-white relative z-10">{managerForm.username}</p>
                         <div className="absolute top-0 right-0 p-6 opacity-10 text-white text-3xl">👤</div>
                       </div>
@@ -308,22 +313,22 @@ const ManagerManagement = () => {
                     </div>
 
                     <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200">
-                      <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Identity Profile Sync</h4>
-                      <div className="grid grid-cols-2 gap-8">
+                      <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-6">Identity Profile Sync</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
                         <div>
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Full Name</p>
+                          <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">Full Name</p>
                           <p className="font-extrabold text-slate-900">{managerForm.fullName}</p>
                         </div>
                         <div>
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Mobile Node</p>
+                          <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">Mobile Node</p>
                           <p className="font-extrabold text-slate-900">{managerForm.mobileNumber}</p>
                         </div>
                         <div>
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Assigned Base</p>
+                          <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">Assigned Base</p>
                           <p className="font-extrabold text-slate-900">{managerForm.district}, {managerForm.state}</p>
                         </div>
                         <div>
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Assignments</p>
+                          <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-1">Total Assignments</p>
                           <p className="font-extrabold text-slate-900">{managerForm.assignedProjects.length} Projects</p>
                         </div>
                       </div>
@@ -363,79 +368,53 @@ const ManagerManagement = () => {
 
                   <button
                     onClick={() => { setShowModal(false); resetForm(); fetchManagers(); }}
-                    className="w-full h-14 text-slate-400 font-black text-[10px] uppercase tracking-[0.4em] hover:text-slate-600 transition-all"
+                    className="w-full h-14 text-slate-600 font-black text-[10px] uppercase tracking-[0.4em] hover:text-slate-800 transition-all"
                   >
                     Close
                   </button>
                 </div>
               ) : (
                 /* FORM VIEW */
-                <form onSubmit={handleCreateManager} className="p-12 space-y-8 bg-white">
-                  <div className="grid grid-cols-2 gap-8">
-                    <div className="col-span-2">
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Full Name</label>
-                      <input required disabled={viewOnly} value={managerForm.fullName} onChange={e => setManagerForm({ ...managerForm, fullName: e.target.value })} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none disabled:opacity-70" placeholder="Full Name" />
+                <form onSubmit={handleCreateManager} className="p-8 sm:p-12 space-y-6 sm:space-y-8 bg-white">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
+                    <div className="col-span-1 sm:col-span-2">
+                      <label className="block text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-3 ml-1">Full Name</label>
+                      <input required disabled={viewOnly} value={managerForm.fullName} onChange={e => setManagerForm({ ...managerForm, fullName: e.target.value })} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none disabled:opacity-70" placeholder="Full Name" />
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Email</label>
-                      <input required disabled={viewOnly} type="email" value={managerForm.emailAddress} onChange={e => setManagerForm({ ...managerForm, emailAddress: e.target.value })} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none disabled:opacity-70" placeholder="Email Address" />
+                      <label className="block text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-3 ml-1">Email</label>
+                      <input required disabled={viewOnly} type="email" value={managerForm.emailAddress} onChange={e => setManagerForm({ ...managerForm, emailAddress: e.target.value })} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none disabled:opacity-70" placeholder="Email Address" />
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Phone Number</label>
-                      <input required disabled={viewOnly} type="tel" value={managerForm.mobileNumber} onChange={e => setManagerForm({ ...managerForm, mobileNumber: e.target.value })} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none disabled:opacity-70" placeholder="Phone Number" />
+                      <label className="block text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-3 ml-1">Phone Number</label>
+                      <input required disabled={viewOnly} type="tel" value={managerForm.mobileNumber} onChange={e => setManagerForm({ ...managerForm, mobileNumber: e.target.value })} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm font-bold text-slate-900 focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all outline-none disabled:opacity-70" placeholder="Phone Number" />
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">State</label>
-                      <select required disabled={viewOnly} value={managerForm.state} onChange={e => setManagerForm({ ...managerForm, state: e.target.value })} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] font-black text-slate-900 outline-none uppercase tracking-widest cursor-pointer disabled:opacity-70">
-                        <option value="">Select State</option>
-                        <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
-                        <option value="Andhra Pradesh">Andhra Pradesh</option>
-                        <option value="Arunachal Pradesh">Arunachal Pradesh</option>
-                        <option value="Assam">Assam</option>
-                        <option value="Bihar">Bihar</option>
-                        <option value="Chandigarh">Chandigarh</option>
-                        <option value="Chhattisgarh">Chhattisgarh</option>
-                        <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
-                        <option value="Delhi">Delhi</option>
-                        <option value="Goa">Goa</option>
-                        <option value="Gujarat">Gujarat</option>
-                        <option value="Haryana">Haryana</option>
-                        <option value="Himachal Pradesh">Himachal Pradesh</option>
-                        <option value="Jammu and Kashmir">Jammu and Kashmir</option>
-                        <option value="Jharkhand">Jharkhand</option>
-                        <option value="Karnataka">Karnataka</option>
-                        <option value="Kerala">Kerala</option>
-                        <option value="Ladakh">Ladakh</option>
-                        <option value="Lakshadweep">Lakshadweep</option>
-                        <option value="Madhya Pradesh">Madhya Pradesh</option>
-                        <option value="Maharashtra">Maharashtra</option>
-                        <option value="Manipur">Manipur</option>
-                        <option value="Meghalaya">Meghalaya</option>
-                        <option value="Mizoram">Mizoram</option>
-                        <option value="Nagaland">Nagaland</option>
-                        <option value="Odisha">Odisha</option>
-                        <option value="Puducherry">Puducherry</option>
-                        <option value="Punjab">Punjab</option>
-                        <option value="Rajasthan">Rajasthan</option>
-                        <option value="Sikkim">Sikkim</option>
-                        <option value="Tamil Nadu">Tamil Nadu</option>
-                        <option value="Telangana">Telangana</option>
-                        <option value="Tripura">Tripura</option>
-                        <option value="Uttar Pradesh">Uttar Pradesh</option>
-                        <option value="Uttarakhand">Uttarakhand</option>
-                        <option value="West Bengal">West Bengal</option>
-                      </select>
+                      <SearchableDropdown 
+                        label="State"
+                        placeholder="Select State"
+                        options={states}
+                        value={managerForm.state}
+                        disabled={viewOnly}
+                        onChange={(val) => setManagerForm({ ...managerForm, state: val, district: '' })}
+                      />
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">District</label>
-                      <input required disabled={viewOnly} value={managerForm.district} onChange={e => setManagerForm({ ...managerForm, district: e.target.value })} className="w-full h-14 px-6 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 outline-none focus:border-blue-500 transition-all disabled:opacity-70" placeholder="e.g. Nashik" />
+                      <SearchableDropdown 
+                        label="District"
+                        placeholder="Select District"
+                        options={districts}
+                        value={managerForm.district}
+                        disabled={viewOnly || !managerForm.state}
+                        onChange={(val) => setManagerForm({ ...managerForm, district: val })}
+                      />
                     </div>
-                    <div className="col-span-2">
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Projects</label>
+                    <div className="col-span-1 sm:col-span-2">
+                      <label className="block text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-3 ml-1">Projects</label>
                       <div className="grid grid-cols-2 gap-4 p-6 bg-slate-50 border border-slate-200 rounded-[2rem] max-h-48 overflow-y-auto custom-scrollbar">
                         {projectsList.map(prj => (
                           <div
@@ -452,7 +431,7 @@ const ManagerManagement = () => {
                             <span className="text-[11px] uppercase tracking-tight">{prj.name}</span>
                           </div>
                         ))}
-                        {projectsList.length === 0 && <p className="col-span-2 text-center text-slate-400 font-bold text-[10px] uppercase py-4">No active projects available</p>}
+                        {projectsList.length === 0 && <p className="col-span-2 text-center text-slate-600 font-bold text-[10px] uppercase py-4">No active projects available</p>}
                       </div>
                     </div>
 
@@ -463,11 +442,11 @@ const ManagerManagement = () => {
                       <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-200 flex flex-col gap-6 shadow-sm">
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Username</p>
+                            <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em] mb-1">Username</p>
                             <p className="text-lg font-black text-slate-900">{managerForm.username}</p>
                           </div>
                           <div className="flex-1 text-right border-l border-slate-200 pl-8">
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-1">Password</p>
+                            <p className="text-[9px] font-black text-slate-600 uppercase tracking-[0.3em] mb-1">Password</p>
                             <p className="text-lg font-black text-slate-900">{managerForm.password}</p>
                           </div>
                         </div>
@@ -504,7 +483,7 @@ const ManagerManagement = () => {
                   )}
 
                   <div className="flex gap-6 pt-6">
-                    <button type="button" onClick={() => setShowModal(false)} className={`flex-1 h-16 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] transition-all ${viewOnly ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}>
+                    <button type="button" onClick={() => setShowModal(false)} className={`flex-1 h-16 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] transition-all ${viewOnly ? 'bg-slate-900 text-white hover:bg-slate-800' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
                       {viewOnly ? 'Close' : 'Cancel'}
                     </button>
                     {!viewOnly && (

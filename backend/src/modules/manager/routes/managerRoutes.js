@@ -11,6 +11,7 @@ const {
   rejectAttendance,
   getDashboard,
   getAssignedProjects,
+  deleteProject,
   setupProjectDetails,
   getProjectDetails,
   assignTrainersToProject,
@@ -39,6 +40,7 @@ router.post('/login', login);
 router.get('/dashboard', protect, managerOnly, getDashboard);
 router.get('/my-projects', protect, getAssignedProjects);
 router.get('/projects/:id', protect, managerOnly, getProjectDetails);
+router.delete('/projects/:id', protect, managerOnly, deleteProject);
 
 // ─────────────────────────────────────────────
 // Manager Profile

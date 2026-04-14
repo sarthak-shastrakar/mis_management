@@ -21,7 +21,7 @@ const Field = ({ label, value, editMode, onChange, type = 'text', options, readO
     if (options) {
       return (
         <div className="space-y-1.5">
-          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</label>
+          <label className="block text-[10px] font-black text-slate-700 uppercase tracking-widest ml-1">{label}</label>
           <select
             value={value || ''}
             onChange={e => onChange(e.target.value)}
@@ -34,21 +34,21 @@ const Field = ({ label, value, editMode, onChange, type = 'text', options, readO
     }
     return (
       <div className="space-y-1.5">
-        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</label>
+        <label className="block text-[10px] font-black text-slate-700 uppercase tracking-widest ml-1">{label}</label>
         <input
           type={type}
           value={value || ''}
           onChange={e => onChange(e.target.value)}
           placeholder={`Enter ${label.toLowerCase()}`}
-          className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all"
+          className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 placeholder:text-slate-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all"
         />
       </div>
     );
   }
   return (
     <div className="space-y-1.5">
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">{label}</p>
-      <p className={`text-sm font-bold px-1 ${readOnly ? 'text-slate-400' : 'text-slate-800'}`}>{value || '—'}</p>
+      <p className="text-[10px] font-black text-slate-700 uppercase tracking-widest ml-1">{label}</p>
+      <p className={`text-sm font-bold px-1 ${readOnly ? 'text-slate-500' : 'text-slate-900'}`}>{value || '—'}</p>
     </div>
   );
 };
@@ -120,14 +120,14 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
   if (loading) return (
     <div className="flex flex-col items-center justify-center h-[50vh] gap-4">
       <div className="w-12 h-12 border-4 border-slate-100 border-t-indigo-600 rounded-full animate-spin"></div>
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] animate-pulse">Establishing Secure Intel Link...</p>
+      <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] animate-pulse">Establishing Secure Intel Link...</p>
     </div>
   );
 
   if (!trainer) return (
     <div className="flex flex-col items-center justify-center h-[50vh] text-center p-10 bg-white rounded-3xl border-2 border-dashed border-slate-100">
       <p className="text-4xl mb-4 grayscale opacity-30">📂</p>
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Personnel identification record mismatch.</p>
+      <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-6">Personnel identification record mismatch.</p>
       <button onClick={onBack} className="px-8 py-3 bg-slate-900 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl shadow-xl active:scale-95 transition-all">Restore Directory</button>
     </div>
   );
@@ -141,7 +141,7 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
             <span className="group-hover:rotate-90 transition-transform">✕</span>
           </button>
           <div>
-            <p className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.25em] mb-1">Employee Record</p>
+            <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.25em] mb-1">Employee Record</p>
             <h2 className="text-4xl font-black text-slate-900 tracking-tight">{trainer.fullName}</h2>
           </div>
         </div>
@@ -176,12 +176,12 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
         </div>
         <div className="flex-1 relative z-10">
           <div className="flex flex-wrap items-center gap-4 mb-4">
-            <span className="text-[11px] font-black text-slate-400 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 tracking-widest">{trainer.trainerId}</span>
+            <span className="text-[11px] font-black text-slate-600 bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 tracking-widest">{trainer.trainerId}</span>
             <span className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${statusColors[trainer.status] || statusColors.pending}`}>
               {trainer.status.toUpperCase()}
             </span>
           </div>
-          <p className="text-sm font-bold text-slate-500 leading-relaxed uppercase tracking-tighter">Trainer Location: <span className="text-slate-900">{trainer.district}, {trainer.state}</span></p>
+          <p className="text-sm font-bold text-slate-600 leading-relaxed uppercase tracking-tighter">Trainer Location: <span className="text-slate-900">{trainer.district}, {trainer.state}</span></p>
         </div>
       </div>
 
@@ -253,7 +253,7 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
               <div className="flex items-center gap-5 p-4 bg-slate-50 rounded-2xl border border-slate-100">
                 <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-xl shadow-sm border border-slate-100">🆔</div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Username</p>
+                  <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-0.5">Username</p>
                   <p className="font-black text-slate-900">{trainer.username}</p>
                 </div>
               </div>
@@ -262,7 +262,7 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
                 <div className="flex items-center gap-5">
                   <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-xl shadow-sm border border-slate-100">🔑</div>
                   <div>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Password</p>
+                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-0.5">Password</p>
                     <p className="font-black text-slate-900 tracking-wider font-mono">{trainer.plainPassword || '••••••••'}</p>
                   </div>
                 </div>

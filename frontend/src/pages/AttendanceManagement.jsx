@@ -61,20 +61,20 @@ const AttendanceManagement = () => {
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h3 className="text-2xl font-black text-black">Attendance Register</h3>
-          <p className="text-sm text-slate-500 font-medium mt-1">View daily field attendance of all trainers</p>
+          <p className="text-sm text-slate-700 font-medium mt-1">View daily field attendance of all trainers</p>
         </div>
       </div>
 
       {/* Filters */}
       <div className="bg-white rounded-2xl border border-slate-100 p-6 flex flex-col md:flex-row gap-4 lg:items-center">
         <div className="relative flex-1">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600">🔍</span>
           <input
             type="text"
             placeholder="Search trainer or project..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full h-11 pl-11 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 placeholder:text-slate-500"
+            className="w-full h-11 pl-11 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-slate-900 placeholder:text-slate-600"
           />
         </div>
 
@@ -92,7 +92,7 @@ const AttendanceManagement = () => {
             <span className="text-sm font-bold text-slate-900 z-10 pointer-events-none tracking-widest">
               {dateFilter.split('-').reverse().join('-')}
             </span>
-            <span className="ml-3 text-slate-400 z-10 pointer-events-none">📅</span>
+            <span className="ml-3 text-slate-600 z-10 pointer-events-none">📅</span>
             <input
               ref={dateInputRef}
               type="date"
@@ -107,7 +107,7 @@ const AttendanceManagement = () => {
               <button
                 key={s}
                 onClick={() => setStatusFilter(s)}
-                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${statusFilter === s ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${statusFilter === s ? 'bg-white shadow-sm text-slate-900' : 'text-slate-600 hover:text-slate-700'}`}
               >
                 {s}
               </button>
@@ -117,25 +117,25 @@ const AttendanceManagement = () => {
       </div>
 
       {/* Daily Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white rounded-2xl border border-slate-100 p-6 flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl text-blue-600 bg-blue-50">👥</div>
           <div>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Scheduled</p>
+            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">Total Scheduled</p>
             <p className="text-3xl font-black text-slate-900">{filtered.length}</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl border border-slate-100 p-6 flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl text-emerald-600 bg-emerald-50">✅</div>
           <div>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Present</p>
+            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">Present</p>
             <p className="text-3xl font-black text-emerald-600">{presentCount}</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl border border-slate-100 p-6 flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl text-rose-600 bg-rose-50">❌</div>
           <div>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Absent</p>
+            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">Absent</p>
             <p className="text-3xl font-black text-rose-600">{absentCount}</p>
           </div>
         </div>
@@ -149,7 +149,7 @@ const AttendanceManagement = () => {
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100">
                 {['Trainer', 'Project', 'Time', 'Location', 'Mode', 'Status'].map(h => (
-                  <th key={h} className="px-6 py-4 text-xs font-black uppercase tracking-wider text-slate-400">{h}</th>
+                  <th key={h} className="px-6 py-4 text-xs font-black uppercase tracking-wider text-slate-600">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -168,7 +168,7 @@ const AttendanceManagement = () => {
                     )}
                   </td>
                   <td className="px-6 py-5 font-bold text-slate-800">{record.time}</td>
-                  <td className="px-6 py-5 text-xs font-medium text-slate-500 max-w-[200px] truncate">{record.location}</td>
+                  <td className="px-6 py-5 text-xs font-medium text-slate-700 max-w-[200px] truncate">{record.location}</td>
                   <td className="px-6 py-5">
                     <div className="flex flex-wrap gap-2">
                       {/* Photos */}

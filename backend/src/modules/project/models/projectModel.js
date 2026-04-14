@@ -41,6 +41,10 @@ const projectSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+    expenses: {
+      type: Number,
+      default: 0
+    },
     
     // ── Installment 1 ────────────────────────────────────────
     installment1Status: {

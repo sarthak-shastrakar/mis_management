@@ -158,8 +158,8 @@ const ManagerDashboard = ({ onNavigate }) => {
   return (
     <div className="space-y-10">
       {/* Upper Section: Project Status */}
-      <div className="bg-white p-10 rounded-[2rem] border border-slate-100 shadow-sm shadow-slate-2/5">
-        <h3 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-3">
+      <div className="bg-white p-6 sm:p-10 rounded-2xl sm:rounded-[2rem] border border-slate-100 shadow-sm shadow-slate-2/5">
+        <h3 className="text-lg sm:text-xl font-black text-slate-900 mb-6 flex items-center gap-3">
           <span className="w-1.5 h-6 bg-blue-600 rounded-full"></span>
           My Projects
         </h3>
@@ -169,17 +169,17 @@ const ManagerDashboard = ({ onNavigate }) => {
           ) : assignedProjects.length === 0 ? (
             <div className="col-span-2 py-10 text-center text-slate-400 font-bold italic uppercase tracking-widest text-xs">No Projects Assigned Yet</div>
           ) : assignedProjects.map((prj, i) => (
-            <div key={i} className="p-8 bg-slate-50 rounded-3xl border border-slate-100 flex items-center justify-between transition-all">
-              <div className="flex items-center gap-6">
-                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-2xl shadow-sm border border-slate-100 font-black text-slate-900">
+            <div key={i} className="p-6 sm:p-8 bg-slate-50 rounded-2xl sm:rounded-3xl border border-slate-100 flex items-center justify-between transition-all">
+              <div className="flex items-center gap-4 sm:gap-6">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white rounded-xl sm:rounded-2xl flex items-center justify-center text-xl sm:text-2xl shadow-sm border border-slate-100 font-black text-slate-900">
                   {prj.projectName.charAt(0)}
                 </div>
                 <div>
-                  <h4 className="font-black text-slate-900 line-clamp-1 text-lg">{prj.projectName}</h4>
-                  <p className="text-[10px] text-slate-700 font-black uppercase tracking-[0.2em] mt-1">{prj.location}</p>
+                  <h4 className="font-black text-slate-900 line-clamp-1 text-base sm:text-lg">{prj.projectName}</h4>
+                  <p className="text-[9px] sm:text-[10px] text-slate-700 font-black uppercase tracking-[0.2em] mt-1">{prj.location}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-4">
                 <div className="text-right hidden sm:block">
                   <p className="text-sm font-black text-slate-900 leading-tight">{prj.completionPercentage}% Attendance</p>
                   <span className={`text-[9px] font-black uppercase tracking-[0.2em] mt-1 block ${prj.healthStatus === 'HEALTHY' ? 'text-emerald-500' : 'text-amber-500'}`}>
@@ -188,7 +188,7 @@ const ManagerDashboard = ({ onNavigate }) => {
                 </div>
                 <button 
                   onClick={() => fetchProjectDetails(prj.projectId)}
-                  className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all shadow-md border border-slate-100 text-slate-600 font-bold"
+                  className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-xl sm:rounded-2xl flex items-center justify-center hover:bg-slate-900 hover:text-white transition-all shadow-md border border-slate-100 text-slate-600 font-bold"
                 >
                   👁️
                 </button>
@@ -199,26 +199,26 @@ const ManagerDashboard = ({ onNavigate }) => {
       </div>
 
       {/* Late Attendance Approval Workflow */}
-      <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm shadow-slate-2/5 overflow-hidden">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10 pb-6 border-b border-slate-50">
+      <div className="bg-white p-6 sm:p-10 rounded-2xl sm:rounded-[3rem] border border-slate-100 shadow-sm shadow-slate-2/5 overflow-hidden">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-10 pb-6 border-b border-slate-50">
           <div>
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Pending Approvals</h3>
-            <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">Review late submissions</p>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Pending Approvals</h3>
+            <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">Review late submissions</p>
           </div>
-          <span className="bg-blue-50 px-6 py-2.5 rounded-2xl text-[10px] font-black text-blue-600 uppercase tracking-widest border border-blue-100">
+          <span className="bg-blue-50 px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black text-blue-600 uppercase tracking-widest border border-blue-100">
             {trainerApprovals.length} Active Requests
           </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full text-left min-w-[700px] sm:min-w-0">
             <thead>
               <tr className="border-b border-slate-50">
-                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Trainer Name</th>
-                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Project</th>
-                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4 text-center">Delay</th>
-                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Reason</th>
-                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4 text-right">Actions</th>
+                <th className="py-4 text-[9px] sm:text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-2 sm:px-4">Trainer Name</th>
+                <th className="py-4 text-[9px] sm:text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-2 sm:px-4">Project</th>
+                <th className="py-4 text-[9px] sm:text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-2 sm:px-4 text-center">Delay</th>
+                <th className="py-4 text-[9px] sm:text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-2 sm:px-4">Reason</th>
+                <th className="py-4 text-[9px] sm:text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-2 sm:px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -271,26 +271,26 @@ const ManagerDashboard = ({ onNavigate }) => {
       </div>
 
       {/* Bulk Attendance Approval Section - NEW */}
-      <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm shadow-slate-2/5 overflow-hidden">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10 pb-6 border-b border-slate-50">
+      <div className="bg-white p-6 sm:p-10 rounded-2xl sm:rounded-[3rem] border border-slate-100 shadow-sm shadow-slate-2/5 overflow-hidden">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-10 pb-6 border-b border-slate-50">
           <div>
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Bulk Attendance Requests</h3>
-            <p className="text-xs text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">Review bulk attendance requests</p>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Bulk Attendance Requests</h3>
+            <p className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">Review bulk attendance requests</p>
           </div>
-          <span className="bg-purple-50 px-6 py-2.5 rounded-2xl text-[10px] font-black text-purple-600 uppercase tracking-widest border border-purple-100">
+          <span className="bg-purple-50 px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black text-purple-600 uppercase tracking-widest border border-purple-100">
             {stats.pendingBulk} Pending Requests
           </span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full text-left min-w-[700px] sm:min-w-0">
             <thead>
               <tr className="border-b border-slate-50">
-                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Trainer</th>
-                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Project</th>
-                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4 text-center">Requested Dates</th>
-                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4">Reason</th>
-                <th className="py-6 text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-4 text-right">Actions</th>
+                <th className="py-4 text-[9px] sm:text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-2 sm:px-4">Trainer</th>
+                <th className="py-4 text-[9px] sm:text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-2 sm:px-4">Project</th>
+                <th className="py-4 text-[9px] sm:text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-2 sm:px-4 text-center">Requested Dates</th>
+                <th className="py-4 text-[9px] sm:text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-2 sm:px-4">Reason</th>
+                <th className="py-4 text-[9px] sm:text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] px-2 sm:px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -383,7 +383,7 @@ const ManagerDashboard = ({ onNavigate }) => {
                 </div>
 
                 <div className="p-12 space-y-10 max-h-[70vh] overflow-y-auto custom-scrollbar bg-white">
-                   <div className="grid grid-cols-2 gap-8">
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
                       <div className="p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100 flex flex-col justify-center">
                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Category</p>
                          <p className="text-xl font-black text-slate-900">{projectDetails.projectCategory || 'General STT'}</p>
@@ -396,7 +396,7 @@ const ManagerDashboard = ({ onNavigate }) => {
 
                    <div className="space-y-6">
                       <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em] ml-2">Project Details</h4>
-                      <div className="grid grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                          <div className="p-6 bg-blue-50/50 rounded-3xl border border-blue-100/50">
                             <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">Target Hours</p>
                             <p className="text-2xl font-black text-blue-700">{projectDetails.trainingHours}</p>

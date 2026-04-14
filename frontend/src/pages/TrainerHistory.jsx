@@ -55,15 +55,15 @@ const TrainerHistory = () => {
   });
 
   return (
-    <div className="space-y-10">
-      <div className="flex flex-col gap-2">
-        <h2 className="text-3xl font-black text-white">Attendance History</h2>
-        <p className="text-slate-500 font-medium text-sm">Review your previous uploads and location logs</p>
+    <div className="space-y-6 sm:space-y-8">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-900">Attendance History</h2>
+        <p className="text-[12px] sm:text-sm text-slate-600 font-semibold">Review your previous uploads and location logs</p>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-xl grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 shadow-sm p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="flex-1">
-          <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Select Project</label>
+          <label className="block text-xs font-black text-slate-700 uppercase tracking-widest mb-2">Select Project</label>
           <select 
             value={selectedProject} 
             onChange={(e) => setSelectedProject(e.target.value)} 
@@ -75,7 +75,7 @@ const TrainerHistory = () => {
           </select>
         </div>
         <div className="flex-1">
-          <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Filter by Date</label>
+          <label className="block text-xs font-black text-slate-700 uppercase tracking-widest mb-2">Filter by Date</label>
           <input 
             ref={dateInputRef}
             type="date" 
@@ -92,23 +92,23 @@ const TrainerHistory = () => {
           />
         </div>
         <div className="flex-1">
-          <label className="block text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Search Remark/Loc</label>
+          <label className="block text-xs font-black text-slate-700 uppercase tracking-widest mb-2">Search Remark/Loc</label>
           <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Nagpur" className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none" />
         </div>
       </div>
 
       {loading ? (
-        <div className="py-20 text-center font-bold text-slate-500">Loading your history...</div>
+        <div className="py-20 text-center font-bold text-slate-700">Loading your history...</div>
       ) : (
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6">
           {filtered.map((record) => (
-            <div key={record._id} className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-6">
+            <div key={record._id} className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 p-5 sm:p-8 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-5">
                 <div>
-                  <h4 className="text-xl font-black text-slate-900 dark:text-white mb-1">{new Date(record.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h4>
+                  <h4 className="text-base sm:text-xl font-black text-slate-900 mb-1">{new Date(record.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h4>
                   <p className="text-xs font-bold text-blue-500 uppercase tracking-widest">Status: {record.status}</p>
                 </div>
-                <div className="px-4 py-2 bg-slate-50 rounded-xl text-xs font-black text-slate-500">📍 {record.location.latitude.toFixed(4)}, {record.location.longitude.toFixed(4)}</div>
+                <div className="px-4 py-2 bg-slate-50 rounded-xl text-xs font-black text-slate-600">📍 {record.location.latitude.toFixed(4)}, {record.location.longitude.toFixed(4)}</div>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
@@ -133,7 +133,7 @@ const TrainerHistory = () => {
             </div>
           ))}
           {filtered.length === 0 && (
-            <div className="py-20 text-center text-slate-400 font-bold bg-white/50 rounded-[2.5rem] border-2 border-dashed border-slate-200">No records found for the selected criteria.</div>
+            <div className="py-20 text-center text-slate-600 font-bold bg-white/50 rounded-[2.5rem] border-2 border-dashed border-slate-200">No records found for the selected criteria.</div>
           )}
         </div>
       )}
