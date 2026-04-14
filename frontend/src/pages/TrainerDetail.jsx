@@ -60,10 +60,13 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({});
   const [projectsList, setProjectsList] = useState([]);
+  const [attendanceHistory, setAttendanceHistory] = useState([]);
+  const [reportType, setReportType] = useState('daily'); // 'daily' | 'monthly'
 
   useEffect(() => {
     fetchTrainer();
     fetchProjects();
+    fetchAttendance();
   }, [trainerId]);
 
   const fetchTrainer = async () => {
@@ -93,6 +96,17 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
       console.error('Resource linkage failed:', err);
     }
   };
+  const fetchAttendance = async () => {
+    try {
+      const response = await API.get(`/attendance/trainer/${trainerId}`);
+      if (response.data.success) {
+        setAttendanceHistory(response.data.data);
+      }
+    } catch (err) {
+      console.error('Attendance retrieval failure:', err);
+    }
+  };
+
 
   const handleUpdate = async () => {
     setSaving(true);
@@ -294,6 +308,86 @@ const TrainerDetail = ({ trainerId, onBack, currentRole, initialEditMode = false
                   🔗 Share
                 </button>
               </div>
+            </div>
+          </div>
+          {/* Section: Attendance Reporting */}
+          <div className="bg-white rounded-[2.5rem] border border-slate-100 p-10 shadow-sm relative group overflow-hidden">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-50/50 rounded-full translate-x-1/3 -translate-y-1/3"></div>
+            
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10 relative z-10">
+              <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] flex items-center gap-3">
+                <span className="w-1.5 h-6 bg-indigo-600 rounded-full shadow-lg shadow-indigo-500/20"></span>
+                Attendance Intelligence Report
+              </h4>
+              <div className="flex p-1.5 bg-slate-50 border border-slate-100 rounded-2xl">
+                <button 
+                  onClick={() => setReportType('daily')}
+                  className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${reportType === 'daily' ? 'bg-white text-indigo-600 shadow-sm shadow-indigo-500/5' : 'text-slate-600 hover:text-slate-900'}`}
+                >Daily</button>
+                <button 
+                  onClick={() => setReportType('monthly')}
+                  className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${reportType === 'monthly' ? 'bg-white text-indigo-600 shadow-sm shadow-indigo-500/5' : 'text-slate-600 hover:text-slate-900'}`}
+                >Summary</button>
+              </div>
+            </div>
+
+            <div className="relative z-10">
+              {reportType === 'daily' ? (
+                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
+                  {attendanceHistory.length > 0 ? attendanceHistory.map((record, i) => (
+                    <div key={i} className="flex items-center justify-between p-6 bg-slate-50 hover:bg-white border border-slate-100 hover:border-indigo-100 rounded-3xl transition-all group/item shadow-sm hover:shadow-md">
+                      <div className="flex items-center gap-6">
+                        <div className="w-14 h-14 rounded-2xl bg-white border border-slate-100 flex flex-col items-center justify-center shadow-sm">
+                          <span className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">{new Date(record.date).toLocaleString('default', { month: 'short' })}</span>
+                          <span className="text-xl font-black text-slate-900 leading-none">{new Date(record.date).getDate()}</span>
+                        </div>
+                        <div>
+                          <p className="font-black text-slate-900 text-sm mb-1">{record.projectName}</p>
+                          <div className="flex items-center gap-3">
+                            <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-100 uppercase tracking-widest">Present</span>
+                            <span className="text-[10px] font-bold text-slate-500">{new Date(record.date).getFullYear()}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Time Profile</p>
+                        <p className="font-bold text-slate-900 text-xs">Standard Upload</p>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="py-20 flex flex-col items-center justify-center bg-slate-50 rounded-[2.5rem] border border-dashed border-slate-200">
+                      <p className="text-4xl mb-4 grayscale opacity-20">📊</p>
+                      <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">No attendance telemetry recorded</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {/* Aggregated Monthly View */}
+                  {Object.entries(
+                    attendanceHistory.reduce((acc, rec) => {
+                      const month = new Date(rec.date).toLocaleString('default', { month: 'long', year: 'numeric' });
+                      acc[month] = (acc[month] || 0) + 1;
+                      return acc;
+                    }, {})
+                  ).map(([month, count], i) => (
+                    <div key={i} className="p-8 bg-slate-50 rounded-[2rem] border border-slate-100 flex justify-between items-center group/card hover:bg-white hover:border-indigo-100 transition-all shadow-sm">
+                      <div>
+                        <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-2">{month}</p>
+                        <p className="text-3xl font-black text-slate-900 tracking-tight">{count}</p>
+                        <p className="text-[10px] font-bold text-emerald-600 mt-1 uppercase">Active Sessions</p>
+                      </div>
+                      <div className="w-16 h-16 rounded-[1.5rem] bg-indigo-50 border border-indigo-100 flex items-center justify-center text-2xl group-hover/card:scale-110 transition-transform">📈</div>
+                    </div>
+                  ))}
+                  {attendanceHistory.length === 0 && (
+                    <div className="col-span-2 py-20 flex flex-col items-center justify-center bg-slate-50 rounded-[2.5rem] border border-dashed border-slate-200 w-full">
+                      <p className="text-4xl mb-4 grayscale opacity-20">📈</p>
+                      <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest text-center">No Monthly Summary Available</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

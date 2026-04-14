@@ -29,13 +29,19 @@ const ExpenseManagement = () => {
   
   // Form State
   const [amount, setAmount] = useState('');
+  const [tentativeAmountPerCandidate, setTentativeAmountPerCandidate] = useState('');
+  const [assessorExpensesPerCandidate, setAssessorExpensesPerCandidate] = useState('');
   const [category, setCategory] = useState('Other');
   const [payeeName, setPayeeName] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [submitting, setSubmitting] = useState(false);
 
-  const categories = ['Travel', 'Food', 'Materials', 'Salary', 'Rent', 'Electricity', 'Maintenance', 'Office Supplies', 'Marketing', 'Other'];
+  // Edit State
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  const categories = ['Travel', 'Food', 'Materials', 'Salary', 'Rent', 'Electricity', 'Maintenance', 'Office Supplies', 'Marketing', 'Assessment Fee', 'Assessment Expenses', 'Other'];
 
   useEffect(() => {
     fetchProjects();
@@ -87,7 +93,9 @@ const ExpenseManagement = () => {
         category,
         payeeName,
         description,
-        date
+        date,
+        tentativeAmountPerCandidate: tentativeAmountPerCandidate ? Number(tentativeAmountPerCandidate) : undefined,
+        assessorExpensesPerCandidate: assessorExpensesPerCandidate ? Number(assessorExpensesPerCandidate) : undefined
       });
 
       if (res.data.success) {
@@ -99,6 +107,8 @@ const ExpenseManagement = () => {
         }));
         // Reset form
         setAmount('');
+        setTentativeAmountPerCandidate('');
+        setAssessorExpensesPerCandidate('');
         setPayeeName('');
         setDescription('');
       }
@@ -134,6 +144,43 @@ const ExpenseManagement = () => {
       }
     } catch (err) {
       alert('Delete failed');
+    }
+  };
+
+  const handleEditClick = (exp) => {
+    setEditingExpense({ ...exp, date: exp.date ? exp.date.split('T')[0] : '' });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateExpense = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await API.put(`/admin/expenses/record/${editingExpense._id}`, {
+        ...editingExpense,
+        amount: Number(editingExpense.amount),
+        tentativeAmountPerCandidate: editingExpense.tentativeAmountPerCandidate ? Number(editingExpense.tentativeAmountPerCandidate) : undefined,
+        assessorExpensesPerCandidate: editingExpense.assessorExpensesPerCandidate ? Number(editingExpense.assessorExpensesPerCandidate) : undefined
+      });
+
+      if (res.data.success) {
+        const updatedExp = res.data.data;
+        // Update local state
+        setExpenses(expenses.map(e => e._id === updatedExp._id ? updatedExp : e));
+        
+        // Update balance if amount changed
+        const diff = Number(editingExpense.amount) - (expenses.find(e => e._id === editingExpense._id)?.amount || 0);
+        if (diff !== 0) {
+          setSelectedProject(prev => ({
+            ...prev,
+            expenses: (prev.expenses || 0) + diff
+          }));
+        }
+
+        setShowEditModal(false);
+        setEditingExpense(null);
+      }
+    } catch (err) {
+      alert('Update failed');
     }
   };
 
@@ -237,6 +284,29 @@ const ExpenseManagement = () => {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Tentative/Candidate (₹)</label>
+                    <input
+                      type="number"
+                      value={tentativeAmountPerCandidate}
+                      onChange={(e) => setTentativeAmountPerCandidate(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full h-12 px-5 bg-slate-50 border-transparent rounded-2xl text-[13px] font-bold text-slate-900 focus:bg-white focus:border-blue-500 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Assessor/Candidate (₹)</label>
+                    <input
+                      type="number"
+                      value={assessorExpensesPerCandidate}
+                      onChange={(e) => setAssessorExpensesPerCandidate(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full h-12 px-5 bg-slate-50 border-transparent rounded-2xl text-[13px] font-bold text-slate-900 focus:bg-white focus:border-blue-500 transition-all"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Expense Date</label>
                   <input
@@ -282,7 +352,7 @@ const ExpenseManagement = () => {
                       <th className="px-8 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Date & Cat</th>
                       <th className="px-8 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400">Accountability</th>
                       <th className="px-8 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Amount</th>
-                      <th className="px-8 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Delete</th>
+                      <th className="px-8 py-4 text-[9px] font-black uppercase tracking-widest text-slate-400 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50">
@@ -316,14 +386,24 @@ const ExpenseManagement = () => {
                             <p className="text-[15px] font-black text-slate-900">₹{exp.amount.toLocaleString()}</p>
                           </td>
                           <td className="px-8 py-5 text-right">
-                             <button 
-                               onClick={() => handleDeleteExpense(exp._id, exp.amount)}
-                               className="p-2 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
-                             >
-                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                               </svg>
-                             </button>
+                             <div className="flex justify-end items-center gap-2">
+                               <button 
+                                 onClick={() => handleEditClick(exp)}
+                                 className="p-2 text-slate-300 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                               >
+                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                 </svg>
+                               </button>
+                               <button 
+                                 onClick={() => handleDeleteExpense(exp._id, exp.amount)}
+                                 className="p-2 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"
+                               >
+                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                 </svg>
+                               </button>
+                             </div>
                           </td>
                         </tr>
                       ))
@@ -334,6 +414,58 @@ const ExpenseManagement = () => {
             </div>
           </div>
         </>
+      )}
+      {/* Edit Modal */}
+      {showEditModal && editingExpense && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-lg overflow-hidden flex flex-col border border-white">
+            <div className="px-10 py-8 bg-slate-900 text-white flex justify-between items-center">
+              <div>
+                <h3 className="text-xl font-black italic tracking-tighter uppercase mb-0.5">Edit Expense</h3>
+                <p className="text-white/40 text-[9px] font-black uppercase tracking-widest">Update transaction records</p>
+              </div>
+              <button onClick={() => setShowEditModal(false)} className="text-xl">✕</button>
+            </div>
+            <form onSubmit={handleUpdateExpense} className="p-10 space-y-6 overflow-y-auto max-h-[80vh]">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Payee Name</label>
+                <input required type="text" value={editingExpense.payeeName} onChange={e => setEditingExpense({...editingExpense, payeeName: e.target.value})} className="w-full h-14 px-6 bg-slate-50 border-transparent rounded-2xl text-[13px] font-bold text-slate-900 focus:bg-white focus:border-blue-500 transition-all" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Amount (₹)</label>
+                  <input required type="number" value={editingExpense.amount} onChange={e => setEditingExpense({...editingExpense, amount: e.target.value})} className="w-full h-14 px-6 bg-slate-50 border-transparent rounded-2xl text-[13px] font-bold text-slate-900 focus:bg-white focus:border-blue-500 transition-all" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Category</label>
+                  <select value={editingExpense.category} onChange={e => setEditingExpense({...editingExpense, category: e.target.value})} className="w-full h-14 px-6 bg-slate-50 border-transparent rounded-2xl text-[13px] font-bold text-slate-900 focus:bg-white focus:border-blue-500 transition-all appearance-none" >
+                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Tentative/Cand.</label>
+                  <input type="number" value={editingExpense.tentativeAmountPerCandidate || ''} onChange={e => setEditingExpense({...editingExpense, tentativeAmountPerCandidate: e.target.value})} className="w-full h-14 px-6 bg-slate-50 border-transparent rounded-2xl text-[13px] font-bold text-slate-900 focus:bg-white focus:border-blue-500 transition-all" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Assessor/Cand.</label>
+                  <input type="number" value={editingExpense.assessorExpensesPerCandidate || ''} onChange={e => setEditingExpense({...editingExpense, assessorExpensesPerCandidate: e.target.value})} className="w-full h-14 px-6 bg-slate-50 border-transparent rounded-2xl text-[13px] font-bold text-slate-900 focus:bg-white focus:border-blue-500 transition-all" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Date</label>
+                <input type="date" value={editingExpense.date} onChange={e => setEditingExpense({...editingExpense, date: e.target.value})} className="w-full h-14 px-6 bg-slate-50 border-transparent rounded-2xl text-[13px] font-bold text-slate-900 focus:bg-white focus:border-blue-500 transition-all" />
+              </div>
+              <div className="pt-4 flex gap-4">
+                <button type="button" onClick={() => setShowEditModal(false)} className="flex-1 h-14 rounded-2xl bg-white border border-slate-200 text-slate-400 font-black text-[10px] uppercase tracking-widest">Cancel</button>
+                <button type="submit" className="flex-1 h-14 rounded-2xl bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest shadow-xl">Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

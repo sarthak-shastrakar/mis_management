@@ -11,9 +11,15 @@ const expenseSchema = new mongoose.Schema(
       type: Number,
       required: [true, 'Please add an expense amount'],
     },
+    tentativeAmountPerCandidate: {
+      type: Number,
+    },
+    assessorExpensesPerCandidate: {
+      type: Number,
+    },
     category: {
       type: String,
-      enum: ['Travel', 'Food', 'Materials', 'Salary', 'Rent', 'Electricity', 'Maintenance', 'Office Supplies', 'Marketing', 'Other'],
+      enum: ['Travel', 'Food', 'Materials', 'Salary', 'Rent', 'Electricity', 'Maintenance', 'Office Supplies', 'Marketing', 'Assessment Fee', 'Assessment Expenses', 'Other'],
       default: 'Other',
       required: [true, 'Please specify an expense category'],
     },

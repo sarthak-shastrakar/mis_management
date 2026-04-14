@@ -216,7 +216,9 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
               </>
             )}
 
-            <Field label="Project Expenses" value={project.expenses} editMode={editMode} type="number" onChange={v => setProject({ ...project, expenses: v })} />
+            {isAdmin && (
+              <Field label="Project Expenses" value={project.expenses} editMode={editMode} type="number" onChange={v => setProject({ ...project, expenses: v })} />
+            )}
 
             <Field label="Start Date" value={project.startDate?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({ ...project, startDate: v })} />
             <Field label="End Date" value={project.endDate?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({ ...project, endDate: v })} />

@@ -28,7 +28,7 @@ const Sidebar = ({ currentRole, activePage, setActivePage, onLogout, isOpen, onC
 
   const items      = currentRole === 'trainer' ? trainerItems : menuItems;
   const logoLetter = currentRole === 'trainer' ? 'T' : 'M';
-  const portalName = currentRole === 'trainer' ? 'Trainer Portal' : 'Gov Monitor';
+  const portalName = currentRole === 'trainer' ? 'Trainer Portal' : 'Project MIS';
   const roleLabel  = currentRole === 'admin'   ? 'Super Admin' : currentRole === 'manager' ? 'Project Manager' : 'Field Executive';
 
   return (
@@ -60,7 +60,7 @@ const Sidebar = ({ currentRole, activePage, setActivePage, onLogout, isOpen, onC
           </div>
           <div className="min-w-0 flex-1">
             <h1 className="text-[15px] font-black text-slate-900 leading-none truncate">{portalName}</h1>
-            <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-0.5">MIS System</p>
+            <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-0.5">Management System</p>
           </div>
           {/* Close btn — mobile only */}
           <button

@@ -26,7 +26,8 @@ exports.addNewTrainer = async (req, res) => {
       totLevel,
       residentCity,
       joiningLocation,
-      reportingManager: reportingManagerId 
+      reportingManager: reportingManagerId,
+      placementLocation
     } = req.body;
 
     if (!fullName || !mobileNumber || !state || !district) {
@@ -121,7 +122,8 @@ exports.addNewTrainer = async (req, res) => {
       totStatus,
       totLevel,
       residentCity,
-      joiningLocation
+      joiningLocation,
+      placementLocation: placementLocation || { state: '', district: '', taluka: '', village: '' }
     });
 
     res.status(201).json({
@@ -252,7 +254,8 @@ exports.updateTrainer = async (req, res) => {
       district, 
       status, 
       password,
-      accountRole
+      accountRole,
+      placementLocation
     } = req.body;
 
     let trainer = await Trainer.findById(req.params.id);
@@ -276,6 +279,7 @@ exports.updateTrainer = async (req, res) => {
     if (state)           trainer.state           = state;
     if (district)        trainer.district        = district;
     if (accountRole)     trainer.accountRole     = accountRole;
+    if (placementLocation) trainer.placementLocation = placementLocation;
 
     const projectsToUpdate = assignedProjects || (assignedProject ? [assignedProject] : null);
 

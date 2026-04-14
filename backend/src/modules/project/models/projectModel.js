@@ -135,6 +135,9 @@ const projectSchema = new mongoose.Schema(
       ref: 'Manager',
       required: false,
     },
+    managerAssignedAt: {
+      type: Date,
+    },
     status: {
       type: String,
       enum: ['active', 'closed'],

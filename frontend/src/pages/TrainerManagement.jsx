@@ -22,6 +22,8 @@ const avatarColors = [
 const TrainerModal = ({ trainer, onClose, onSave, projects, currentRole, successData }) => {
   const [selectedProjects, setSelectedProjects] = useState(trainer ? trainer.projects.map(p => p._id || p) : []);
   const [managers, setManagers] = useState([]);
+  const [talukas, setTalukas] = useState([]);
+  const [villages, setVillages] = useState([]);
   const [formData, setFormData] = useState({
     fullName: trainer ? trainer.name : '',
     trainerId: trainer ? trainer.trainerId : '',
@@ -29,6 +31,7 @@ const TrainerModal = ({ trainer, onClose, onSave, projects, currentRole, success
     state: trainer ? trainer.state : '',
     district: trainer ? trainer.location || trainer.district : '',
     reportingManager: trainer ? trainer.reportingManager : '',
+    placementLocation: trainer?.placementLocation || { state: '', district: '', taluka: '', village: '' }
   });
 
   useEffect(() => {
@@ -39,6 +42,37 @@ const TrainerModal = ({ trainer, onClose, onSave, projects, currentRole, success
 
   const states = Object.keys(statesAndDistricts);
   const districts = formData.state ? statesAndDistricts[formData.state] : [];
+  const placementDistricts = formData.placementLocation.state ? statesAndDistricts[formData.placementLocation.state] : [];
+
+  useEffect(() => {
+    if (formData.placementLocation.state && formData.placementLocation.district) {
+      fetchTalukas(formData.placementLocation.state, formData.placementLocation.district);
+    } else {
+      setTalukas([]);
+    }
+  }, [formData.placementLocation.state, formData.placementLocation.district]);
+
+  useEffect(() => {
+    if (formData.placementLocation.state && formData.placementLocation.district && formData.placementLocation.taluka) {
+      fetchVillages(formData.placementLocation.state, formData.placementLocation.district, formData.placementLocation.taluka);
+    } else {
+      setVillages([]);
+    }
+  }, [formData.placementLocation.state, formData.placementLocation.district, formData.placementLocation.taluka]);
+
+  const fetchTalukas = async (s, d) => {
+    try {
+      const resp = await API.get(`/locations/talukas?state=${s}&district=${d}`);
+      if (resp.data.success) setTalukas(resp.data.data);
+    } catch (err) { console.error(err); }
+  };
+
+  const fetchVillages = async (s, d, t) => {
+    try {
+      const resp = await API.get(`/locations/villages?state=${s}&district=${d}&taluka=${t}`);
+      if (resp.data.success) setVillages(resp.data.data);
+    } catch (err) { console.error(err); }
+  };
 
   const fetchManagers = async () => {
     try {
@@ -170,52 +204,61 @@ const TrainerModal = ({ trainer, onClose, onSave, projects, currentRole, success
                 placeholder="Enter staff full name"
                 value={formData.fullName}
                 onChange={e => setFormData({ ...formData, fullName: e.target.value })}
-                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm"
+                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm shadow-sm"
               />
             </div>
 
-            <div>
-              <label className="block text-xs font-black text-slate-700 uppercase tracking-widest mb-2">Trainer ID / Staff ID</label>
-              <input
-                required
-                placeholder="T-XXXX"
-                value={formData.trainerId}
-                onChange={e => setFormData({ ...formData, trainerId: e.target.value })}
-                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm"
-              />
-            </div>
+            {/* Base Profile Details */}
+            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100">
+               <div className="md:col-span-2 mb-2">
+                  <h4 className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <span className="w-1 h-3 bg-indigo-600 rounded-full"></span>
+                    Base Identity
+                  </h4>
+               </div>
+               <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Trainer ID</label>
+                  <input
+                    required
+                    placeholder="T-XXXX"
+                    value={formData.trainerId}
+                    onChange={e => setFormData({ ...formData, trainerId: e.target.value })}
+                    className="w-full h-12 px-5 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold text-xs focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all"
+                  />
+                </div>
 
-            <div>
-              <label className="block text-xs font-black text-slate-700 uppercase tracking-widest mb-2">Mobile Number</label>
-              <input
-                required
-                maxLength="10"
-                placeholder="10-digit number"
-                value={formData.mobileNumber}
-                onChange={e => setFormData({ ...formData, mobileNumber: e.target.value })}
-                className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all text-sm"
-              />
-            </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 ml-1">Mobile Number</label>
+                  <input
+                    required
+                    maxLength="10"
+                    placeholder="10-digit number"
+                    value={formData.mobileNumber}
+                    onChange={e => setFormData({ ...formData, mobileNumber: e.target.value })}
+                    className="w-full h-12 px-5 bg-white border border-slate-200 rounded-xl text-slate-900 font-bold text-xs focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all"
+                  />
+                </div>
 
-            <div>
-              <SearchableDropdown 
-                label="State"
-                placeholder="Select State"
-                options={states}
-                value={formData.state}
-                onChange={(val) => setFormData({ ...formData, state: val, district: '' })}
-              />
-            </div>
+                <div className="md:col-span-1">
+                  <SearchableDropdown 
+                    label="Home State"
+                    placeholder="Select State"
+                    options={states}
+                    value={formData.state}
+                    onChange={(val) => setFormData({ ...formData, state: val, district: '' })}
+                  />
+                </div>
 
-            <div>
-              <SearchableDropdown 
-                label="District"
-                placeholder="Select District"
-                options={districts}
-                value={formData.district}
-                disabled={!formData.state}
-                onChange={(val) => setFormData({ ...formData, district: val })}
-              />
+                <div className="md:col-span-1">
+                  <SearchableDropdown 
+                    label="Home District"
+                    placeholder="Select District"
+                    options={districts}
+                    value={formData.district}
+                    disabled={!formData.state}
+                    onChange={(val) => setFormData({ ...formData, district: val })}
+                  />
+                </div>
             </div>
 
             {currentRole === 'admin' && (
@@ -236,11 +279,55 @@ const TrainerModal = ({ trainer, onClose, onSave, projects, currentRole, success
             )}
           </div>
 
+          {/* Placement Location Matrix */}
+          <div className="bg-blue-50/30 p-8 rounded-[2rem] border border-blue-100/50 space-y-6">
+            <h4 className="text-[11px] font-black text-blue-700 uppercase tracking-[0.25em] flex items-center gap-3">
+              <span className="w-1.5 h-4 bg-blue-600 rounded-full"></span>
+              Placement Location
+            </h4>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <SearchableDropdown 
+                  label="Placement State"
+                  placeholder="Select State"
+                  options={states}
+                  value={formData.placementLocation.state}
+                  onChange={(val) => setFormData({ ...formData, placementLocation: { ...formData.placementLocation, state: val, district: '', taluka: '', village: '' } })}
+                />
+                <SearchableDropdown 
+                  label="Placement District"
+                  placeholder="Select District"
+                  options={placementDistricts}
+                  value={formData.placementLocation.district}
+                  disabled={!formData.placementLocation.state}
+                  onChange={(val) => setFormData({ ...formData, placementLocation: { ...formData.placementLocation, district: val, taluka: '', village: '' } })}
+                />
+                <SearchableDropdown 
+                  label="Taluka"
+                  placeholder="Select/Enter Taluka"
+                  options={talukas}
+                  allowCustom
+                  value={formData.placementLocation.taluka}
+                  disabled={!formData.placementLocation.district}
+                  onChange={(val) => setFormData({ ...formData, placementLocation: { ...formData.placementLocation, taluka: val, village: '' } })}
+                />
+                <SearchableDropdown 
+                  label="City/Village"
+                  placeholder="Select/Enter Village"
+                  options={villages}
+                  allowCustom
+                  value={formData.placementLocation.village}
+                  disabled={!formData.placementLocation.taluka}
+                  onChange={(val) => setFormData({ ...formData, placementLocation: { ...formData.placementLocation, village: val } })}
+                />
+            </div>
+          </div>
+
           <div>
             <label className="block text-xs font-black text-slate-700 uppercase tracking-[0.2em] mb-4">Assign Active Project(s)</label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-52 overflow-y-auto p-5 bg-slate-50 dark:bg-slate-800/30 border border-slate-200 dark:border-slate-800 rounded-[2rem] custom-scrollbar">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-52 overflow-y-auto p-5 bg-white border border-slate-200 rounded-[2rem] custom-scrollbar">
               {projects.map(p => (
-                <label key={p._id} className={`flex items-center gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedProjects.includes(p._id) ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-500/20' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 text-slate-500 hover:border-indigo-200'}`}>
+                <label key={p._id} className={`flex items-center gap-4 p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedProjects.includes(p._id) ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-500 hover:border-indigo-200'}`}>
                   <input type="checkbox" checked={selectedProjects.includes(p._id)} onChange={() => toggleProject(p._id)} className="hidden" />
                   <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${selectedProjects.includes(p._id) ? 'bg-white border-white' : 'border-slate-300'}`}>
                     {selectedProjects.includes(p._id) && <span className="text-indigo-600 text-[10px]">✓</span>}

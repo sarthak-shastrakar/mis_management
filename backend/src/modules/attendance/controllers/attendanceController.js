@@ -478,3 +478,45 @@ exports.getAllBulkRequests = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// ─────────────────────────────────────────────────────────────
+// @desc    Get Specific Trainer's attendance (For Admin/Manager)
+// @route   GET /api/v1/attendance/trainer/:trainerId
+// @access  Private (Manager/Admin)
+// ─────────────────────────────────────────────────────────────
+exports.getTrainerAttendance = async (req, res) => {
+  try {
+    const { trainerId } = req.params;
+
+    // Optional: Manager ownership check
+    if (req.user.role === 'manager') {
+      const trainer = await Trainer.findById(trainerId);
+      if (!trainer || (String(trainer.createdBy) !== req.user.id && String(trainer.reportingManager) !== req.user.id)) {
+        return res.status(403).json({ success: false, message: 'Unauthorized access to this trainer\'s records' });
+      }
+    }
+
+    const attendance = await Attendance.find({ trainerId })
+      .populate('projectId', 'name customProjectId')
+      .sort({ date: -1 })
+      .lean();
+
+    // Resolve project names if projectId is just a string (custom ID)
+    const projects = await Project.find({}).lean();
+    const enriched = attendance.map(att => {
+      const pId = String(att.projectId?._id || att.projectId);
+      const projDoc = projects.find(p => String(p._id) === pId || p.projectId === pId || p.name === pId);
+      return {
+        ...att,
+        projectName: projDoc ? projDoc.name : (pId.length > 10 ? 'Project Deleted' : pId)
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data: enriched
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

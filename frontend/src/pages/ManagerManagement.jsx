@@ -154,6 +154,7 @@ const ManagerManagement = () => {
       state: manager.state || '',
       district: manager.district || '',
       assignedProjects: manager.assignedProjects ? manager.assignedProjects.map(p => p._id) : [],
+      assignedProjectsWithDates: manager.assignedProjectsWithDates || [],
       status: manager.status || 'active',
       username: manager.username || '',
       password: manager.plainPassword || ''
@@ -414,24 +415,40 @@ const ManagerManagement = () => {
                       />
                     </div>
                     <div className="col-span-1 sm:col-span-2">
-                      <label className="block text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-3 ml-1">Projects</label>
-                      <div className="grid grid-cols-2 gap-4 p-6 bg-slate-50 border border-slate-200 rounded-[2rem] max-h-48 overflow-y-auto custom-scrollbar">
-                        {projectsList.map(prj => (
-                          <div
-                            key={prj._id}
-                            onClick={() => {
-                              if (viewOnly) return;
-                              const updated = managerForm.assignedProjects.includes(prj._id)
-                                ? managerForm.assignedProjects.filter(id => id !== prj._id)
-                                : [...managerForm.assignedProjects, prj._id];
-                              setManagerForm({ ...managerForm, assignedProjects: updated });
-                            }}
-                            className={`flex items-center p-4 rounded-xl cursor-pointer transition-all border ${managerForm.assignedProjects.includes(prj._id) ? 'bg-blue-50 border-blue-200 text-blue-700 font-extrabold shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 font-bold'} ${viewOnly ? 'cursor-default' : ''}`}
-                          >
-                            <span className="text-[11px] uppercase tracking-tight">{prj.name}</span>
-                          </div>
-                        ))}
-                        {projectsList.length === 0 && <p className="col-span-2 text-center text-slate-600 font-bold text-[10px] uppercase py-4">No active projects available</p>}
+                      <label className="block text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-3 ml-1">Projects & Assignment Dates</label>
+                      <div className="grid grid-cols-1 gap-4 p-6 bg-slate-50 border border-slate-200 rounded-[2rem] max-h-64 overflow-y-auto custom-scrollbar">
+                        {viewOnly ? (
+                          managerForm.assignedProjectsWithDates.length > 0 ? (
+                            managerForm.assignedProjectsWithDates.map((prj, idx) => (
+                              <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-white border border-slate-200 rounded-xl gap-2">
+                                <span className="text-[11px] font-extrabold uppercase tracking-tight text-slate-900">{prj.name}</span>
+                                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">
+                                  Assigned: {prj.assignedAt ? new Date(prj.assignedAt).toLocaleDateString() : 'N/A'}
+                                </span>
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-center text-slate-600 font-bold text-[10px] uppercase py-4">No active projects assigned</p>
+                          )
+                        ) : (
+                          <>
+                            {projectsList.map(prj => (
+                              <div
+                                key={prj._id}
+                                onClick={() => {
+                                  const updated = managerForm.assignedProjects.includes(prj._id)
+                                    ? managerForm.assignedProjects.filter(id => id !== prj._id)
+                                    : [...managerForm.assignedProjects, prj._id];
+                                  setManagerForm({ ...managerForm, assignedProjects: updated });
+                                }}
+                                className={`flex items-center p-4 rounded-xl cursor-pointer transition-all border ${managerForm.assignedProjects.includes(prj._id) ? 'bg-blue-50 border-blue-200 text-blue-700 font-extrabold shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50 font-bold'}`}
+                              >
+                                <span className="text-[11px] uppercase tracking-tight">{prj.name}</span>
+                              </div>
+                            ))}
+                            {projectsList.length === 0 && <p className="col-span-2 text-center text-slate-600 font-bold text-[10px] uppercase py-4">No active projects available</p>}
+                          </>
+                        )}
                       </div>
                     </div>
 

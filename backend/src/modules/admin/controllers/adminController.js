@@ -505,7 +505,7 @@ exports.addNewManager = async (req, res, next) => {
 exports.getAllManagers = async (req, res, next) => {
   try {
     const managers = await Manager.find().sort({ createdAt: -1 });
-    const allProjects = await Project.find().select('name manager');
+    const allProjects = await Project.find().select('name manager managerAssignedAt');
 
     const managersWithProjects = managers.map((m) => {
       // Find all projects where this manager is the owner
@@ -514,6 +514,10 @@ exports.getAllManagers = async (req, res, next) => {
       return {
         ...m._doc,
         assignedProjectsNames: projects.map(p => p.name).join(', ') || 'None',
+        assignedProjectsWithDates: projects.map(p => ({
+          name: p.name,
+          assignedAt: p.managerAssignedAt
+        })),
         assignedProjectsCount: projects.length
       };
     });
