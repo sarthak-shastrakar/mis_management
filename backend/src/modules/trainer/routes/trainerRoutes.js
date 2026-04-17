@@ -10,6 +10,7 @@ const {
 const {
   trainerLogin,
   completeProfile,
+  resetPasswordDirect,
 } = require("../controllers/trainerAuthController");
 
 const {
@@ -45,6 +46,8 @@ router.post("/auth/login", trainerLogin);
 //                 completion NOT required yet
 //                 (These are the onboarding steps)
 // ─────────────────────────────────────────────────────────────
+router.post('/auth/reset-password-direct', resetPasswordDirect);
+
 router.post("/auth/complete-profile", protect, trainerOnly, completeProfile);
 
 const { uploadHousePhoto } = require("../../../utils/cloudinary");
@@ -106,6 +109,22 @@ router.get(
   trainerOnly,
   requireProfileComplete,
   getBulkRequests
+);
+
+const {
+  uploadEvidence
+} = require("../../attendance/controllers/evidenceController");
+
+router.post(
+  "/evidence/upload",
+  protect,
+  trainerOnly,
+  requireProfileComplete,
+  uploadHousePhoto.fields([
+    { name: 'photos', maxCount: 3 },
+    { name: 'video', maxCount: 1 }
+  ]),
+  uploadEvidence
 );
 
 module.exports = router;

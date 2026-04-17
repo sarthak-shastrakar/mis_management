@@ -44,10 +44,17 @@ exports.addExpense = async (req, res) => {
 
 // @desc    Get all expenses for a project
 // @route   GET /api/v1/admin/expenses/:projectId
-// @access  Private (Admin Only)
+// @access  Private (Admin/Viewer)
 exports.getProjectExpenses = async (req, res) => {
   try {
-    const expenses = await Expense.find({ project: req.params.projectId })
+    const projectId = req.params.projectId;
+
+    // Security Check for Viewer
+    if (req.user.role === 'viewer' && !req.user.assignedProjects.includes(projectId)) {
+      return res.status(403).json({ success: false, message: 'Not authorized to view expenses for this project' });
+    }
+
+    const expenses = await Expense.find({ project: projectId })
       .sort({ date: -1 });
 
     res.status(200).json({

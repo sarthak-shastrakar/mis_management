@@ -91,7 +91,7 @@ exports.getProjectAttendance = async (req, res) => {
     const { projectId } = req.params;
 
     const stats = await Attendance.find({ projectId: projectId })
-      .populate('trainerId', 'name username employeeId staffRole')
+      .populate('trainerId', 'fullName trainerId mobileNumber accountRole')
       .sort({ date: -1 });
 
     res.status(200).json({ success: true, data: stats });
@@ -322,6 +322,9 @@ exports.getAllAttendanceForManager = async (req, res) => {
       }).select('_id');
       const trainerIds = trainers.map(t => t._id);
       query = { trainerId: { $in: trainerIds } };
+    } else if (req.user.role === 'viewer') {
+      const assigned = req.user.assignedProjects || [];
+      query = { projectId: { $in: assigned } };
     } else if (req.user.role !== 'admin') {
       return res.status(403).json({ success: false, message: 'Unauthorized access' });
     }
@@ -450,7 +453,7 @@ exports.getAllBulkRequests = async (req, res) => {
     if (req.user.role === 'manager') {
       // Find requests specifically assigned to this manager
       query = { managerId: req.user.id };
-    } else if (req.user.role !== 'admin') {
+    } else if (req.user.role !== 'admin' && req.user.role !== 'viewer') {
       return res.status(403).json({ success: false, message: 'Unauthorized access' });
     }
 

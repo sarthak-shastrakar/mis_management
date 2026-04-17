@@ -12,6 +12,7 @@ const Sidebar = ({ currentRole, activePage, setActivePage, onLogout, isOpen, onC
   const trainerItems = [
     { id: 'dashboard',       label: 'My Dashboard',   icon: '🏠' },
     { id: 'mark-attendance', label: 'Mark Attendance', icon: '📷' },
+    { id: 'evidence',        label: 'Work Evidence',  icon: '🚀' },
     { id: 'my-history',      label: 'My History',      icon: '📜' },
     { id: 'profile',         label: 'My Profile',      icon: '👤' },
   ];
@@ -19,9 +20,12 @@ const Sidebar = ({ currentRole, activePage, setActivePage, onLogout, isOpen, onC
   const menuItems = [
     { id: 'dashboard',  label: 'Dashboard',  icon: '📊' },
     { id: 'projects',   label: 'Projects',   icon: '📁' },
-    ...(currentRole === 'admin'   ? [{ id: 'managers',  label: 'Managers',  icon: '👔' }] : []),
+    ...(currentRole === 'admin' || currentRole === 'viewer' ? [{ id: 'managers',  label: 'Managers',  icon: '👔' }] : []),
     ...(currentRole === 'admin'   ? [{ id: 'expenses',  label: 'Expenses',  icon: '💸' }] : []),
-    ...(currentRole !== 'trainer' ? [{ id: 'trainers',  label: 'Trainers',  icon: '👥' }] : []),
+    ...(currentRole === 'admin' || currentRole === 'viewer' ? [{ id: 'reports',   label: 'Reports',   icon: '📈' }] : []),
+    ...(currentRole === 'admin'   ? [{ id: 'users',      label: 'User Management', icon: '👤' }] : []),
+    { id: 'evidence', label: 'Evidence Feed', icon: '📽️' },
+    ...(currentRole !== 'trainer' && currentRole !== 'viewer' ? [{ id: 'trainers',  label: 'Trainers',  icon: '👥' }] : []),
     { id: 'attendance', label: 'Attendance', icon: '📅' },
     ...(currentRole !== 'admin'   ? [{ id: 'profile',   label: 'My Profile', icon: '👤' }] : []),
   ];
@@ -29,7 +33,7 @@ const Sidebar = ({ currentRole, activePage, setActivePage, onLogout, isOpen, onC
   const items      = currentRole === 'trainer' ? trainerItems : menuItems;
   const logoLetter = currentRole === 'trainer' ? 'T' : 'M';
   const portalName = currentRole === 'trainer' ? 'Trainer Portal' : 'Gov Monitor';
-  const roleLabel  = currentRole === 'admin'   ? 'Super Admin' : currentRole === 'manager' ? 'Project Manager' : 'Field Executive';
+  const roleLabel  = currentRole === 'admin'   ? 'Super Admin' : currentRole === 'manager' ? 'Project Manager' : currentRole === 'viewer' ? 'Guest Viewer' : 'Field Executive';
 
   return (
     <>

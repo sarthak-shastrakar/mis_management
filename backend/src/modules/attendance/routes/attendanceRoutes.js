@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, managerOnly, adminOnly } = require('../../../middlewares/authMiddleware');
+const { protect, managerOnly, adminOnly, viewAccess } = require('../../../middlewares/authMiddleware');
 const { uploadHousePhoto } = require('../../../utils/cloudinary');
 const {
   markAttendance,
@@ -21,7 +21,7 @@ const {
  * @desc    Get all attendance for manager's trainers
  * @access  Private (Manager/Admin)
  */
-router.get('/all-projects', protect, getAllAttendanceForManager);
+router.get('/all-projects', protect, viewAccess, getAllAttendanceForManager);
 
 /**
  * @route   POST /api/v1/attendance/mark
@@ -42,7 +42,7 @@ router.get('/my-history/:projectId', protect, getMyAttendance);
  * @desc    Get project-wide attendance (for Managers)
  * @access  Private (Manager/Admin)
  */
-router.get('/project/:projectId', protect, getProjectAttendance);
+router.get('/project/:projectId', protect, viewAccess, getProjectAttendance);
 
 // --- Bulk Request Operations ---
 router.get('/bulk-requests/all', protect, managerOnly, getAllBulkRequests);

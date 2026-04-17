@@ -12,6 +12,15 @@ const progressColors = {
   closed: 'bg-slate-400',
 };
 
+const calculateDuration = (start, end) => {
+  if (!start || !end) return 'N/A';
+  const s = new Date(start);
+  const e = new Date(end);
+  const diffTime = e - s;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Inclusive
+  return diffDays > 0 ? `${diffDays} Days` : 'Invalid Range';
+};
+
 const Field = ({ label, value, editMode, onChange, type = 'text', options }) => {
   if (editMode) {
     if (options) {
@@ -54,7 +63,7 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
 
   const fetchProject = async () => {
     try {
-      const endpoint = isAdmin ? `/admin/projects/${projectId}` : `/manager/projects/${projectId}`;
+      const endpoint = (isAdmin || user?.role === 'viewer') ? `/admin/projects/${projectId}` : `/manager/projects/${projectId}`;
 
       const response = await API.get(endpoint);
       if (response.data.success) {
@@ -221,6 +230,13 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
             <Field label="Start Date" value={project.startDate?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({ ...project, startDate: v })} />
             <Field label="End Date" value={project.endDate?.split('T')[0]} editMode={editMode} type="date" onChange={v => setProject({ ...project, endDate: v })} />
             
+            <div>
+              <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1">Duration</p>
+              <p className="text-sm font-black text-blue-700 bg-blue-50 px-3 py-1 rounded-lg inline-block">
+                {calculateDuration(project.startDate, project.endDate)}
+              </p>
+            </div>
+
             <Field
               label="Operational Status"
               value={project.status}
@@ -247,9 +263,9 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
         {/* Side Panel */}
         <div className="space-y-8">
           {/* Manager Info */}
-          {isAdmin && (
+          {(isAdmin || user?.role === 'viewer') && (
             <div className="bg-white rounded-3xl sm:rounded-[2.5rem] border border-slate-100 p-8 sm:p-10 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-8 opacity-[0.03] transition-all transform">
+               <div className="absolute top-0 right-0 p-8 opacity-[0.03] transition-all transform">
                 <span className="text-8xl">👔</span>
               </div>
               <h3 className="text-base font-black text-slate-900 mb-6 pb-4 border-b border-slate-50">Manager</h3>
@@ -259,7 +275,8 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
                 </div>
                 <div>
                   <p className="font-black text-slate-900 text-base sm:text-lg">{project.manager?.fullName || 'Not Assigned'}</p>
-                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">{project.manager?.managerId || 'NO-ID'}</p>
+                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1.5">{project.manager?.managerId || 'NO-ID'}</p>
+                  <p className="text-[10px] font-bold text-slate-500">{project.manager?.mobileNumber || ''}</p>
                 </div>
               </div>
             </div>
@@ -276,7 +293,7 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
                   <p className="text-sm font-black text-slate-800">{new Date(project.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                 </div>
               </div>
-              <div className="w-px h-10 bg-slate-100 ml-1.5"></div>
+              <div className="w-px h-6 bg-slate-100 ml-1.5"></div>
               <div className="flex items-center gap-4">
                 <div className="w-3 h-3 rounded-full bg-rose-500 shadow-lg shadow-rose-500/20"></div>
                 <div>
@@ -286,6 +303,56 @@ const ProjectDetail = ({ projectId, onBack, initialEditMode = false }) => {
               </div>
             </div>
           </div>
+
+          {/* Trainers List (Viewer Only) */}
+          {user?.role === 'viewer' && (
+            <div className="bg-white rounded-3xl sm:rounded-[2.5rem] border border-slate-100 p-8 sm:p-10 shadow-sm">
+              <h3 className="text-base font-black text-slate-900 mb-6 pb-4 border-b border-slate-50 flex justify-between items-center">
+                <span>Trainers</span>
+                <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[10px]">{project.trainersList?.length || 0}</span>
+              </h3>
+              <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                {project.trainersList?.map(t => (
+                  <div key={t._id} className="flex items-center gap-4 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-xs font-black text-slate-600 shadow-sm">
+                      {t.fullName?.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-black text-slate-900 truncate">{t.fullName}</p>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{t.trainerId}</p>
+                    </div>
+                    <div className={`w-2 h-2 rounded-full ${t.status === 'active' ? 'bg-emerald-500' : 'bg-slate-300'}`}></div>
+                  </div>
+                ))}
+                {(!project.trainersList || project.trainersList.length === 0) && (
+                  <p className="text-center py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest italic">No trainers assigned</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Recent Attendance Summary (Viewer Only) */}
+          {user?.role === 'viewer' && (
+            <div className="bg-white rounded-3xl sm:rounded-[2.5rem] border border-slate-100 p-8 sm:p-10 shadow-sm">
+              <h3 className="text-base font-black text-slate-900 mb-6 pb-4 border-b border-slate-50">Recent Activity</h3>
+              <div className="space-y-4">
+                {project.recentAttendance?.map((att, idx) => (
+                  <div key={idx} className="flex gap-4">
+                    <div className="w-1 h-10 bg-blue-100 rounded-full mt-1"></div>
+                    <div>
+                      <p className="text-[10px] font-black text-slate-900 leading-tight">{att.trainerId?.fullName || 'Trainer'}</p>
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                        {new Date(att.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} • {att.status}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {(!project.recentAttendance || project.recentAttendance.length === 0) && (
+                  <p className="text-center py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest italic">No recent activity</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

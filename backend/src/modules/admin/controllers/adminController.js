@@ -4,6 +4,7 @@ const Manager = require('../../manager/models/managerModel');
 const Trainer = require('../../trainer/models/trainerModel');
 const Project = require('../../project/models/projectModel');
 const Attendance = require('../../attendance/models/attendanceModel');
+const Viewer = require('../../viewer/models/viewerModel');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
@@ -12,22 +13,34 @@ const crypto = require('crypto');
 // @access  Private (Admin)
 exports.getDashboardStats = async (req, res, next) => {
   try {
-    const totalProjects = await Project.countDocuments();
-    const activeManagers = await Manager.countDocuments(); // Active + Inactive for overall count
-    const fieldTrainers = await Trainer.countDocuments();
-    
-    // Count daily uploads (today)
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const todayEnd = new Date();
     todayEnd.setHours(23, 59, 59, 999);
 
-    const dailyUploadsCount = await Attendance.countDocuments({
-      createdAt: { $gte: todayStart, $lte: todayEnd }
-    });
+    let projectQuery = {};
+    let managerQuery = {};
+    let trainerQuery = {};
+    let attendanceQuery = { createdAt: { $gte: todayStart, $lte: todayEnd } };
+
+    if (req.user.role === 'viewer') {
+      const assigned = req.user.assignedProjects || [];
+      projectQuery = { _id: { $in: assigned } };
+      managerQuery = { assignedProjects: { $in: assigned } };
+      trainerQuery = { assignedProjects: { $in: assigned } };
+      attendanceQuery = { 
+        createdAt: { $gte: todayStart, $lte: todayEnd },
+        projectId: { $in: assigned } 
+      };
+    }
+
+    const totalProjects = await Project.countDocuments(projectQuery);
+    const activeManagers = await Manager.countDocuments(managerQuery);
+    const fieldTrainers = await Trainer.countDocuments(trainerQuery);
+    const dailyUploadsCount = await Attendance.countDocuments(attendanceQuery);
 
     // Fetch recent active projects
-    const recentProjects = await Project.find()
+    const recentProjects = await Project.find(projectQuery)
       .populate('manager', 'fullName')
       .sort({ createdAt: -1 })
       .limit(5);
@@ -156,8 +169,15 @@ exports.createProject = async (req, res, next) => {
 // @access  Private (Admin Only)
 exports.getAllProjects = async (req, res, next) => {
   try {
-    const projects = await Project.find()
-      .populate('manager', 'fullName managerId emailAddress')
+    let query = {};
+    if (req.user.role === 'manager') {
+      query = { manager: req.user.id };
+    } else if (req.user.role === 'viewer') {
+      query = { _id: { $in: req.user.assignedProjects || [] } };
+    }
+
+    const projects = await Project.find(query)
+      .populate('manager', 'fullName managerId emailAddress district mobileNumber')
       .sort({ createdAt: -1 });
     
     const projectsWithDetails = await Promise.all(projects.map(async (prj) => {
@@ -189,21 +209,43 @@ exports.getAllProjects = async (req, res, next) => {
 // @access  Private (Admin Only)
 exports.getProject = async (req, res, next) => {
   try {
-    const project = await Project.findById(req.params.id).populate('manager', 'fullName managerId');
+    const project = await Project.findById(req.params.id)
+      .populate('manager', 'fullName managerId emailAddress mobileNumber district')
+      .lean();
+
     if (!project) {
       return res.status(404).json({ success: false, message: 'Project not found' });
     }
 
-    const trainersCount = await Trainer.countDocuments({ assignedProject: project.name });
+    // Security Check for Viewer
+    if (req.user.role === 'viewer' && !req.user.assignedProjects.includes(project._id.toString())) {
+      return res.status(403).json({ success: false, message: 'Not authorized to view this project' });
+    }
+
+    // Fetch details for drill-down
+    const trainers = await Trainer.find({ assignedProjects: project._id })
+      .select('fullName trainerId status mobileNumber')
+      .lean();
+
+    const trainersCount = trainers.length;
+
+    // Get attendance stats for this project
+    const attendanceStats = await Attendance.find({ projectId: project._id })
+      .sort({ date: -1 })
+      .limit(10)
+      .populate('trainerId', 'fullName')
+      .lean();
 
     res.status(200).json({
       success: true,
       data: {
-        ...project._doc,
+        ...project,
         id: project.projectId || project._id.toString().slice(-6).toUpperCase(),
         managerName: project.manager ? project.manager.fullName : 'Not Assigned',
         managerId: project.manager ? project.manager.managerId : 'N/A',
-        trainers: trainersCount
+        trainers: trainersCount,
+        trainersList: trainers,
+        recentAttendance: attendanceStats
       }
     });
   } catch (err) {
@@ -504,7 +546,12 @@ exports.addNewManager = async (req, res, next) => {
 // @access  Private (Admin Only)
 exports.getAllManagers = async (req, res, next) => {
   try {
-    const managers = await Manager.find().sort({ createdAt: -1 });
+    let query = {};
+    if (req.user.role === 'viewer') {
+      query = { assignedProjects: { $in: req.user.assignedProjects || [] } };
+    }
+
+    const managers = await Manager.find(query).sort({ createdAt: -1 });
     const allProjects = await Project.find().select('name manager');
 
     const managersWithProjects = managers.map((m) => {
@@ -737,7 +784,12 @@ exports.resetManagerPassword = async (req, res, next) => {
 // @access  Private (Admin Only)
 exports.getAllTrainers = async (req, res, next) => {
   try {
-    const trainers = await Trainer.find()
+    let query = {};
+    if (req.user.role === 'viewer') {
+      query = { assignedProjects: { $in: req.user.assignedProjects || [] } };
+    }
+
+    const trainers = await Trainer.find(query)
       .populate('reportingManager', 'fullName')
       .populate('assignedProjects', 'name')
       .sort({ createdAt: -1 })
@@ -922,16 +974,25 @@ exports.deleteTrainer = async (req, res, next) => {
 exports.getPhotosByDate = async (req, res, next) => {
   try {
     const { date } = req.query; // YYYY-MM-DD
-    if (!date) return res.status(400).json({ success: false, message: 'Please provide a date' });
-
-    const start = new Date(date);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 1);
+    
+    let query = {};
+    if (date && date !== 'all') {
+      const start = new Date(date);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 1);
+      query.date = { $gte: start, $lt: end };
+    }
 
     // --- 1. Trainer Attendance Records (Presence) ---
-    const attendances = await Attendance.find({ date: { $gte: start, $lt: end } })
-      .populate('trainerId', 'fullName');
+    const [attendances, allProjects] = await Promise.all([
+      Attendance.find(query).populate('trainerId', 'fullName'),
+      Project.find({}, 'name')
+    ]);
+
+    // Create a mapping of project ID to name
+    const projectMap = {};
+    allProjects.forEach(p => { projectMap[p._id.toString()] = p.name; });
 
     // --- 2. Combine into a Unified Structure ---
     const combined = [];
@@ -942,7 +1003,8 @@ exports.getPhotosByDate = async (req, res, next) => {
         type: 'attendance',
         trainerId: att.trainerId?._id,
         trainerName: att.trainerId?.fullName || 'N/A',
-        projectName: att.projectId || 'N/A',
+        projectId: att.projectId, // Adding this for frontend filtering
+        projectName: projectMap[att.projectId] || att.projectId || 'N/A',
         photoUrls: att.photos || [],
         status: att.status,
         date: att.date.toISOString().split('T')[0],
@@ -1048,4 +1110,97 @@ const sendTokenResponse = (admin, statusCode, res) => {
       role: admin.role || 'admin',
     },
   });
+};
+// @desc    Admin Reset Password Direct
+// @route   POST /api/v1/admin/reset-password-direct
+// @access  Public
+exports.resetAdminPasswordDirect = async (req, res) => {
+  try {
+    const { username, newPassword, confirmPassword } = req.body;
+
+    if (!username || !newPassword || !confirmPassword) {
+      return res.status(400).json({ success: false, message: 'Please provide all fields' });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ success: false, message: 'Passwords do not match' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    }
+
+    const admin = await Admin.findOne({ username });
+
+    if (!admin) {
+      return res.status(404).json({ success: false, message: 'No admin found with this username' });
+    }
+
+    // Update password (pre-save hook will hash it)
+    admin.password = newPassword;
+    await admin.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Admin password reset successfully. You can now login.'
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Add New Viewer
+// @route   POST /api/v1/admin/viewers
+// @access  Private (Admin)
+exports.addViewer = async (req, res) => {
+  try {
+    const { name, username, password, assignedProjects } = req.body;
+    
+    if (!name || !username || !password) {
+      return res.status(400).json({ success: false, message: 'Please provide all fields' });
+    }
+
+    const viewerExists = await Viewer.findOne({ username });
+    if (viewerExists) {
+      return res.status(400).json({ success: false, message: 'Viewer username already exists' });
+    }
+
+    const viewer = await Viewer.create({ 
+      name, 
+      username, 
+      password,
+      assignedProjects: assignedProjects || [] 
+    });
+
+    res.status(201).json({ success: true, data: viewer });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Get All Viewers
+// @route   GET /api/v1/admin/viewers
+// @access  Private (Admin)
+exports.getAllViewers = async (req, res) => {
+  try {
+    const viewers = await Viewer.find()
+      .populate('assignedProjects', 'name projectId')
+      .sort({ createdAt: -1 });
+    res.status(200).json({ success: true, count: viewers.length, data: viewers });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Delete Viewer
+// @route   DELETE /api/v1/admin/viewers/:id
+// @access  Private (Admin)
+exports.deleteViewer = async (req, res) => {
+  try {
+    const viewer = await Viewer.findByIdAndDelete(req.params.id);
+    if (!viewer) return res.status(404).json({ success: false, message: 'Viewer not found' });
+    res.status(200).json({ success: true, message: 'Viewer deleted' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 };

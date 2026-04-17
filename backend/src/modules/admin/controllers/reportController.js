@@ -14,7 +14,11 @@ const { cloudinary } = require('../../../utils/cloudinary');
 // ─────────────────────────────────────────────────────────────
 exports.exportStaffPerformance = async (req, res) => {
   try {
-    const staffs = await Trainer.find().populate('reportingManager', 'fullName');
+    let query = {};
+    if (req.user.role === 'viewer') {
+      query = { assignedProjects: { $in: req.user.assignedProjects || [] } };
+    }
+    const staffs = await Trainer.find(query).populate('reportingManager', 'fullName');
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Staff Performance');
@@ -80,6 +84,11 @@ exports.downloadProjectPhotos = async (req, res) => {
 
     const project = await Project.findById(projectId);
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+
+    // Security Check for Viewer
+    if (req.user.role === 'viewer' && !req.user.assignedProjects.includes(projectId)) {
+      return res.status(403).json({ success: false, message: 'Not authorized to download photos for this project' });
+    }
 
     const archive = archiver('zip', { zlib: { level: 9 } });
     res.setHeader('Content-Type', 'application/zip');
@@ -147,7 +156,16 @@ exports.exportPhotoSummaryReport = async (req, res) => {
 
     // --- 2. Trainer Attendance Entries ---
     let attQuery = {};
-    if (projectId) attQuery.projectId = projectId;
+    if (req.user.role === 'viewer') {
+      const assigned = req.user.assignedProjects || [];
+      attQuery.projectId = { $in: assigned };
+    }
+    if (projectId) {
+      if (req.user.role === 'viewer' && !req.user.assignedProjects.includes(projectId)) {
+         return res.status(403).json({ success: false, message: 'Not authorized for this project' });
+      }
+      attQuery.projectId = projectId;
+    }
     if (date) {
       const d = new Date(date);
       attQuery.date = { 
@@ -197,6 +215,11 @@ exports.exportProjectSummary = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id).populate('manager', 'fullName');
     if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+
+    // Security Check for Viewer
+    if (req.user.role === 'viewer' && !req.user.assignedProjects.includes(project._id.toString())) {
+      return res.status(403).json({ success: false, message: 'Not authorized for this project' });
+    }
 
     const doc = new PDFDocument();
     res.setHeader('Content-Type', 'application/pdf');

@@ -19,22 +19,31 @@ const Login = ({ onLogin }) => {
       let response;
       let role = '';
 
-      if (trimmedUsername === 'admin' || trimmedUsername === '@admin' || !trimmedUsername.includes('_')) {
-        response = await API.post('/admin/login', { username: trimmedUsername, password });
-        role = 'admin';
-      } else if (trimmedUsername.startsWith('mgr_')) {
+      if (trimmedUsername.startsWith('mgr_')) {
         response = await API.post('/manager/login', { username: trimmedUsername, password });
         role = 'manager';
       } else if (trimmedUsername.startsWith('tr_')) {
         response = await API.post('/trainer/auth/login', { username: trimmedUsername, password });
         role = 'trainer';
       } else {
-        throw new Error('Invalid format. Use "admin", "mgr_xxx", or "tr_xxx"');
+        // Try Admin first, then Viewer as fallback
+        try {
+          response = await API.post('/admin/login', { username: trimmedUsername, password });
+          role = 'admin';
+        } catch (adminErr) {
+          try {
+            response = await API.post('/viewer/login', { username: trimmedUsername, password });
+            role = 'viewer';
+          } catch (viewerErr) {
+            // If both fail, throw the more relevant error
+            throw new Error(viewerErr.response?.data?.message || adminErr.response?.data?.message || 'Invalid Credentials');
+          }
+        }
       }
 
-      if (response.data.success) {
+      if (response && response.data.success) {
         localStorage.setItem('token', response.data.token);
-        const userData = response.data.admin || response.data.manager || response.data.trainer;
+        const userData = response.data.admin || response.data.manager || response.data.trainer || response.data.user;
         const nextStep = response.data.nextStep || 'DASHBOARD';
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('userStatus', nextStep);
@@ -111,7 +120,7 @@ const Login = ({ onLogin }) => {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="admin / mgr_xxx / tr_xxx"
+                placeholder="Username (admin, mgr_xxx, etc.)"
                 className="w-full h-12 sm:h-14 px-5 bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl text-sm font-semibold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
               />
             </div>

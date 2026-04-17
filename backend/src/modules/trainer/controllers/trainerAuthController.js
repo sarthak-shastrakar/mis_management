@@ -152,6 +152,50 @@ exports.completeProfile = async (req, res) => {
 };
 
 // ─────────────────────────────────────────────────────────────
+// @desc    Reset password directly via mobile verification
+// @route   POST /api/v1/trainer/auth/reset-password-direct
+// @access  Public
+// ─────────────────────────────────────────────────────────────
+exports.resetPasswordDirect = async (req, res) => {
+  try {
+    const { mobileNumber, newPassword, confirmPassword } = req.body;
+
+    if (!mobileNumber || !newPassword || !confirmPassword) {
+      return res.status(400).json({ success: false, message: 'Please provide all fields' });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ success: false, message: 'Passwords do not match' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    }
+
+    const trainer = await Trainer.findOne({ mobileNumber });
+
+    if (!trainer) {
+      return res.status(404).json({ success: false, message: 'No trainer found with this mobile number' });
+    }
+
+    // Update password
+    trainer.password = newPassword;
+    
+    // Update plain password so user/admin can see it in MIS if needed
+    trainer.plainPassword = newPassword;
+
+    await trainer.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successfully. You can now login.'
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
 // Helper
 // ─────────────────────────────────────────────────────────────
 const generateToken = (id) => {

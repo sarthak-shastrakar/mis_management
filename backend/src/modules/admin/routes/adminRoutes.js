@@ -24,6 +24,10 @@ const {
   getPhotosByDate,
   getPhotosByTrainer,
   exchangeTrainerProject,
+  resetAdminPasswordDirect,
+  addViewer,
+  getAllViewers,
+  deleteViewer,
 } = require("../controllers/adminController");
 const { 
   addExpense,
@@ -40,7 +44,7 @@ const {
   exportProjectSummary,
   exportPhotoSummaryReport,
 } = require("../controllers/reportController");
-const { protect, adminOnly } = require("../../../middlewares/authMiddleware");
+const { protect, adminOnly, viewAccess } = require("../../../middlewares/authMiddleware");
 
 const router = express.Router();
 
@@ -48,21 +52,22 @@ const router = express.Router();
 // Public routes
 // ─────────────────────────────────────────────
 router.post("/login", login);
+router.post("/reset-password", resetAdminPasswordDirect);
 
 // ─────────────────────────────────────────────
 // Auth routes
 // ─────────────────────────────────────────────
 // Dashboard / Reports
 // ─────────────────────────────────────────────
-router.get("/dashboard-stats", protect, adminOnly, getDashboardStats);
+router.get("/dashboard-stats", protect, viewAccess, getDashboardStats);
 router.get("/logout", protect, logout);
 router.delete("/delete-account", protect, adminOnly, deleteAccount);
 router.route("/projects")
-  .get(protect, adminOnly, getAllProjects)
+  .get(protect, viewAccess, getAllProjects)
   .post(protect, adminOnly, createProject);
 
 router.route("/projects/:id")
-  .get(protect, adminOnly, getProject)
+  .get(protect, viewAccess, getProject)
   .put(protect, adminOnly, updateProject)
   .delete(protect, adminOnly, deleteProject);
 
@@ -73,15 +78,15 @@ router.route("/expenses")
   .post(protect, adminOnly, addExpense);
 
 router.route("/expenses/:projectId")
-  .get(protect, adminOnly, getProjectExpenses);
+  .get(protect, viewAccess, getProjectExpenses);
 
 router.delete("/expenses/record/:id", protect, adminOnly, deleteExpense);
 
 // ─────────────────────────────────────────────
 // Manager CRUD
 // ─────────────────────────────────────────────
+router.get("/managers", protect, viewAccess, getAllManagers);
 router.post("/add-manager", protect, adminOnly, addNewManager);
-router.get("/managers", protect, adminOnly, getAllManagers);
 
 router
   .route("/managers/:id")
@@ -95,18 +100,23 @@ router.put("/managers/:id/reset-password", protect, adminOnly, resetManagerPassw
 // ─────────────────────────────────────────────
 // Photo Monitoring (Admin)
 // ─────────────────────────────────────────────
-router.get("/photos/date-wise", protect, adminOnly, getPhotosByDate);
-router.get("/photos/trainer-wise", protect, adminOnly, getPhotosByTrainer);
+router.get("/photos/date-wise", protect, viewAccess, getPhotosByDate);
+router.get("/photos/trainer-wise", protect, viewAccess, getPhotosByTrainer);
+
+// Viewer Management
+router.get("/viewers", protect, adminOnly, getAllViewers);
+router.post("/viewers", protect, adminOnly, addViewer);
+router.delete("/viewers/:id", protect, adminOnly, deleteViewer);
 
 // ─────────────────────────────────────────────
 // Trainer Management (Admin)
 // ─────────────────────────────────────────────
-router.get("/trainers", protect, adminOnly, getAllTrainers);
+router.get("/trainers", protect, viewAccess, getAllTrainers);
 router.post("/trainers/add", protect, adminOnly, addNewTrainer);
 
 router
   .route("/trainers/:id")
-  .get(protect, adminOnly, getTrainer)
+  .get(protect, viewAccess, getTrainer)
   .put(protect, adminOnly, updateTrainer)
   .delete(protect, adminOnly, deleteTrainer);
 
@@ -119,9 +129,12 @@ router.patch("/trainers/:id/status", protect, adminOnly, toggleTrainerStatus);
 // ─────────────────────────────────────────────
 // Reports & Exports
 // ─────────────────────────────────────────────
-router.get("/reports/staff-performance", protect, adminOnly, exportStaffPerformance);
-router.get("/reports/project-photos/:projectId", protect, adminOnly, downloadProjectPhotos);
+router.get("/reports/staff-performance", protect, viewAccess, exportStaffPerformance);
+router.get("/reports/project-photos/:projectId", protect, viewAccess, downloadProjectPhotos);
 router.get("/reports/project-summary/:id", protect, exportProjectSummary);
-router.get("/reports/photo-summary", protect, adminOnly, exportPhotoSummaryReport);
+router.get("/reports/photo-summary", protect, viewAccess, exportPhotoSummaryReport);
+
+const { getAllEvidence } = require("../../attendance/controllers/evidenceController");
+router.get("/evidence", protect, viewAccess, getAllEvidence);
 
 module.exports = router;

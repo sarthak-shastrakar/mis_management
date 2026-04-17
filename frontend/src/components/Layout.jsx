@@ -14,8 +14,13 @@ import TrainerProfile from '../pages/TrainerProfile';
 import TrainerDashboard from '../pages/TrainerDashboard';
 import MarkAttendance from '../pages/MarkAttendance';
 import TrainerHistory from '../pages/TrainerHistory';
+import AdminReports from '../pages/AdminReports';
+import EvidenceUpload from '../pages/EvidenceUpload';
+import AdminEvidence from '../pages/AdminEvidence';
 import ManagerProfile from '../pages/ManagerProfile';
 import ExpenseManagement from '../pages/ExpenseManagement';
+import UserManagement from '../pages/UserManagement';
+import ViewerProfile from '../pages/ViewerProfile';
 
 // Sidebar is w-[260px] = 260px
 const SIDEBAR_OFFSET = 'lg:pl-[260px]';
@@ -71,7 +76,7 @@ const Layout = ({ currentRole, currentUser, userStatus, setUserStatus, onLogout,
 
             {/* Dashboard */}
             {activePage === 'dashboard' && (
-              currentRole === 'admin'
+              (currentRole === 'admin' || currentRole === 'viewer')
                 ? <AdminDashboard onAddManager={(mgr) => setManagersList(prev => [mgr, ...prev])} onNavigate={handleNavigate} />
                 : currentRole === 'manager'
                   ? <ManagerDashboard onNavigate={handleNavigate} />
@@ -79,13 +84,22 @@ const Layout = ({ currentRole, currentUser, userStatus, setUserStatus, onLogout,
             )}
 
             {activePage === 'projects'          && <ProjectManagement currentRole={currentRole} onNavigate={handleNavigate} />}
-            {activePage === 'managers'          && currentRole === 'admin' && <ManagerManagement managersList={managersList} setManagersList={setManagersList} />}
+            {activePage === 'managers'          && (currentRole === 'admin' || currentRole === 'viewer') && <ManagerManagement currentRole={currentRole} managersList={managersList} setManagersList={setManagersList} />}
             {activePage === 'trainers'          && <TrainerManagement currentRole={currentRole} onNavigate={handleNavigate} />}
             {activePage === 'attendance'        && <AttendanceManagement currentRole={currentRole} currentUser={currentUser} />}
             {activePage === 'expenses'          && currentRole === 'admin' && <ExpenseManagement />}
+            {activePage === 'reports'           && (currentRole === 'admin' || currentRole === 'viewer') && <AdminReports />}
+            {activePage === 'evidence'          && (currentRole === 'trainer' ? <EvidenceUpload /> : <AdminEvidence />)}
             {activePage === 'mark-attendance'   && <MarkAttendance currentRole={currentRole} currentUser={currentUser} />}
             {activePage === 'my-history'        && <TrainerHistory currentRole={currentRole} currentUser={currentUser} />}
-            {activePage === 'profile'           && (currentRole === 'manager' ? <ManagerProfile /> : <TrainerProfile />)}
+            {activePage === 'profile'           && (
+              currentRole === 'manager' 
+                ? <ManagerProfile /> 
+                : currentRole === 'viewer'
+                  ? <ViewerProfile />
+                  : <TrainerProfile />
+            )}
+            {activePage === 'users'             && currentRole === 'admin' && <UserManagement />}
 
             {activePage === 'project-detail' && (
               <ProjectDetail
@@ -105,7 +119,7 @@ const Layout = ({ currentRole, currentUser, userStatus, setUserStatus, onLogout,
             )}
 
             {/* 404 fallback */}
-            {!['dashboard','projects','managers','trainers','attendance','project-detail','trainer-detail','profile','mark-attendance','my-history', 'expenses'].includes(activePage) && (
+            {!['dashboard','projects','managers','trainers','attendance','project-detail','trainer-detail','profile','mark-attendance','my-history', 'expenses', 'reports', 'evidence'].includes(activePage) && (
               <div className="flex flex-col items-center justify-center min-h-[60vh] text-center border-2 border-dashed border-slate-200 rounded-3xl bg-white shadow-sm p-10">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-50 rounded-full flex items-center justify-center text-3xl sm:text-4xl mb-4">📁</div>
                 <h3 className="text-lg sm:text-xl font-black mb-2 text-slate-900">Coming Soon</h3>

@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const Admin = require('../modules/admin/models/adminModel');
 const Manager = require('../modules/manager/models/managerModel');
 const Trainer = require('../modules/trainer/models/trainerModel');
+const Viewer = require('../modules/viewer/models/viewerModel');
 
 // ─────────────────────────────────────────────────────────────
 // Authentication Middleware
@@ -28,6 +29,7 @@ const protect = async (req, res, next) => {
     let user = await Admin.findById(decoded.id);
     if (!user) user = await Manager.findById(decoded.id);
     if (!user) user = await Trainer.findById(decoded.id);
+    if (!user) user = await Viewer.findById(decoded.id);
 
     if (!user) {
       return res.status(401).json({ success: false, message: 'User not found or token invalid' });
@@ -60,8 +62,17 @@ const managerOnly = (req, res, next) => {
   }
 };
 
+const viewAccess = (req, res, next) => {
+  if (req.user && (req.user.role === 'admin' || req.user.role === 'viewer')) {
+    next();
+  } else {
+    return res.status(403).json({ success: false, message: 'Access denied: Viewing rights required' });
+  }
+};
+
 module.exports = {
   protect,
   adminOnly,
-  managerOnly
+  managerOnly,
+  viewAccess
 };

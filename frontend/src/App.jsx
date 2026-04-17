@@ -4,6 +4,7 @@ import Login from './pages/Login'
 import { managersData } from './data/mockData';
 import { ModalProvider } from './context/ModalContext';
 import UniversalModal from './components/UniversalModal';
+import ForgotPassword from './pages/ForgotPassword';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
@@ -26,6 +27,13 @@ function App() {
     setCurrentUser(null);
     setUserStatus('DASHBOARD');
   };
+
+  // Basic routing for Forgot Password
+  const isForgotPassword = window.location.pathname === '/forgot-password';
+
+  if (isForgotPassword) {
+    return <ForgotPassword />;
+  }
 
   return (
     <ModalProvider>
