@@ -72,8 +72,8 @@ const Login = ({ onLogin }) => {
           <div>
             {/* Logo */}
             <div className="flex items-center gap-3 mb-12">
-              <div className="w-11 h-11 bg-white text-blue-600 rounded-xl flex items-center justify-center font-black text-xl shadow-lg">M</div>
-              <span className="text-xl font-bold tracking-tight">Gov Monitor</span>
+              <div className="w-11 h-11 bg-white text-blue-600 rounded-xl flex items-center justify-center font-black text-xl shadow-lg">P</div>
+              <span className="text-xl font-bold tracking-tight">Project MIS</span>
             </div>
             {/* Headline */}
             <h1 className="text-3xl xl:text-4xl font-black leading-tight mb-5">
@@ -95,8 +95,8 @@ const Login = ({ onLogin }) => {
 
           {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-8 lg:hidden">
-            <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-black text-lg">M</div>
-            <span className="text-lg font-black text-slate-900">Gov Monitor</span>
+            <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-black text-lg">P</div>
+            <span className="text-lg font-black text-slate-900">Project MIS</span>
           </div>
 
           <div className="mb-8">

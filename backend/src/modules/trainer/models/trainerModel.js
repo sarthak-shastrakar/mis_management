@@ -37,6 +37,12 @@ const trainerSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please add district/city'],
     },
+    placementLocation: {
+      state: { type: String },
+      district: { type: String },
+      taluka: { type: String },
+      village: { type: String },
+    },
 
     // ── Auth ─────────────────────────────────────────────────
     username: {

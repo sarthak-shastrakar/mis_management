@@ -9,7 +9,8 @@ const {
   getAllAttendanceForManager,
   approveBulkRequest,
   rejectBulkRequest,
-  getAllBulkRequests
+  getAllBulkRequests,
+  getTrainerAttendance
 } = require('../controllers/attendanceController');
 
 // ─────────────────────────────────────────────────────────────
@@ -43,6 +44,12 @@ router.get('/my-history/:projectId', protect, getMyAttendance);
  * @access  Private (Manager/Admin)
  */
 router.get('/project/:projectId', protect, viewAccess, getProjectAttendance);
+
+/**
+ * @route   GET /api/v1/attendance/trainer/:trainerId
+ * @desc    Get specific trainer attendance (Manager/Admin)
+ */
+router.get('/trainer/:trainerId', protect, getTrainerAttendance);
 
 // --- Bulk Request Operations ---
 router.get('/bulk-requests/all', protect, managerOnly, getAllBulkRequests);

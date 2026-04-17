@@ -7,7 +7,16 @@ const mongoose = require('mongoose');
 // @access  Private (Admin Only)
 exports.addExpense = async (req, res) => {
   try {
-    const { projectId, amount, category, payeeName, description, date } = req.body;
+    const { 
+      projectId, 
+      amount, 
+      category, 
+      payeeName, 
+      description, 
+      date,
+      tentativeAmountPerCandidate,
+      assessorExpensesPerCandidate
+    } = req.body;
 
     if (!projectId || !amount || !payeeName) {
       return res.status(400).json({ success: false, message: 'Project, amount, and payee name are required' });
@@ -25,6 +34,8 @@ exports.addExpense = async (req, res) => {
       payeeName,
       description,
       date: date || Date.now(),
+      tentativeAmountPerCandidate,
+      assessorExpensesPerCandidate,
       recordedBy: req.user.id
     });
 
@@ -89,6 +100,45 @@ exports.updateProjectFinancials = async (req, res) => {
     res.status(200).json({
       success: true,
       data: project
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Update an expense
+// @route   PUT /api/v1/admin/expenses/record/:id
+// @access  Private (Admin Only)
+exports.updateExpense = async (req, res) => {
+  try {
+    const expense = await Expense.findById(req.params.id);
+    if (!expense) {
+      return res.status(404).json({ success: false, message: 'Expense record not found' });
+    }
+
+    const { amount, category, payeeName, description, date, tentativeAmountPerCandidate, assessorExpensesPerCandidate } = req.body;
+
+    // Handle amount change and update project totals
+    if (amount !== undefined && amount !== expense.amount) {
+      const diff = amount - expense.amount;
+      await Project.findByIdAndUpdate(expense.project, {
+        $inc: { expenses: diff }
+      });
+      expense.amount = amount;
+    }
+
+    if (category) expense.category = category;
+    if (payeeName) expense.payeeName = payeeName;
+    if (description) expense.description = description;
+    if (date) expense.date = date;
+    if (tentativeAmountPerCandidate !== undefined) expense.tentativeAmountPerCandidate = tentativeAmountPerCandidate;
+    if (assessorExpensesPerCandidate !== undefined) expense.assessorExpensesPerCandidate = assessorExpensesPerCandidate;
+
+    await expense.save();
+
+    res.status(200).json({
+      success: true,
+      data: expense
     });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });

@@ -28,9 +28,9 @@ exports.getDashboardStats = async (req, res, next) => {
       projectQuery = { _id: { $in: assigned } };
       managerQuery = { assignedProjects: { $in: assigned } };
       trainerQuery = { assignedProjects: { $in: assigned } };
-      attendanceQuery = { 
+      attendanceQuery = {
         createdAt: { $gte: todayStart, $lte: todayEnd },
-        projectId: { $in: assigned } 
+        projectId: { $in: assigned }
       };
     }
 
@@ -44,7 +44,7 @@ exports.getDashboardStats = async (req, res, next) => {
       .populate('manager', 'fullName')
       .sort({ createdAt: -1 })
       .limit(5);
-    
+
     // Supplement project data with trainer counts
     const projectsWithDetails = await Promise.all(recentProjects.map(async (prj) => {
       const trainersCount = await Trainer.countDocuments({ assignedProjects: prj._id });
@@ -78,13 +78,13 @@ exports.getDashboardStats = async (req, res, next) => {
 // @access  Private (Admin Only)
 exports.createProject = async (req, res, next) => {
   try {
-    const { 
-      name, 
-      managerId, 
+    const {
+      name,
+      managerId,
       location,
-      totalProjectCost, 
-      startDate, 
-      endDate, 
+      totalProjectCost,
+      startDate,
+      endDate,
       workOrderNo,
       projectCategory,
       allocatedTarget,
@@ -179,7 +179,7 @@ exports.getAllProjects = async (req, res, next) => {
     const projects = await Project.find(query)
       .populate('manager', 'fullName managerId emailAddress district mobileNumber')
       .sort({ createdAt: -1 });
-    
+
     const projectsWithDetails = await Promise.all(projects.map(async (prj) => {
       const trainersCount = await Trainer.countDocuments({ assignedProjects: prj._id });
       return {
@@ -258,12 +258,12 @@ exports.getProject = async (req, res, next) => {
 // @access  Private (Admin Only)
 exports.updateProject = async (req, res, next) => {
   try {
-    const { 
-      name, 
-      managerId, 
+    const {
+      name,
+      managerId,
       location,
-      totalProjectCost, 
-      startDate, 
+      totalProjectCost,
+      startDate,
       endDate,
       status,
       progressStatus,
@@ -458,15 +458,15 @@ exports.login = async (req, res, next) => {
 // @access  Private (Admin Only)
 exports.addNewManager = async (req, res, next) => {
   try {
-    const { 
-      fullName, 
+    const {
+      fullName,
       mobileNumber, mobile, // Accept both names
       emailAddress, email,   // Accept both names
-      state, 
-      district, 
+      state,
+      district,
       assignedProjects, // This is now expected to be an array
       username: providedUsername, // Admin may provide credentials
-      password: providedPassword 
+      password: providedPassword
     } = req.body;
 
     // Use whichever names the frontend provided
@@ -474,7 +474,7 @@ exports.addNewManager = async (req, res, next) => {
     const finalEmail = emailAddress || email;
 
     if (!finalMobile || !finalEmail || !fullName) {
-       return res.status(400).json({ success: false, message: 'Full Name, Mobile, and Email are required' });
+      return res.status(400).json({ success: false, message: 'Full Name, Mobile, and Email are required' });
     }
 
     // 1. Check if manager already exists
@@ -557,7 +557,7 @@ exports.getAllManagers = async (req, res, next) => {
     const managersWithProjects = managers.map((m) => {
       // Find all projects where this manager is the owner
       const projects = allProjects.filter(p => p.manager?.toString() === m._id.toString());
-      
+
       return {
         ...m._doc,
         assignedProjectsNames: projects.map(p => p.name).join(', ') || 'None',
@@ -646,11 +646,11 @@ exports.updateManager = async (req, res, next) => {
     // Sync Project Model: Update handle unassignment and new assignment
     if (req.body.assignedProjects !== undefined) {
       const newProjectIds = Array.isArray(req.body.assignedProjects) ? req.body.assignedProjects : [];
-      
+
       // 1. Find projects currently assigned to this manager
       const previouslyAssigned = await Project.find({ manager: manager._id });
       const previousIds = previouslyAssigned.map(p => p._id.toString());
-      
+
       // 2. Identify projects to unassign (in previous but not in new)
       const toUnassign = previousIds.filter(id => !newProjectIds.includes(id));
       if (toUnassign.length > 0) {
@@ -797,9 +797,9 @@ exports.getAllTrainers = async (req, res, next) => {
 
     // Add real stats for each trainer
     for (const trainer of trainers) {
-      const attendanceCount = await Attendance.countDocuments({ 
+      const attendanceCount = await Attendance.countDocuments({
         trainerId: trainer._id,
-        status: { $in: ['present', 'approved'] } 
+        status: { $in: ['present', 'approved'] }
       });
       trainer.totalUploads = attendanceCount;
       const diffTime = Math.abs(new Date() - new Date(trainer.createdAt));
@@ -832,11 +832,11 @@ exports.getTrainer = async (req, res, next) => {
     }
 
     // Add real stats for this specific trainer
-    const attendanceCount = await Attendance.countDocuments({ 
+    const attendanceCount = await Attendance.countDocuments({
       trainerId: trainer._id,
-      status: { $in: ['present', 'approved'] } 
+      status: { $in: ['present', 'approved'] }
     });
-    
+
     trainer.totalUploads = attendanceCount;
     const diffTime = Math.abs(new Date() - new Date(trainer.createdAt));
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
@@ -974,7 +974,7 @@ exports.deleteTrainer = async (req, res, next) => {
 exports.getPhotosByDate = async (req, res, next) => {
   try {
     const { date } = req.query; // YYYY-MM-DD
-    
+
     let query = {};
     if (date && date !== 'all') {
       const start = new Date(date);
@@ -1032,7 +1032,7 @@ exports.getPhotosByTrainer = async (req, res, next) => {
 
     // --- 1. Attendance Presence for this Trainer ---
     const attendances = await Attendance.find({ trainerId })
-       .populate('trainerId', 'fullName');
+      .populate('trainerId', 'fullName');
 
     // --- 2. Combine ---
     const combined = [];
@@ -1077,7 +1077,7 @@ exports.exchangeTrainerProject = async (req, res, next) => {
     if (!newProject) return res.status(404).json({ success: false, message: 'New Project not found' });
 
     const oldProjectName = trainer.assignedProject;
-    
+
     // Update trainer
     trainer.assignedProject = newProject.name;
     await trainer.save();
@@ -1155,7 +1155,7 @@ exports.resetAdminPasswordDirect = async (req, res) => {
 exports.addViewer = async (req, res) => {
   try {
     const { name, username, password, assignedProjects } = req.body;
-    
+
     if (!name || !username || !password) {
       return res.status(400).json({ success: false, message: 'Please provide all fields' });
     }
@@ -1165,11 +1165,11 @@ exports.addViewer = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Viewer username already exists' });
     }
 
-    const viewer = await Viewer.create({ 
-      name, 
-      username, 
+    const viewer = await Viewer.create({
+      name,
+      username,
       password,
-      assignedProjects: assignedProjects || [] 
+      assignedProjects: assignedProjects || []
     });
 
     res.status(201).json({ success: true, data: viewer });

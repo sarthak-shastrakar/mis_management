@@ -51,6 +51,7 @@ exports.createProject = async (req, res) => {
       projectAddress,
       maxDemonstrators,
       manager: req.user.role === 'admin' ? req.body.managerId : req.user.id,
+      managerAssignedAt: (req.user.role === 'admin' && req.body.managerId) || (req.user.role === 'manager') ? new Date() : undefined,
       isLocked: false // Open for first-time filling of details
     });
 
@@ -111,9 +112,15 @@ exports.updateProject = async (req, res) => {
       project.isLocked = true;
     }
 
-    // Admin can toggle lock
-    if (req.user.role === 'admin' && req.body.isLocked !== undefined) {
-      project.isLocked = req.body.isLocked;
+    // Admin can toggle lock and change manager
+    if (req.user.role === 'admin') {
+      if (req.body.isLocked !== undefined) {
+        project.isLocked = req.body.isLocked;
+      }
+      if (req.body.managerId !== undefined && req.body.managerId !== project.manager?.toString()) {
+        project.manager = req.body.managerId;
+        project.managerAssignedAt = new Date();
+      }
     }
 
     await project.save();

@@ -33,7 +33,8 @@ const {
   addExpense,
   getProjectExpenses,
   deleteExpense,
-  updateProjectFinancials
+  updateProjectFinancials,
+  updateExpense
 } = require("../controllers/expenseController");
 const { 
   addNewTrainer 
@@ -80,7 +81,9 @@ router.route("/expenses")
 router.route("/expenses/:projectId")
   .get(protect, viewAccess, getProjectExpenses);
 
-router.delete("/expenses/record/:id", protect, adminOnly, deleteExpense);
+router.route("/expenses/record/:id")
+  .put(protect, adminOnly, updateExpense)
+  .delete(protect, adminOnly, deleteExpense);
 
 // ─────────────────────────────────────────────
 // Manager CRUD
