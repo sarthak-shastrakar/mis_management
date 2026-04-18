@@ -202,6 +202,10 @@ const trainerSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    oneSignalPlayerId: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

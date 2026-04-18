@@ -1,88 +1,126 @@
 const cron = require('node-cron');
 const Trainer = require('../modules/trainer/models/trainerModel');
 const Attendance = require('../modules/attendance/models/attendanceModel');
+const Notification = require('../modules/notification/models/notificationModel');
 const { sendPushNotification } = require('./onesignal');
 
-const initReminderCron = () => {
-  // Scheduled for 12:35 PM daily (for testing)
-  // Syntax: minute hour day-of-month month day-of-week
-  cron.schedule('35 12 * * *', async () => {
-    console.log('--- Running Daily Attendance Reminder Cron Job (12:35 PM) ---');
+const runReminderJob = async () => {
+  console.log('--- [DEBUG] Starting Attendance Reminder Logic ---');
+  
+  try {
+    // 1. Get all active trainers
+    const trainers = await Trainer.find({ status: 'active' })
+      .populate('assignedProjects')
+      .select('_id fullName assignedProjects oneSignalPlayerId');
     
-    try {
-      // 1. Get all active trainers with their assigned projects
-      const trainers = await Trainer.find({ status: 'active' })
-        .populate('assignedProjects')
-        .select('_id fullName assignedProjects');
+    console.log(`[DEBUG] Found ${trainers.length} active trainers.`);
+
+    if (trainers.length === 0) {
+      return 0;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const trainersToNotify = []; // Array of { playerId: string, trainerId: ObjectId }
+
+    for (const trainer of trainers) {
+      console.log(`[DEBUG] Checking Trainer: ${trainer.fullName} (${trainer._id})`);
       
-      if (!trainers || trainers.length === 0) {
-        console.log('No active trainers found.');
-        return;
+      if (!trainer.assignedProjects || trainer.assignedProjects.length === 0) {
+        console.log(`  -> [SKIP] No assigned projects.`);
+        continue;
       }
 
-      // 2. Identify and store absent records
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      let hasPendingAttendance = false;
 
-      const missingAttendanceTrainers = new Set(); // To avoid duplicate notifications
+      for (const project of trainer.assignedProjects) {
+        const projectId = project._id.toString();
 
-      for (const trainer of trainers) {
-        if (!trainer.assignedProjects || trainer.assignedProjects.length === 0) continue;
+        const existingAttendance = await Attendance.findOne({
+          trainerId: trainer._id,
+          projectId: projectId,
+          date: today
+        });
 
-        for (const project of trainer.assignedProjects) {
-          const projectId = project._id.toString();
-
-          // Check if there is any attendance entry for this trainer and project today
-          const existingAttendance = await Attendance.findOne({
-            trainerId: trainer._id,
-            projectId: projectId,
-            date: today
-          });
-
-          if (!existingAttendance) {
-            // Create Absent Record
+        if (!existingAttendance) {
+          try {
             await Attendance.create({
               trainerId: trainer._id,
               projectId: projectId,
               date: today,
               status: 'absent',
-              remarks: 'System: Automatically marked absent (Attendance not submitted by cutoff)',
-              photos: [] // Empty array for absent
+              remarks: 'System: bhai tune attendance nahi lagayi gaddari karbe (Auto-Absent at 7:10 PM)',
+              photos: [] 
             });
-            
-            missingAttendanceTrainers.add(trainer._id.toString());
-            console.log(`Marked ABSENT: ${trainer.fullName} for Project: ${project.name || projectId}`);
+            hasPendingAttendance = true;
+            console.log(`  -> [ABSENT MARKED] Project: ${project.name || projectId}`);
+          } catch (dupError) {
+             console.log(`  -> [SKIP] Attendance already exists (possible race condition).`);
           }
+        } else {
+          console.log(`  -> [FOUND] Attendance already exists (${existingAttendance.status}).`);
         }
       }
 
-      // 3. Send notifications to those who were marked absent
-      if (missingAttendanceTrainers.size > 0 || true) { // Forced true for testing with specific ID
-        const externalUserIds = Array.from(missingAttendanceTrainers);
-        
-        // Add user's test ID if not present
-        if (!externalUserIds.includes("1234567890")) {
-          externalUserIds.push("1234567890");
+      if (hasPendingAttendance) {
+        if (trainer.oneSignalPlayerId) {
+          trainersToNotify.push({
+            playerId: trainer.oneSignalPlayerId,
+            trainerId: trainer._id
+          });
+        } else {
+          console.log(`  -> [WARNING] No OneSignalPlayerId found for this trainer.`);
         }
-        
-        await sendPushNotification(
-          externalUserIds,
-          "Bhai, aaj ki attendance mark nahi ki? Humne aapko 'Absent' mark kar diya hai. Jaldi check karo!",
-          "Attendance Missed"
-        );
-        
-        console.log(`Sent missed attendance notifications to ${externalUserIds.length} trainers.`);
       }
-
-    } catch (error) {
-      console.error('Error in reminder cron job:', error);
     }
-  }, {
+
+    // 3. Send notifications and save to DB
+    if (trainersToNotify.length > 0) {
+      const playerIds = trainersToNotify.map(t => t.playerId);
+      const message = "bhai tune attendance nahi lagayi gaddari karbe";
+      const title = "Attendance Missed";
+      
+      // Send via OneSignal
+      await sendPushNotification(
+        playerIds,
+        message,
+        title,
+        true 
+      );
+      
+      // Save logs to DB
+      for (const t of trainersToNotify) {
+        await Notification.create({
+          recipientId: t.trainerId,
+          title,
+          message,
+          type: 'attendance_reminder',
+          status: 'sent'
+        });
+      }
+
+      console.log(`[DEBUG] Sent notifications to ${playerIds.length} trainers and logged to DB.`);
+      return playerIds.length;
+    } else {
+      console.log('[DEBUG] No trainers needed reminders.');
+      return 0;
+    }
+
+  } catch (error) {
+    console.error('[ERROR] in reminder job:', error);
+    throw error;
+  }
+};
+
+const initReminderCron = () => {
+  // Scheduled for 5:00 PM daily
+  cron.schedule('0 17 * * *', runReminderJob, {
     scheduled: true,
     timezone: "Asia/Kolkata"
   });
 
-  console.log('✔ Attendance Reminder Cron Job Initialized (12:21 PM)');
+  console.log('✔ Attendance Reminder Cron Job Initialized (5:00 PM)');
 };
 
-module.exports = initReminderCron;
+module.exports = { initReminderCron, runReminderJob };

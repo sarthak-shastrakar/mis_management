@@ -41,6 +41,55 @@ const {
 // ─────────────────────────────────────────────────────────────
 router.post("/auth/login", trainerLogin);
 
+// Testing route to trigger 7:15 PM logic manually
+const { runReminderJob } = require('../../../utils/reminderCron');
+const Trainer = require('../models/trainerModel'); 
+const { sendPushNotification } = require('../../../utils/onesignal');
+const Notification = require('../../notification/models/notificationModel');
+
+router.get("/auth/test-notification", async (req, res) => {
+  try {
+    const isForce = req.query.force === 'true';
+    const isReset = req.query.reset === 'true';
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (isReset) {
+      console.log('--- [RESET] Deleting today\'s absent records for testing ---');
+      const Attendance = require('../../attendance/models/attendanceModel');
+      await Attendance.deleteMany({ date: today, status: 'absent' });
+    }
+
+    if (isForce) {
+      console.log('--- [FORCE] Sending test notifications to all active trainers with IDs ---');
+      const trainers = await Trainer.find({ status: 'active', oneSignalPlayerId: { $ne: null } });
+      const playerIds = trainers.map(t => t.oneSignalPlayerId);
+      
+      if (playerIds.length > 0) {
+        await sendPushNotification(playerIds, "bhai tune attendance nahi lagayi gaddari karbe", "Test Force Notification", true);
+        
+        for (const t of trainers) {
+          await Notification.create({
+            recipientId: t._id,
+            title: "Test Force Notification",
+            message: "bhai tune attendance nahi lagayi gaddari karbe",
+            type: 'test_force',
+            status: 'sent'
+          });
+        }
+        return res.json({ success: true, message: `Force notification sent to ${playerIds.length} trainers. Reset: ${isReset}` });
+      }
+      return res.json({ success: false, message: "No active trainers with OneSignal IDs found." });
+    }
+
+    const count = await runReminderJob();
+    res.json({ success: true, message: `Job executed. Notifications sent to ${count} trainers. Reset: ${isReset}` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────
 // SEMI-PROTECTED — Trainer must be logged in but profile
 //                 completion NOT required yet

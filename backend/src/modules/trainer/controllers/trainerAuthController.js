@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 // ─────────────────────────────────────────────────────────────
 exports.trainerLogin = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { username, password, oneSignalPlayerId } = req.body;
 
     if (!username || !password) {
       return res.status(400).json({ success: false, message: 'Please provide username and password' });
@@ -27,6 +27,12 @@ exports.trainerLogin = async (req, res) => {
     const isMatch = await trainer.matchPassword(password);
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+
+    // Update OneSignal ID if provided
+    if (oneSignalPlayerId) {
+      trainer.oneSignalPlayerId = oneSignalPlayerId;
+      await trainer.save();
     }
 
     const token = generateToken(trainer._id);

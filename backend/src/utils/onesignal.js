@@ -5,22 +5,30 @@ const ONESIGNAL_REST_API_KEY = process.env.ONESIGNAL_REST_API_KEY;
 
 /**
  * Send a push notification via OneSignal
- * @param {Array<string>} externalUserIds - Array of MongoDB User IDs
+ * @param {Array<string>} userIds - Array of IDs (Player IDs or External User IDs)
  * @param {string} message - Notification content
  * @param {string} heading - Notification title
+ * @param {boolean} usePlayerId - If true, use include_player_ids; else use include_external_user_ids
  */
-const sendPushNotification = async (externalUserIds, message, heading = "Attendance Reminder") => {
+const sendPushNotification = async (userIds, message, heading = "Attendance Reminder", usePlayerId = true) => {
   try {
-    if (!externalUserIds || externalUserIds.length === 0) return;
+    if (!userIds || userIds.length === 0) return;
+
+    const payload = {
+      app_id: ONESIGNAL_APP_ID,
+      contents: { en: message },
+      headings: { en: heading },
+    };
+
+    if (usePlayerId) {
+      payload.include_player_ids = userIds;
+    } else {
+      payload.include_external_user_ids = userIds;
+    }
 
     const response = await axios.post(
       'https://onesignal.com/api/v1/notifications',
-      {
-        app_id: ONESIGNAL_APP_ID,
-        include_external_user_ids: externalUserIds,
-        contents: { en: message },
-        headings: { en: heading },
-      },
+      payload,
       {
         headers: {
           'Content-Type': 'application/json',
