@@ -24,6 +24,7 @@ const ManagerManagement = ({ currentRole }) => {
     state: '',
     district: '',
     assignedProjects: [],
+    assignedProjectsWithDates: [],
     status: 'active'
   });
 
@@ -68,6 +69,7 @@ const ManagerManagement = ({ currentRole }) => {
       fullName: '', emailAddress: '', mobileNumber: '',
       username: '', password: '',
       state: '', district: '', assignedProjects: [],
+      assignedProjectsWithDates: [],
       status: 'active'
     });
     setEditingId(null);
@@ -132,40 +134,73 @@ const ManagerManagement = ({ currentRole }) => {
   };
 
   const handleEditOpen = (manager) => {
-    setManagerForm({
-      fullName: manager.fullName,
-      emailAddress: manager.emailAddress || '',
-      mobileNumber: manager.mobileNumber || '',
-      state: manager.state || '',
-      district: manager.district || '',
-      assignedProjects: manager.assignedProjects ? manager.assignedProjects.map(p => p._id) : [],
-      status: manager.status || 'active',
-      username: manager.username || '',
-      password: manager.plainPassword || ''
-    });
-    setEditingId(manager._id);
-    setViewOnly(false);
-    setIsCreated(false);
-    setShowModal(true);
+    try {
+      console.log('Attempting to Edit Manager:', manager);
+      if (!manager) {
+        showAlert({ title: 'Error', message: 'Manager data is missing', variant: 'danger' });
+        return;
+      }
+      
+      setManagerForm({
+        fullName: manager.fullName || '',
+        emailAddress: manager.emailAddress || '',
+        mobileNumber: manager.mobileNumber || '',
+        state: manager.state || '',
+        district: manager.district || '',
+        assignedProjects: Array.isArray(manager.assignedProjects) 
+          ? manager.assignedProjects.map(p => {
+              if (!p) return null;
+              return typeof p === 'object' ? p._id : p;
+            }).filter(Boolean)
+          : [],
+        assignedProjectsWithDates: manager.assignedProjectsWithDates || [],
+        status: manager.status || 'active',
+        username: manager.username || '',
+        password: manager.plainPassword || ''
+      });
+      setEditingId(manager._id);
+      setViewOnly(false);
+      setIsCreated(false);
+      setShowModal(true);
+    } catch (err) {
+      console.error('HandleEditOpen Error:', err);
+      showAlert({ title: 'Crash Prevented', message: 'Error initializing edit form: ' + err.message, variant: 'danger' });
+    }
   };
 
   const handleViewOpen = (manager) => {
-    setManagerForm({
-      fullName: manager.fullName,
-      emailAddress: manager.emailAddress || '',
-      mobileNumber: manager.mobileNumber || '',
-      state: manager.state || '',
-      district: manager.district || '',
-      assignedProjects: manager.assignedProjects ? manager.assignedProjects.map(p => p._id) : [],
-      assignedProjectsWithDates: manager.assignedProjectsWithDates || [],
-      status: manager.status || 'active',
-      username: manager.username || '',
-      password: manager.plainPassword || ''
-    });
-    setEditingId(manager._id);
-    setViewOnly(true);
-    setIsCreated(false);
-    setShowModal(true);
+    try {
+      console.log('Attempting to View Manager:', manager);
+      if (!manager) {
+        showAlert({ title: 'Error', message: 'Manager data is missing', variant: 'danger' });
+        return;
+      }
+
+      setManagerForm({
+        fullName: manager.fullName || '',
+        emailAddress: manager.emailAddress || '',
+        mobileNumber: manager.mobileNumber || '',
+        state: manager.state || '',
+        district: manager.district || '',
+        assignedProjects: Array.isArray(manager.assignedProjects) 
+          ? manager.assignedProjects.map(p => {
+              if (!p) return null;
+              return typeof p === 'object' ? p._id : p;
+            }).filter(Boolean) 
+          : [],
+        assignedProjectsWithDates: manager.assignedProjectsWithDates || [],
+        status: manager.status || 'active',
+        username: manager.username || '',
+        password: manager.plainPassword || ''
+      });
+      setEditingId(manager._id);
+      setViewOnly(true);
+      setIsCreated(false);
+      setShowModal(true);
+    } catch (err) {
+      console.error('HandleViewOpen Error:', err);
+      showAlert({ title: 'Crash Prevented', message: 'Error initializing view: ' + err.message, variant: 'danger' });
+    }
   };
 
   const handleDeleteManager = async (id) => {
