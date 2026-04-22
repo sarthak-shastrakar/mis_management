@@ -36,8 +36,8 @@ const managerSchema = new mongoose.Schema(
     }],
     status: {
       type: String,
-      enum: ['active', 'inactive'],
-      default: 'active',
+      enum: ['pending', 'active', 'inactive'],
+      default: 'pending',
     },
     managerId: {
       type: String,

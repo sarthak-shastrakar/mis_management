@@ -523,3 +523,51 @@ exports.getTrainerAttendance = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// ─────────────────────────────────────────────────────────────
+// @desc    Submit Daily Work Report (Mobile Wizard Flow)
+// @route   POST /api/v1/trainer/work-report
+// @access  Private (Trainer)
+// ─────────────────────────────────────────────────────────────
+exports.submitWorkReport = async (req, res) => {
+  try {
+    const { projectId, beneficiaryId, date, time, latitude, longitude, remarks, workType } = req.body;
+    const trainerId = req.user.id;
+    const Attendance = require('../models/attendanceModel');
+
+    // 1. Media handling (Step 4 of Wizard)
+    const photoUrls = req.files && req.files['photos'] ? req.files['photos'].map(f => f.path) : [];
+    const videoUrls = req.files && req.files['videos'] ? req.files['videos'].map(f => f.path) : [];
+
+    // 2. Date/Time normalization (Step 2 of Wizard)
+    const workDate = new Date(date || new Date());
+    if (time) {
+        const [hours, minutes] = time.split(':');
+        workDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+    }
+
+    // 3. Create the Work Record
+    const record = await Attendance.create({
+      trainerId,
+      projectId: projectId || 'PMKVY-NAGPUR', // Fallback for testing
+      beneficiaryId,
+      date: workDate,
+      photos: photoUrls,
+      videos: videoUrls,
+      location: { 
+        latitude: parseFloat(latitude || 0), 
+        longitude: parseFloat(longitude || 0) 
+      },
+      status: 'present',
+      remarks: `Work Type: ${workType || 'Standard'} | ${remarks || ''}`
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Work report submitted successfully',
+      data: record
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

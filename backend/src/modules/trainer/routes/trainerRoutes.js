@@ -16,7 +16,8 @@ const {
 const {
   submitAttendance,
   submitBulkRequest,
-  getBulkRequests
+  getBulkRequests,
+  submitWorkReport
 } = require("../../attendance/controllers/attendanceController");
 
 // Profile Controllers
@@ -25,6 +26,9 @@ const {
   updateMyProfile,
   getAttendanceHistory,
   getAssignedProjects,
+  getMyBeneficiaries,
+  getDashboardSummary,
+  updatePushToken
 } = require("../controllers/trainerProfileController");
 
 // Manager-side Trainer CRUD (used in manager routes — kept here for reference)
@@ -43,7 +47,7 @@ router.post("/auth/login", trainerLogin);
 
 // Testing route to trigger 7:15 PM logic manually
 const { runReminderJob } = require('../../../utils/reminderCron');
-const Trainer = require('../models/trainerModel'); 
+const Trainer = require('../models/trainerModel');
 const { sendPushNotification } = require('../../../utils/onesignal');
 const Notification = require('../../notification/models/notificationModel');
 
@@ -51,7 +55,7 @@ router.get("/auth/test-notification", async (req, res) => {
   try {
     const isForce = req.query.force === 'true';
     const isReset = req.query.reset === 'true';
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -65,10 +69,10 @@ router.get("/auth/test-notification", async (req, res) => {
       console.log('--- [FORCE] Sending test notifications to all active trainers with IDs ---');
       const trainers = await Trainer.find({ status: 'active', oneSignalPlayerId: { $ne: null } });
       const playerIds = trainers.map(t => t.oneSignalPlayerId);
-      
+
       if (playerIds.length > 0) {
         await sendPushNotification(playerIds, "bhai tune attendance nahi lagayi gaddari karbe", "Test Force Notification", true);
-        
+
         for (const t of trainers) {
           await Notification.create({
             recipientId: t._id,
@@ -158,6 +162,45 @@ router.get(
   trainerOnly,
   requireProfileComplete,
   getBulkRequests
+);
+
+// ─────────────────────────────────────────────────────────────
+// MOBILE APP SPECIFIC — Dashboard & Work Reporting
+// ─────────────────────────────────────────────────────────────
+
+router.get(
+  "/beneficiaries",
+  protect,
+  trainerOnly,
+  requireProfileComplete,
+  getMyBeneficiaries
+);
+
+router.get(
+  "/dashboard-summary",
+  protect,
+  trainerOnly,
+  requireProfileComplete,
+  getDashboardSummary
+);
+
+router.put(
+  "/push-token",
+  protect,
+  trainerOnly,
+  updatePushToken
+);
+
+router.post(
+  "/work-report",
+  protect,
+  trainerOnly,
+  requireProfileComplete,
+  uploadHousePhoto.fields([
+    { name: 'photos', maxCount: 5 },
+    { name: 'videos', maxCount: 2 }
+  ]),
+  submitWorkReport
 );
 
 const {

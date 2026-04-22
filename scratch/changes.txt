@@ -1,0 +1,61 @@
+# MIS Management System - Master Requirements List
+
+## 1. Global Branding & UI [60% Complete]
+- [ ] **Strict Location Display:** In all sections (menus, dropdowns, evidence, reports), location data (State, District, Taluka, Village) must be displayed systematically and filtered by specific dates. [NEW]
+- [x] **New Name:** Replace all "Gov Monitor" branding with "MIS Management System".
+- [x] **Browser Title:** Update HTML title to "MIS Management System".
+- [x] **Admin Dashboard Activity:** Dashboard summary cards (Total Projects, Managers, Trainers) are now clickable and navigate to respective pages.
+- [x] **Manager Branding:** Ensured manager-side screens are also updated (inherited from Layout).
+- [ ] **Mobile App Branding:** Ensure the mobile app reflects the new name.
+
+## 2. Admin & Manager: Role Approval Workflow [80% Complete]
+- [x] **Master Logic:** Models updated with `pending` status. API endpoints for Approve/Reject created.
+- [x] **Admin Interface:** Added "Role Approvals" page for Admin to manage Manager and Trainer registrations.
+- [x] **Viewer Support:** Added "Pending Viewers" section to the Approvals page.
+- [ ] **Manager Interface:** Managers should also be able to approve/reject roles for users assigned to them.
+- [x] **Viewer Role:** Viewers included in the approval workflow.
+
+## 3. Project Management [90% Complete]
+- [x] **Remarks Merge:** Merged "Site Address" and "Description" into a single "Remarks / Site Address" field.
+- [x] **Extra Fields:** Added "Category" and "Hours" fields.
+- [x] **Manual Override:** Added "Numeric Edit" button for manual training hours override.
+- [x] **Duration Presets:** Added "392 Hours" preset button.
+- [ ] **Location Logic:** (PENDING - LATER) Automatic filtering for State -> District -> Taluka -> Village.
+- [x] **Sorting:** Projects list sorted alphabetically by Manager name.
+
+## 4. Trainer Management [100% Complete - Admin Side]
+- [x] **Place of Posting:** New column showing State, District, Taluka, Village, Assigned Projects, and Start Dates.
+- [x] **Filters:** Added "All", "Project-wise", and "Manager-wise" filters.
+- [x] **Summary Stats:** Added Total Trainers, Total Pending, and Total Rejected in the header.
+- [x] **Location History:** Integrated into the placement metadata and evidence feed.
+- [x] **Admin Trainer Approval:** Admins have ✓/✕ buttons in the trainer list for name/profile verification.
+- [x] **Salutation & Beneficiaries:** Added Salutation (Mr./Shri/Ms./Ku.) and up to 5 Beneficiary Registration numbers targeting.
+
+## 5. Manager Dashboard & Analytics [ ]
+- [ ] **New Dashboard Fields:**
+    - Total Training Hours
+    - Total Target
+    - Completed Houses
+    - Work Completed
+    - Days Passed
+    - Total Timeline
+- [ ] **Progress Formulas:**
+    - **Work Completed %:** `(Completed Houses / Total Target) * 100`
+    - **Time Elapsed %:** `(Days Passed / Total Timeline) * 100`
+    - **Attention Needed %:** `((Time Elapsed - Work Completed) / Time Elapsed) * 100`
+- [ ] **Prominent Indicator:** Display the "Attention Needed" percentage prominently after the Project Name.
+- [ ] **Late Submissions Table:** Review table for delayed attendance with "Trainer Name", "Project", "Delay", "Reason", and "Actions".
+
+## 6. Mobile App (Backend Fixes) [20% Complete]
+- [ ] **Session/Security Fix:** Fix data leakage between trainer logins.
+- [x] **Backend Schema Support:** Added Salutation and Beneficiary fields to Trainer model.
+- [ ] **Read-Only Profile Fields:** Implement in Flutter UI.
+- [ ] **Writable Profile Fields:** Implement in Flutter UI.
+
+## 7. Visual Evidence & Reports [100% Complete]
+- [x] **Systematic Organization:** Evidence feed filtered by Project and Date, with location metadata visible.
+- [x] **Evidence Grouping:** Grouped by Backend enrichment with BatchID/Village/Block.
+- [x] **Date Filters:** "From" and "To" date filters implemented for reports and evidence.
+- [x] **File Naming Convention:** `Projectname_Block_Village_BatchID_Day_Date_Time_Lat_Long.jpg` implemented in ZIP download.
+- [x] **Zip & Download:** Functional systematically organized ZIP export.
+- [x] **Report Generation:** Global Attendance Log (Excel) and ZIP download for photos.

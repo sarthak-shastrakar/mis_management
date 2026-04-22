@@ -140,13 +140,22 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
       const endpoint = currentRole === 'admin' ? '/admin/projects' : '/manager/my-projects';
       const response = await API.get(endpoint);
       if (response.data.success) {
-        setProjectsList(response.data.data.map(p => ({
+        const mappedData = response.data.data.map(p => ({
           ...p,
-          manager: p.managerName || p.managerPopulated?.fullName || 'Not Assigned',
+          manager: p.manager?.fullName || p.managerName || p.managerPopulated?.fullName || 'Not Assigned',
           displayLocation: p.displayLocation || (p.location ? `${p.location.district}, ${p.location.state}` : 'N/A'),
           progress: p.progressStatus || 0,
           status: p.statusDisplay || p.status || 'Active'
-        })));
+        }));
+
+        // Sort alphabetically by manager name
+        mappedData.sort((a, b) => {
+          if (a.manager === 'Not Assigned') return 1;
+          if (b.manager === 'Not Assigned') return -1;
+          return a.manager.localeCompare(b.manager);
+        });
+
+        setProjectsList(mappedData);
       }
     } catch (err) {
       console.error('Projects fetch failed', err);
@@ -214,7 +223,11 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
     }
     const start = new Date(formData.startDate);
     const end = new Date(start);
-    end.setDate(start.getDate() + (Number(days) - 1));
+    if (days === 392) {
+      end.setDate(start.getDate() + 391); 
+    } else {
+      end.setDate(start.getDate() + (Number(days) - 1));
+    }
     setFormData(prev => ({ ...prev, endDate: end.toISOString().split('T')[0] }));
   };
 
@@ -408,6 +421,9 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                   <div>
                     <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Select Overall Project End Date <span className="text-rose-500">*</span></label>
                     <input required type="date" value={formData.endDate} onChange={e => setFormData({ ...formData, endDate: e.target.value })} className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 shadow-sm" />
+                    <div className="flex gap-2 mt-2">
+                       <button type="button" onClick={() => handleDurationPreset(392)} className="px-2 py-1 bg-blue-50 text-blue-600 rounded-lg text-[9px] font-black uppercase tracking-widest border border-blue-100 hover:bg-blue-600 hover:text-white transition-all">392 Hours Preset</button>
+                    </div>
                   </div>
                   <div>
                     <label className="block text-[9px] font-bold text-slate-500 leading-tight mb-2 h-7 flex items-end">Calculate Total Estimated Days for Complete Project Complication</label>
@@ -463,8 +479,17 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-[9px] font-bold text-slate-500 leading-tight mb-2 h-7 flex items-end">Total Training Hours</label>
-                    <div className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center shadow-sm">
-                      <span className="text-sm font-bold text-slate-500">{Number(formData.trainingDays || 0) * Number(formData.trainingHoursPerDay || 0)}</span>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center shadow-sm">
+                        <span className="text-sm font-bold text-slate-500">{formData.trainingHours || (Number(formData.trainingDays || 0) * Number(formData.trainingHoursPerDay || 0))}</span>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => setCustomPrompt({ isOpen: true, field: 'trainingHours', label: 'Numeric Edit New Option (Manual Hours):', value: formData.trainingHours || '' })}
+                        className="h-12 px-4 bg-blue-50 text-blue-600 rounded-xl font-black text-[10px] uppercase tracking-widest border border-blue-100 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                      >
+                        Edit
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -532,12 +557,8 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Input Site Address (Optional)</label>
-                  <textarea value={formData.projectAddress} onChange={e => setFormData({ ...formData, projectAddress: e.target.value })} className="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 shadow-sm focus:ring-2 focus:ring-blue-500/20 min-h-[80px]" placeholder="Enter Site Address" />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Input Remarks</label>
-                  <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 shadow-sm focus:ring-2 focus:ring-blue-500/20 min-h-[80px]" placeholder="Enter Remarks" />
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Remarks / Site Address</label>
+                  <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 shadow-sm focus:ring-2 focus:ring-blue-500/20 min-h-[120px]" placeholder="Enter Site Address and any additional Remarks..." />
                 </div>
 
                 {currentRole === 'admin' && (

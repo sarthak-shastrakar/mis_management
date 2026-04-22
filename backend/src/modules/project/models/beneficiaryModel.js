@@ -2,33 +2,55 @@ const mongoose = require('mongoose');
 
 const beneficiarySchema = new mongoose.Schema(
   {
-    beneficiaryId: {
+    registrationNo: {
       type: String,
-      required: [true, 'Beneficiary ID is required'],
       unique: true,
+      required: [true, 'Please add a registration number'],
+      trim: true,
     },
-    fullName: {
+    houseOwnerName: {
       type: String,
-      required: [true, 'Beneficiary name is required'],
+      required: [true, 'Please add house owner name'],
+    },
+    location: {
+      district: { type: String, required: true },
+      block: { type: String, required: true },
+      village: { type: String, required: true },
+    },
+    trainees: [
+      {
+        name: { type: String },
+        mobileNumber: { type: String },
+        aadharNumber: { type: String },
+        bankAccountNo: { type: String },
+        ifscCode: { type: String },
+        result: { type: String }, // PASS/FAIL/ABSENT
+      }
+    ],
+    batchId: {
+      type: String,
     },
     projectId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Project',
-      required: [true, 'Project association is required'],
+      required: false,
     },
-    location: {
-      state: String,
-      district: String,
-      taluka: String,
-      village: String,
+    assignedTrainer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Trainer',
+      required: false,
     },
-    contactNumber: {
-      type: String,
+    trainerNameFromExcel: {
+      type: String, // Kept for reference or lookup
+    },
+    isCertified: {
+      type: Boolean,
+      default: false,
     },
     status: {
       type: String,
-      enum: ['active', 'inactive'],
-      default: 'active',
+      enum: ['pending', 'in-progress', 'completed'],
+      default: 'pending',
     }
   },
   {
@@ -36,4 +58,4 @@ const beneficiarySchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.models.Beneficiary || mongoose.model('Beneficiary', beneficiarySchema);
+module.exports = mongoose.model('Beneficiary', beneficiarySchema);

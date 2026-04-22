@@ -19,6 +19,7 @@ const Sidebar = ({ currentRole, activePage, setActivePage, onLogout, isOpen, onC
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+    ...(currentRole === 'admin' ? [{ id: 'approvals', label: 'Role Approvals', icon: '🛡️' }] : []),
     { id: 'projects', label: 'Projects', icon: '📁' },
     ...(currentRole === 'admin' || currentRole === 'viewer' ? [{ id: 'managers', label: 'Managers', icon: '👔' }] : []),
     ...(currentRole === 'admin' ? [{ id: 'expenses', label: 'Expenses', icon: '💸' }] : []),
@@ -32,7 +33,7 @@ const Sidebar = ({ currentRole, activePage, setActivePage, onLogout, isOpen, onC
 
   const items = currentRole === 'trainer' ? trainerItems : menuItems;
   const logoLetter = currentRole === 'trainer' ? 'T' : 'M';
-  const portalName = currentRole === 'trainer' ? 'Trainer Portal' : 'Gov Monitor';
+  const portalName = currentRole === 'trainer' ? 'Trainer Portal' : 'MIS Management System';
   const roleLabel = currentRole === 'admin' ? 'Super Admin' : currentRole === 'manager' ? 'Project Manager' : currentRole === 'viewer' ? 'Guest Viewer' : 'Field Executive';
 
   return (

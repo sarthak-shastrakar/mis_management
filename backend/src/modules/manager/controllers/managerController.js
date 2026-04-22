@@ -368,6 +368,15 @@ exports.getDashboard = async (req, res, next) => {
       todayProjectAttendance[proj] = (todayProjectAttendance[proj] || 0) + 1;
     });
 
+    // --- Global Metrics ---
+    const globalStats = {
+      totalTrainingHours: projects.reduce((sum, p) => sum + (p.trainingHours || 0), 0),
+      totalTarget: projects.reduce((sum, p) => sum + (p.allocatedTarget || 0), 0),
+      totalCompletedHouses: projects.reduce((sum, p) => sum + (p.completedHouses || 0), 0),
+      totalDaysPassed: 0,
+      totalTimelineDays: 0
+    };
+
     const assignedProjectsStatus = await Promise.all(projects.map(async (prj) => {
       const managerId = new mongoose.Types.ObjectId(req.user.id);
       const trainersCount = await Trainer.countDocuments({ 
@@ -379,14 +388,33 @@ exports.getDashboard = async (req, res, next) => {
       });
       const presentToday = todayProjectAttendance[prj._id] || todayProjectAttendance[prj.name] || 0;
       
+      // --- Progress Calculations ---
+      const now = new Date();
+      const start = new Date(prj.startDate);
+      const end = new Date(prj.endDate);
+      
+      const totalTimeline = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+      const daysPassed = Math.max(0, Math.ceil((now - start) / (1000 * 60 * 60 * 24)));
+      
+      const timeElapsedPercentage = Math.min(100, Math.round((daysPassed / totalTimeline) * 100));
+      const workCompletedPercentage = Math.min(100, Math.round(((prj.completedHouses || 0) / (prj.allocatedTarget || 1)) * 100));
+      const attentionNeededPercentage = Math.max(0, timeElapsedPercentage - workCompletedPercentage);
+
       return {
         projectId: prj._id,
         projectName: prj.name,
         location: prj.location ? `${prj.location.district}, ${prj.location.state}` : 'N/A',
         totalTrainers: trainersCount,
         presentToday,
-        completionPercentage: prj.progressStatus || 0,
-        healthStatus: prj.progressStatus >= 70 ? 'HEALTHY' : 'ATTENTION NEEDED',
+        completionPercentage: workCompletedPercentage,
+        healthStatus: attentionNeededPercentage > 15 ? 'ATTENTION NEEDED' : 'HEALTHY',
+        analytics: {
+          timeElapsedPercentage,
+          workCompletedPercentage,
+          attentionNeededPercentage,
+          daysPassed,
+          totalTimeline
+        }
       };
     }));
 
@@ -456,6 +484,18 @@ exports.getDashboard = async (req, res, next) => {
       };
     });
 
+    // 3. Integrated User Registrations (Trainers & Viewers)
+    const Viewer = require('../../viewer/models/viewerModel');
+    const pendingTrainers = await Trainer.find({ 
+      status: 'pending', 
+      reportingManager: req.user.id 
+    }).lean();
+    
+    const pendingViewers = await Viewer.find({ 
+      status: 'pending',
+      assignedProjects: { $in: projects.map(p => p._id) }
+    }).lean();
+
     res.status(200).json({
       success: true,
       data: {
@@ -475,6 +515,12 @@ exports.getDashboard = async (req, res, next) => {
           activeRequests: formattedBulkRequests.length,
           list: formattedBulkRequests,
         },
+        userApprovals: {
+          trainers: pendingTrainers,
+          viewers: pendingViewers,
+          total: pendingTrainers.length + pendingViewers.length
+        },
+        globalStats
       },
     });
   } catch (err) {
@@ -536,7 +582,8 @@ exports.setupProjectDetails = async (req, res, next) => {
       location,
       projectAddress,
       startDate,
-      endDate
+      endDate,
+      completedHouses
     } = req.body;
 
     const updateData = {
@@ -560,6 +607,8 @@ exports.setupProjectDetails = async (req, res, next) => {
       projectAddress: projectAddress || project.projectAddress,
       startDate: startDate || project.startDate,
       endDate: endDate || project.endDate,
+      completedHouses: completedHouses !== undefined ? completedHouses : project.completedHouses,
+      progressStatus: Math.round(((completedHouses || project.completedHouses) / (allocatedTarget || project.allocatedTarget || 1)) * 100),
       isLocked: true // Lock after first setup
     };
 
@@ -784,6 +833,68 @@ exports.assignTrainersToProject = async (req, res, next) => {
       success: true, 
       message: 'Project personnel assignment synchronized successfully' 
     });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─────────────────────────────────────────────
+// @desc    Approve Trainer/Viewer Registration
+// @route   PUT /api/v1/manager/users/:id/approve
+// @access  Private (Manager)
+// ─────────────────────────────────────────────
+exports.approveUserRegistration = async (req, res, next) => {
+  try {
+    const { role } = req.body;
+    let UserModel;
+    if (role === 'trainer') UserModel = require('../../trainer/models/trainerModel');
+    else if (role === 'viewer') UserModel = require('../../viewer/models/viewerModel');
+    else return res.status(400).json({ success: false, message: 'Invalid role for manager approval' });
+
+    const user = await UserModel.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Verify ownership/reporting link
+    if (role === 'trainer' && String(user.reportingManager) !== req.user.id) {
+       return res.status(403).json({ success: false, message: 'Not authorized to approve this trainer' });
+    }
+    // For viewers, ensure the project is assigned to this manager
+    if (role === 'viewer') {
+      const isAssigned = user.assignedProjects && user.assignedProjects.some(pid => 
+        req.user.assignedProjects && req.user.assignedProjects.includes(String(pid))
+      );
+      if (!isAssigned) return res.status(403).json({ success: false, message: 'Not authorized to approve this viewer' });
+    }
+
+    user.status = 'active';
+    await user.save();
+
+    res.status(200).json({ success: true, message: 'User approved successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─────────────────────────────────────────────
+// @desc    Reject Trainer/Viewer Registration
+// @route   PUT /api/v1/manager/users/:id/reject
+// @access  Private (Manager)
+// ─────────────────────────────────────────────
+exports.rejectUserRegistration = async (req, res, next) => {
+  try {
+    const { role } = req.body;
+    let UserModel;
+    if (role === 'trainer') UserModel = require('../../trainer/models/trainerModel');
+    else if (role === 'viewer') UserModel = require('../../viewer/models/viewerModel');
+    else return res.status(400).json({ success: false, message: 'Invalid role' });
+
+    const user = await UserModel.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    user.status = 'rejected';
+    await user.save();
+
+    res.status(200).json({ success: true, message: 'User rejected successfully' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

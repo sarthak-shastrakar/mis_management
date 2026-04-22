@@ -84,7 +84,7 @@ exports.getAllEvidence = async (req, res) => {
     }
 
     const evidence = await Evidence.find(query)
-      .populate('trainerId', 'fullName trainerId mobileNumber')
+      .populate('trainerId', 'fullName trainerId mobileNumber placementLocation beneficiaries')
       .sort({ date: -1 })
       .lean();
 
@@ -94,7 +94,10 @@ exports.getAllEvidence = async (req, res) => {
       const proj = projects.find(p => String(p._id) === String(ev.projectId) || p.projectId === ev.projectId || p.name === ev.projectId);
       return {
         ...ev,
-        projectName: proj ? proj.name : 'Unknown Project'
+        projectName: proj ? proj.name : 'Unknown Project',
+        block: ev.trainerId?.placementLocation?.taluka || 'TBD',
+        village: ev.trainerId?.placementLocation?.village || 'TBD',
+        batchID: (ev.trainerId?.beneficiaries && ev.trainerId.beneficiaries[0]) || 'NoBatch'
       };
     });
 

@@ -15,6 +15,8 @@ const {
   setupProjectDetails,
   getProjectDetails,
   assignTrainersToProject,
+  approveUserRegistration,
+  rejectUserRegistration,
 } = require('../controllers/managerController');
 
 const {
@@ -84,6 +86,10 @@ router.post('/send-notification', protect, managerOnly, sendNotification);
 router.get('/attendance/pending', protect, managerOnly, getPendingAttendances);
 router.put('/attendance/:id/approve', protect, managerOnly, approveAttendance);
 router.put('/attendance/:id/reject', protect, managerOnly, rejectAttendance);
+
+// User Registration Approvals
+router.put('/users/:id/approve', protect, managerOnly, approveUserRegistration);
+router.put('/users/:id/reject', protect, managerOnly, rejectUserRegistration);
 
 module.exports = router;
 

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
 import API from '../api/api';
+import * as XLSX from 'xlsx';
 
 const statusColors = {
   'Present': 'bg-emerald-100 text-emerald-700',
@@ -55,6 +55,33 @@ const AttendanceManagement = () => {
   const presentCount = filtered.filter(r => r.status === 'Present').length;
   const absentCount = filtered.filter(r => r.status === 'Absent').length;
 
+  const handleExportExcel = () => {
+    if (filtered.length === 0) return;
+    
+    const exportData = filtered.map(r => ({
+      'Date': r.date.split('T')[0],
+      'Project Name': r.project,
+      'Staff Name': r.trainerName,
+      'Staff ID': r.trainerIdCode,
+      'Mobile': r.trainerId?.mobileNumber || 'N/A',
+      'Reporting Manager': r.trainerId?.reportingManager?.fullName || 'N/A',
+      'Location': r.location,
+      'Check-in Time': r.time,
+      'Status': r.status,
+      'Remarks': r.remarks || ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Attendance_Log");
+    
+    // Auto-width columns
+    const max_width = exportData.reduce((w, r) => Math.max(w, Object.values(r).join("").length / 10), 10);
+    ws['!cols'] = Object.keys(exportData[0]).map(() => ({ wch: 15 }));
+
+    XLSX.writeFile(wb, `Attendance_Log_${fromDate}_to_${toDate}.xlsx`);
+  };
+
 
   return (
     <div className="space-y-8">
@@ -64,26 +91,34 @@ const AttendanceManagement = () => {
           <h3 className="text-2xl font-black text-black">Attendance Register</h3>
           <p className="text-sm text-slate-700 font-medium mt-1">View daily field attendance of all trainers</p>
         </div>
-        <button 
-          onClick={async () => {
-            try {
-              const res = await API.get(`/admin/reports/attendance-zip?fromDate=${fromDate}&toDate=${toDate}`, { responseType: 'blob' });
-              const url = window.URL.createObjectURL(new Blob([res.data]));
-              const link = document.createElement('a');
-              link.href = url;
-              link.setAttribute('download', `Attendance_Report_${fromDate}_to_${toDate}.zip`);
-              document.body.appendChild(link);
-              link.click();
-              link.remove();
-            } catch (error) {
-              console.error('Export failed', error);
-              alert('Export failed.');
-            }
-          }}
-          className="h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-black text-white text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center gap-2"
-        >
-          <span>⬇️</span> Download Report
-        </button>
+        <div className="flex gap-4">
+          <button 
+            onClick={handleExportExcel}
+            className="h-11 px-6 rounded-xl bg-indigo-600 hover:bg-slate-900 font-black text-white text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg shadow-indigo-500/20 active:scale-95 flex items-center gap-2"
+          >
+            <span>📊</span> Export Log (Excel)
+          </button>
+          <button 
+            onClick={async () => {
+              try {
+                const res = await API.get(`/admin/reports/attendance-zip?fromDate=${fromDate}&toDate=${toDate}`, { responseType: 'blob' });
+                const url = window.URL.createObjectURL(new Blob([res.data]));
+                const link = document.createElement('a');
+                link.href = url;
+                link.setAttribute('download', `Attendance_Photos_${fromDate}_to_${toDate}.zip`);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+              } catch (error) {
+                console.error('Export failed', error);
+                alert('Export failed.');
+              }
+            }}
+            className="h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-black text-white text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center gap-2"
+          >
+            <span>📸</span> Download Photos (ZIP)
+          </button>
+        </div>
       </div>
 
       {/* Filters */}

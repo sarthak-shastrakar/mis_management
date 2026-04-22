@@ -4,10 +4,10 @@ import API from '../api/api';
 const StatCard = ({ title, value, icon, color, change, onClick }) => (
   <div 
     onClick={onClick}
-    className={`bg-white rounded-2xl sm:rounded-3xl border border-slate-100 p-5 sm:p-6 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 group ${onClick ? 'cursor-pointer active:scale-95' : ''}`}
+    className={`bg-white rounded-3xl border border-slate-100 p-6 shadow-sm hover:shadow-xl hover:border-blue-200 transition-all cursor-pointer group active:scale-95`}
   >
     <div className="flex items-start justify-between mb-4">
-      <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center text-xl sm:text-2xl ${color}`}>
+      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${color} group-hover:scale-110 transition-transform duration-300`}>
         {icon}
       </div>
       {change && (
@@ -16,8 +16,11 @@ const StatCard = ({ title, value, icon, color, change, onClick }) => (
         </span>
       )}
     </div>
-    <p className="text-[11px] font-black text-slate-600 uppercase tracking-widest mb-1">{title}</p>
-    <p className="text-3xl sm:text-4xl font-black text-slate-900 group-hover:text-blue-600 transition-colors">{value}</p>
+    <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1 group-hover:text-blue-600 transition-colors uppercase">{title}</p>
+    <div className="flex items-baseline gap-2">
+      <p className="text-4xl font-black text-slate-900 group-hover:text-blue-700 transition-colors">{value}</p>
+      <span className="text-slate-300 group-hover:text-blue-400 group-hover:translate-x-1 transition-all">→</span>
+    </div>
   </div>
 );
 

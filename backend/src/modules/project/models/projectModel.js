@@ -136,6 +136,10 @@ const projectSchema = new mongoose.Schema(
       max: 100,
       default: 0,
     },
+    completedHouses: {
+      type: Number,
+      default: 0,
+    },
     isLocked: {
       type: Boolean,
       default: false, // Managers can input once, then locked. Admin can unlock.

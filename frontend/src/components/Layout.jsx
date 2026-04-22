@@ -21,6 +21,7 @@ import ManagerProfile from '../pages/ManagerProfile';
 import ExpenseManagement from '../pages/ExpenseManagement';
 import UserManagement from '../pages/UserManagement';
 import ViewerProfile from '../pages/ViewerProfile';
+import Approvals from '../pages/Approvals';
 
 // Sidebar is w-[260px] = 260px
 const SIDEBAR_OFFSET = 'lg:pl-[260px]';
@@ -100,6 +101,7 @@ const Layout = ({ currentRole, currentUser, userStatus, setUserStatus, onLogout,
                   : <TrainerProfile />
             )}
             {activePage === 'users'             && currentRole === 'admin' && <UserManagement />}
+            {activePage === 'approvals'         && currentRole === 'admin' && <Approvals />}
 
             {activePage === 'project-detail' && (
               <ProjectDetail
@@ -119,7 +121,7 @@ const Layout = ({ currentRole, currentUser, userStatus, setUserStatus, onLogout,
             )}
 
             {/* 404 fallback */}
-            {!['dashboard','projects','managers','trainers','attendance','project-detail','trainer-detail','profile','mark-attendance','my-history', 'expenses', 'reports', 'evidence'].includes(activePage) && (
+            {!['dashboard','projects','managers','trainers','attendance','project-detail','trainer-detail','profile','mark-attendance','my-history', 'expenses', 'reports', 'evidence', 'approvals'].includes(activePage) && (
               <div className="flex flex-col items-center justify-center min-h-[60vh] text-center border-2 border-dashed border-slate-200 rounded-3xl bg-white shadow-sm p-10">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-50 rounded-full flex items-center justify-center text-3xl sm:text-4xl mb-4">📁</div>
                 <h3 className="text-lg sm:text-xl font-black mb-2 text-slate-900">Coming Soon</h3>

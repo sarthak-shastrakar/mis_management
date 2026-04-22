@@ -28,6 +28,9 @@ const {
   addViewer,
   getAllViewers,
   deleteViewer,
+  approveUser,
+  rejectUser,
+  getPendingUsers,
 } = require("../controllers/adminController");
 const { 
   addExpense,
@@ -113,6 +116,11 @@ router.get("/photos/trainer-wise", protect, viewAccess, getPhotosByTrainer);
 router.get("/viewers", protect, adminOnly, getAllViewers);
 router.post("/viewers", protect, adminOnly, addViewer);
 router.delete("/viewers/:id", protect, adminOnly, deleteViewer);
+
+// Approval Routes
+router.put("/users/:id/approve", protect, adminOnly, approveUser);
+router.put("/users/:id/reject", protect, adminOnly, rejectUser);
+router.get("/users/pending", protect, adminOnly, getPendingUsers);
 
 // ─────────────────────────────────────────────
 // Trainer Management (Admin)

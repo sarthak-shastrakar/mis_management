@@ -4,6 +4,11 @@ const bcrypt = require('bcryptjs');
 const trainerSchema = new mongoose.Schema(
   {
     // ── Basic Info (filled by Manager) ──────────────────────
+    salutation: {
+      type: String,
+      enum: ['Mr.', 'Shri', 'Ms.', 'Ku.'],
+      default: 'Mr.'
+    },
     fullName: {
       type: String,
       required: [true, 'Please add full name'],
@@ -70,8 +75,8 @@ const trainerSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['active', 'inactive'],
-      default: 'active',
+      enum: ['pending', 'active', 'inactive'],
+      default: 'pending',
     },
 
     // ── First Login & Profile Completion Flags ───────────────
@@ -206,6 +211,11 @@ const trainerSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    beneficiaries: {
+      type: [String],
+      validate: [val => val.length <= 5, '{PATH} exceeds the limit of 5'],
+      default: []
+    }
   },
   {
     timestamps: true,

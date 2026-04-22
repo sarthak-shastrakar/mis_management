@@ -31,8 +31,8 @@ const viewerSchema = new mongoose.Schema(
     ],
     status: {
       type: String,
-      enum: ['active', 'inactive'],
-      default: 'active',
+      enum: ['active', 'inactive', 'pending', 'rejected'],
+      default: 'pending',
     },
   },
   {

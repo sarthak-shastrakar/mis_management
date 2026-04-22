@@ -11,9 +11,9 @@ exports.addNewTrainer = async (req, res) => {
   try {
     // Manager fills fields as per the UI Mockup + new MIS requirements:
     // Full Name, Trainer ID, Mobile Number, Assign Project, State, District, Account Role, Staff ID
-    const { 
-      fullName, 
-      trainerId: manualTrainerId, 
+    const {
+      fullName,
+      trainerId: manualTrainerId,
       mobileNumber,
       state,
       district,
@@ -27,7 +27,9 @@ exports.addNewTrainer = async (req, res) => {
       residentCity,
       joiningLocation,
       reportingManager: reportingManagerId,
-      placementLocation
+      placementLocation,
+      salutation,
+      beneficiaries
     } = req.body;
 
     if (!fullName || !mobileNumber || !state || !district) {
@@ -50,7 +52,7 @@ exports.addNewTrainer = async (req, res) => {
       const trainerCount = await Trainer.countDocuments();
       const trainerSeq = trainerCount + 1001;
       trainerId = `T-${trainerSeq}`;
-      
+
       const idExists = await Trainer.findOne({ trainerId });
       if (idExists) trainerId = `T-${trainerSeq + 1}`;
     } else {
@@ -83,7 +85,7 @@ exports.addNewTrainer = async (req, res) => {
     // 5. Resolve Projects correctly (Manager sends array of Project IDs or Names)
     let finalProjectIds = [];
     const projectsToResolve = assignedProjectsFromReq || (assignedProjectFromReq ? [assignedProjectFromReq] : []);
-    
+
     if (projectsToResolve && Array.isArray(projectsToResolve)) {
       for (const prjId of projectsToResolve) {
         if (prjId === 'None') continue;
@@ -113,7 +115,7 @@ exports.addNewTrainer = async (req, res) => {
       reportingManager: (req.user.role === 'admin' && reportingManagerId) ? reportingManagerId : req.user.id,
       createdBy: req.user.id,
       assignedBy: finalProjectIds.length > 0 ? req.user.id : null,
-      
+
       // New MIS Fields
       accountRole: 'trainer',
       alternativeMobileNumber,
@@ -123,7 +125,9 @@ exports.addNewTrainer = async (req, res) => {
       totLevel,
       residentCity,
       joiningLocation,
-      placementLocation: placementLocation || { state: '', district: '', taluka: '', village: '' }
+      placementLocation: placementLocation || { state: '', district: '', taluka: '', village: '' },
+      salutation: salutation || 'Mr.',
+      beneficiaries: (beneficiaries && Array.isArray(beneficiaries)) ? beneficiaries.slice(0, 5) : []
     });
 
     res.status(201).json({
@@ -163,7 +167,7 @@ exports.getAllTrainers = async (req, res) => {
     // Filtering logic for Managers
     if (req.user.role === 'manager') {
       const managerId = new mongoose.Types.ObjectId(req.user.id);
-      query = { 
+      query = {
         $or: [
           { createdBy: managerId },
           { reportingManager: managerId }
@@ -178,12 +182,12 @@ exports.getAllTrainers = async (req, res) => {
       .populate('assignedProjects', 'name')
       .sort({ createdAt: -1 })
       .lean();
-    
+
     // Add real stats for each trainer
     for (const trainer of trainers) {
-      const attendanceCount = await Attendance.countDocuments({ 
+      const attendanceCount = await Attendance.countDocuments({
         trainerId: trainer._id,
-        status: { $in: ['present', 'approved'] } 
+        status: { $in: ['present', 'approved'] }
       });
       trainer.totalUploads = attendanceCount;
       // Simple attendance rate Calculation: (uploads / days since joined)
@@ -216,18 +220,18 @@ exports.getTrainer = async (req, res) => {
     // Ownership check for managers (allow if creator OR reporting manager)
     const createdById = trainer.createdBy?._id ? String(trainer.createdBy._id) : String(trainer.createdBy);
     const reportingManagerId = trainer.reportingManager?._id ? String(trainer.reportingManager._id) : String(trainer.reportingManager);
-    if (req.user.role === 'manager' && 
-        createdById !== req.user.id && 
-        reportingManagerId !== req.user.id) {
+    if (req.user.role === 'manager' &&
+      createdById !== req.user.id &&
+      reportingManagerId !== req.user.id) {
       return res.status(403).json({ success: false, message: 'You are not authorized to view this trainer' });
     }
 
     // Add real stats for this specific trainer
-    const attendanceCount = await Attendance.countDocuments({ 
+    const attendanceCount = await Attendance.countDocuments({
       trainerId: trainer._id,
-      status: { $in: ['present', 'approved'] } 
+      status: { $in: ['present', 'approved'] }
     });
-    
+
     trainer.totalUploads = attendanceCount;
     // Calculation: (Total Uploads / Days since creation) * 100
     const diffTime = Math.abs(new Date() - new Date(trainer.createdAt));
@@ -245,14 +249,16 @@ exports.getTrainer = async (req, res) => {
 // @access  Private (Manager/Admin Only)
 exports.updateTrainer = async (req, res) => {
   try {
-    const { 
-      fullName, 
-      mobileNumber, 
-      assignedProject, 
+    const {
+      fullName,
+      mobileNumber,
+      salutation,
+      beneficiaries,
+      assignedProject,
       assignedProjects,
-      state, 
-      district, 
-      status, 
+      state,
+      district,
+      status,
       password,
       accountRole,
       placementLocation
@@ -262,9 +268,9 @@ exports.updateTrainer = async (req, res) => {
     if (!trainer) return res.status(404).json({ success: false, message: 'Trainer not found' });
 
     // Ownership check for managers (allow if creator OR reporting manager)
-    if (req.user.role === 'manager' && 
-        String(trainer.createdBy) !== req.user.id && 
-        String(trainer.reportingManager) !== req.user.id) {
+    if (req.user.role === 'manager' &&
+      String(trainer.createdBy) !== req.user.id &&
+      String(trainer.reportingManager) !== req.user.id) {
       return res.status(403).json({ success: false, message: 'You are not authorized to update this trainer' });
     }
 
@@ -275,10 +281,10 @@ exports.updateTrainer = async (req, res) => {
       trainer.username = `tr_${mobileNumber.slice(-4)}`;
     }
 
-    if (fullName)        trainer.fullName        = fullName;
-    if (state)           trainer.state           = state;
-    if (district)        trainer.district        = district;
-    if (accountRole)     trainer.accountRole     = accountRole;
+    if (fullName) trainer.fullName = fullName;
+    if (state) trainer.state = state;
+    if (district) trainer.district = district;
+    if (accountRole) trainer.accountRole = accountRole;
     if (placementLocation) trainer.placementLocation = placementLocation;
 
     const projectsToUpdate = assignedProjects || (assignedProject ? [assignedProject] : null);
@@ -299,11 +305,11 @@ exports.updateTrainer = async (req, res) => {
       trainer.assignedProjects = finalProjectIds;
       trainer.assignedBy = req.user.id;
     }
-    
-    if (status)          trainer.status          = status;
+
+    if (status) trainer.status = status;
 
     if (password) {
-      trainer.password      = password;
+      trainer.password = password;
       trainer.plainPassword = password;
     }
 
@@ -327,9 +333,9 @@ exports.deleteTrainer = async (req, res) => {
     if (!trainer) return res.status(404).json({ success: false, message: 'Trainer not found' });
 
     // Ownership check for managers (allow if creator OR reporting manager)
-    if (req.user.role === 'manager' && 
-        String(trainer.createdBy) !== req.user.id && 
-        String(trainer.reportingManager) !== req.user.id) {
+    if (req.user.role === 'manager' &&
+      String(trainer.createdBy) !== req.user.id &&
+      String(trainer.reportingManager) !== req.user.id) {
       return res.status(403).json({ success: false, message: 'You are not authorized to delete this trainer' });
     }
 

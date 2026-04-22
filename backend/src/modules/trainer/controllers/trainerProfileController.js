@@ -186,3 +186,101 @@ exports.getAttendanceHistory = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
+// ─────────────────────────────────────────────────────────────
+// @desc    Get Beneficiaries assigned to this Trainer
+// @route   GET /api/v1/trainer/beneficiaries
+// @access  Private (Trainer)
+// ─────────────────────────────────────────────────────────────
+exports.getMyBeneficiaries = async (req, res) => {
+  try {
+    const Beneficiary = require('../../project/models/beneficiaryModel');
+    const { regNo, village } = req.query;
+    
+    let query = { assignedTrainer: req.user.id };
+    
+    if (regNo) {
+      query.registrationNo = { $regex: regNo, $options: 'i' };
+    }
+    if (village) {
+      query['location.village'] = { $regex: village, $options: 'i' };
+    }
+
+    const beneficiaries = await Beneficiary.find(query).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: beneficiaries.length,
+      data: beneficiaries
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// @desc    Get Dashboard Summary Stats for Trainer
+// @route   GET /api/v1/trainer/dashboard-summary
+// @access  Private (Trainer)
+// ─────────────────────────────────────────────────────────────
+exports.getDashboardSummary = async (req, res) => {
+  try {
+    const Beneficiary = require('../../project/models/beneficiaryModel');
+    const Attendance = require('../../attendance/models/attendanceModel');
+    
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // 1. Total Beneficiaries
+    const totalBeneficiaries = await Beneficiary.countDocuments({ assignedTrainer: req.user.id });
+
+    // 2. Uploaded Today (Unique beneficiaries for which work was marked today)
+    const uploadedTodayRecords = await Attendance.distinct('beneficiaryId', {
+      trainerId: req.user.id,
+      date: { $gte: today, $lt: tomorrow },
+      beneficiaryId: { $ne: null }
+    });
+    const uploadedCount = uploadedTodayRecords.length;
+
+    // 3. Pending (Simple subtraction for the day)
+    const pendingCount = Math.max(0, totalBeneficiaries - uploadedCount);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalBeneficiaries,
+        uploadedCount,
+        pendingCount
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// @desc    Update Push Token (OneSignal Player ID)
+// @route   PUT /api/v1/trainer/push-token
+// @access  Private (Trainer)
+// ─────────────────────────────────────────────────────────────
+exports.updatePushToken = async (req, res) => {
+  try {
+    const { playerId } = req.body;
+    if (!playerId) return res.status(400).json({ success: false, message: 'Player ID required' });
+
+    const trainer = await Trainer.findByIdAndUpdate(
+      req.user.id,
+      { oneSignalPlayerId: playerId },
+      { new: true }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Push token updated successfully'
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

@@ -1204,3 +1204,84 @@ exports.deleteViewer = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+// @desc    Approve User Registration
+// @route   PUT /api/v1/admin/users/:id/approve
+// @access  Private (Admin Only)
+exports.approveUser = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body; // 'manager', 'trainer', or 'viewer'
+
+    let model;
+    if (role === 'manager') model = Manager;
+    else if (role === 'trainer') model = Trainer;
+    else if (role === 'viewer') model = Viewer;
+    else return res.status(400).json({ success: false, message: 'Invalid role' });
+
+    const user = await model.findByIdAndUpdate(id, { status: 'active' }, { new: true });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `${role.charAt(0).toUpperCase() + role.slice(1)} approved successfully`,
+      data: user
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Reject User Registration
+// @route   PUT /api/v1/admin/users/:id/reject
+// @access  Private (Admin Only)
+exports.rejectUser = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    let model;
+    if (role === 'manager') model = Manager;
+    else if (role === 'trainer') model = Trainer;
+    else if (role === 'viewer') model = Viewer;
+    else return res.status(400).json({ success: false, message: 'Invalid role' });
+
+    const user = await model.findByIdAndUpdate(id, { status: 'inactive' }, { new: true });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `${role.charAt(0).toUpperCase() + role.slice(1)} rejected successfully`,
+      data: user
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Get All Pending Users
+// @route   GET /api/v1/admin/users/pending
+// @access  Private (Admin Only)
+exports.getPendingUsers = async (req, res, next) => {
+  try {
+    const pendingManagers = await Manager.find({ status: 'pending' }).lean();
+    const pendingTrainers = await Trainer.find({ status: 'pending' }).lean();
+    const pendingViewers = await Viewer.find({ status: 'pending' }).lean();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        managers: pendingManagers,
+        trainers: pendingTrainers,
+        viewers: pendingViewers
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};

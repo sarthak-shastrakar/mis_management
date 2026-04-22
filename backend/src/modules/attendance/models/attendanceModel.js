@@ -11,6 +11,11 @@ const attendanceSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Project is required'],
     },
+    beneficiaryId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Beneficiary',
+      required: false, // Optional for backward compatibility, but required for the new wizard
+    },
     date: {
       type: Date,
       required: [true, 'Please add attendance date'],

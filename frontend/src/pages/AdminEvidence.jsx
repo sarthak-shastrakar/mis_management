@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api/api';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 const EvidenceMediaGallery = ({ ev, handleDownload }) => {
   const scrollRef = React.useRef(null);
@@ -173,6 +175,62 @@ const AdminEvidence = () => {
     }
   };
 
+  const handleBulkDownload = async () => {
+    if (evidenceRecords.length === 0) return;
+    setLoading(true);
+    const zip = new JSZip();
+    const folder = zip.folder("Work_Evidence");
+
+    try {
+      await Promise.all(evidenceRecords.map(async (ev) => {
+        const dateObj = new Date(ev.date);
+        const day = dateObj.toLocaleDateString('en-IN', { weekday: 'long' });
+        const dateStr = dateObj.toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }).replace(/\//g, '-');
+        const timeStr = dateObj.toLocaleTimeString('en-IN', { hour12: false }).replace(/:/g, '-');
+        const lat = ev.location?.latitude?.toFixed(4) || '0';
+        const long = ev.location?.longitude?.toFixed(4) || '0';
+        
+        // Sanitize names for filenames
+        const cleanProject = ev.projectName.replace(/[^a-z0-9]/gi, '_');
+        const cleanBlock = (ev.block || 'TBD').replace(/[^a-z0-9]/gi, '_');
+        const cleanVillage = (ev.village || 'TBD').replace(/[^a-z0-9]/gi, '_');
+        const cleanBatch = (ev.batchID || 'NoBatch').replace(/[^a-z0-9]/gi, '_');
+
+        const baseName = `${cleanProject}_${cleanBlock}_${cleanVillage}_${cleanBatch}_${day}_${dateStr}_${timeStr}_${lat}_${long}`;
+
+        // Download all photos for this record
+        await Promise.all(ev.photos.map(async (url, idx) => {
+          try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            folder.file(`${baseName}_Photo_${idx + 1}.jpg`, blob);
+          } catch (e) {
+            console.error('Failed to add photo to zip', url, e);
+          }
+        }));
+
+        // Download video if exists
+        if (ev.video) {
+          try {
+            const response = await fetch(ev.video);
+            const blob = await response.blob();
+            folder.file(`${baseName}_Video.mp4`, blob);
+          } catch (e) {
+            console.error('Failed to add video to zip', ev.video, e);
+          }
+        }
+      }));
+
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, `Evidence_Export_${filters.date || 'AllTime'}.zip`);
+    } catch (err) {
+      console.error('Bulk download failed', err);
+      alert('Failed to generate ZIP archive');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-10 animate-in fade-in duration-700">
       {/* Header */}
@@ -192,6 +250,19 @@ const AdminEvidence = () => {
                 <p className="text-lg font-black text-slate-900 leading-none">{stats.totalTrainers}</p>
               </div>
            </div>
+
+           <button 
+             onClick={handleBulkDownload}
+             disabled={loading || evidenceRecords.length === 0}
+             className="h-14 px-8 bg-indigo-600 hover:bg-slate-900 text-white font-black rounded-3xl shadow-xl shadow-indigo-500/20 transition-all flex items-center gap-3 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
+           >
+             {loading ? (
+               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+             ) : (
+               <span className="text-lg">📦</span>
+             )}
+             <span className="text-[10px] uppercase tracking-widest">Download ZIP</span>
+           </button>
         </div>
       </div>
 
