@@ -118,6 +118,50 @@ const AdminReports = () => {
     }
   };
 
+  const handleExcelDownload = async () => {
+    try {
+      setLoading(true);
+      const projParam = filters.projectId !== 'all' ? `?projectId=${filters.projectId}` : '';
+      const response = await API.get(`/admin/reports/project-status-excel${projParam}`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'Project_Status_Report.xlsx';
+      link.click();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to generate Excel report');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePhotoAlbumPDF = async () => {
+    if (filters.projectId === 'all') {
+      alert('Please select a project to generate a PDF photo album.');
+      return;
+    }
+    try {
+      setLoading(true);
+      const dateParam = filters.date ? `&date=${filters.date}` : '';
+      const response = await API.get(`/admin/reports/photo-album-pdf?projectId=${filters.projectId}${dateParam}`, {
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Photo_Album_${filters.projectId}.pdf`;
+      link.click();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to generate PDF album');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
       {/* Header Section */}
@@ -126,7 +170,20 @@ const AdminReports = () => {
           <h2 className="text-3xl font-black text-slate-900 tracking-tight">Consolidated Intelligence</h2>
           <p className="text-sm font-bold text-slate-500 mt-1 uppercase tracking-widest">Field operations & visual verification reports</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
+          <button 
+             onClick={handlePhotoAlbumPDF}
+             disabled={filters.projectId === 'all'}
+             className={`h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl flex items-center gap-2 ${filters.projectId === 'all' ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-rose-600 text-white hover:bg-rose-700'}`}
+          >
+            📄 Photo Album (PDF)
+          </button>
+          <button 
+             onClick={handleExcelDownload}
+             className="h-12 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl flex items-center gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
+          >
+            📊 Status Report (Excel)
+          </button>
           <button 
              onClick={handleZipDownload}
              disabled={filters.projectId === 'all'}

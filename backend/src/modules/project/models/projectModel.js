@@ -9,7 +9,6 @@ const projectSchema = new mongoose.Schema(
     },
     projectCategory: {
       type: String,
-      enum: ['PMAY-G STT Mode', 'PMAY-G RPL Mode', 'MoRTH RPL', 'BoCW RPL', 'None'],
       default: 'None',
     },
     workOrderNo: {
@@ -29,8 +28,7 @@ const projectSchema = new mongoose.Schema(
     },
     trainingHours: {
       type: Number,
-      enum: [360, 390, 72, 168, 120],
-      required: [true, 'Please select training hours'],
+      required: [true, 'Please select or enter training hours'],
     },
     trainingCostPerHour: {
       type: Number,
@@ -101,6 +99,19 @@ const projectSchema = new mongoose.Schema(
       type: Date,
       required: [true, 'Please add project completion date'],
     },
+    trainingStartDate: {
+      type: Date,
+    },
+    trainingDays: {
+      type: Number,
+    },
+    holidays: {
+      type: Number,
+      default: 0
+    },
+    trainingHoursPerDay: {
+      type: Number,
+    },
 
     // ── Staff Engagement ─────────────────────────────────────
     maxDemonstrators: {
@@ -108,12 +119,11 @@ const projectSchema = new mongoose.Schema(
       default: 1,
     },
 
-    // ── Location ─────────────────────────────────────────────
     location: {
       state: { type: String, required: true },
       district: { type: String, required: true },
-      taluka: { type: String, required: true },
-      village: { type: String, required: true },
+      taluka: { type: String },
+      village: { type: String },
     },
     projectAddress: {
       type: String,

@@ -30,49 +30,60 @@ const TrainerModal = ({ trainer, onClose, onSave, projects, currentRole, success
     mobileNumber: trainer ? trainer.mobile : '',
     state: trainer ? trainer.state : '',
     district: trainer ? trainer.location || trainer.district : '',
-    reportingManager: trainer ? trainer.reportingManager : '',
+    reportingManager: trainer ? (trainer.reportingManager?._id || trainer.reportingManager || '') : '',
     placementLocation: trainer?.placementLocation || { state: '', district: '', taluka: '', village: '' }
   });
+
+  const [talukasList, setTalukasList] = useState([]);
+  const [villagesList, setVillagesList] = useState([]);
+  const [isFetchingTalukas, setIsFetchingTalukas] = useState(false);
+  const [isFetchingVillages, setIsFetchingVillages] = useState(false);
+
+  const statesList = Object.keys(statesAndDistricts);
+  const homeDistrictsList = formData.state ? statesAndDistricts[formData.state] : [];
+  const placementDistrictsList = formData.placementLocation.state ? statesAndDistricts[formData.placementLocation.state] : [];
+
+  useEffect(() => {
+    if (formData.placementLocation.state && formData.placementLocation.district) {
+      setIsFetchingTalukas(true);
+      API.get(`/locations/talukas?state=${formData.placementLocation.state}&district=${formData.placementLocation.district}`)
+        .then(res => {
+          if (res.data && res.data.success) {
+            setTalukasList(res.data.data);
+          } else {
+            setTalukasList([]);
+          }
+        })
+        .catch(console.error)
+        .finally(() => setIsFetchingTalukas(false));
+    } else {
+      setTalukasList([]);
+    }
+  }, [formData.placementLocation.state, formData.placementLocation.district]);
+
+  useEffect(() => {
+    if (formData.placementLocation.state && formData.placementLocation.district && formData.placementLocation.taluka) {
+      setIsFetchingVillages(true);
+      API.get(`/locations/villages?state=${formData.placementLocation.state}&district=${formData.placementLocation.district}&taluka=${formData.placementLocation.taluka}`)
+        .then(res => {
+          if (res.data && res.data.success) {
+            setVillagesList(res.data.data);
+          } else {
+            setVillagesList([]);
+          }
+        })
+        .catch(console.error)
+        .finally(() => setIsFetchingVillages(false));
+    } else {
+      setVillagesList([]);
+    }
+  }, [formData.placementLocation.state, formData.placementLocation.district, formData.placementLocation.taluka]);
 
   useEffect(() => {
     if (currentRole === 'admin') {
       fetchManagers();
     }
   }, [currentRole]);
-
-  const states = Object.keys(statesAndDistricts);
-  const districts = formData.state ? statesAndDistricts[formData.state] : [];
-  const placementDistricts = formData.placementLocation.state ? statesAndDistricts[formData.placementLocation.state] : [];
-
-  useEffect(() => {
-    if (formData.placementLocation.state && formData.placementLocation.district) {
-      fetchTalukas(formData.placementLocation.state, formData.placementLocation.district);
-    } else {
-      setTalukas([]);
-    }
-  }, [formData.placementLocation.state, formData.placementLocation.district]);
-
-  useEffect(() => {
-    if (formData.placementLocation.state && formData.placementLocation.district && formData.placementLocation.taluka) {
-      fetchVillages(formData.placementLocation.state, formData.placementLocation.district, formData.placementLocation.taluka);
-    } else {
-      setVillages([]);
-    }
-  }, [formData.placementLocation.state, formData.placementLocation.district, formData.placementLocation.taluka]);
-
-  const fetchTalukas = async (s, d) => {
-    try {
-      const resp = await API.get(`/locations/talukas?state=${s}&district=${d}`);
-      if (resp.data.success) setTalukas(resp.data.data);
-    } catch (err) { console.error(err); }
-  };
-
-  const fetchVillages = async (s, d, t) => {
-    try {
-      const resp = await API.get(`/locations/villages?state=${s}&district=${d}&taluka=${t}`);
-      if (resp.data.success) setVillages(resp.data.data);
-    } catch (err) { console.error(err); }
-  };
 
   const fetchManagers = async () => {
     try {
@@ -241,9 +252,9 @@ const TrainerModal = ({ trainer, onClose, onSave, projects, currentRole, success
 
                 <div className="md:col-span-1">
                   <SearchableDropdown 
-                    label="Home State"
+                    label={<>Home State <span className="text-rose-500">*</span></>}
                     placeholder="Select State"
-                    options={states}
+                    options={statesList}
                     value={formData.state}
                     onChange={(val) => setFormData({ ...formData, state: val, district: '' })}
                   />
@@ -251,9 +262,9 @@ const TrainerModal = ({ trainer, onClose, onSave, projects, currentRole, success
 
                 <div className="md:col-span-1">
                   <SearchableDropdown 
-                    label="Home District"
+                    label={<>Home District / City <span className="text-rose-500">*</span></>}
                     placeholder="Select District"
-                    options={districts}
+                    options={homeDistrictsList}
                     value={formData.district}
                     disabled={!formData.state}
                     onChange={(val) => setFormData({ ...formData, district: val })}
@@ -271,7 +282,7 @@ const TrainerModal = ({ trainer, onClose, onSave, projects, currentRole, success
                   className="w-full h-14 px-5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white font-bold focus:outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all cursor-pointer"
                 >
                   <option value="">Select Manager</option>
-                  {managers.map(m => (
+                  {[...managers].sort((a, b) => a.fullName.localeCompare(b.fullName)).map(m => (
                     <option key={m._id} value={m._id}>{m.fullName} ({m.managerId})</option>
                   ))}
                 </select>
@@ -288,38 +299,43 @@ const TrainerModal = ({ trainer, onClose, onSave, projects, currentRole, success
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <SearchableDropdown 
-                  label="Placement State"
+                  label={<>Placement State <span className="text-rose-500">*</span></>}
                   placeholder="Select State"
-                  options={states}
+                  options={statesList}
                   value={formData.placementLocation.state}
                   onChange={(val) => setFormData({ ...formData, placementLocation: { ...formData.placementLocation, state: val, district: '', taluka: '', village: '' } })}
                 />
                 <SearchableDropdown 
-                  label="Placement District"
+                  label={<>Placement District / City <span className="text-rose-500">*</span></>}
                   placeholder="Select District"
-                  options={placementDistricts}
+                  options={placementDistrictsList}
                   value={formData.placementLocation.district}
                   disabled={!formData.placementLocation.state}
                   onChange={(val) => setFormData({ ...formData, placementLocation: { ...formData.placementLocation, district: val, taluka: '', village: '' } })}
                 />
-                <SearchableDropdown 
-                  label="Taluka"
-                  placeholder="Select/Enter Taluka"
-                  options={talukas}
-                  allowCustom
-                  value={formData.placementLocation.taluka}
-                  disabled={!formData.placementLocation.district}
-                  onChange={(val) => setFormData({ ...formData, placementLocation: { ...formData.placementLocation, taluka: val, village: '' } })}
-                />
-                <SearchableDropdown 
-                  label="City/Village"
-                  placeholder="Select/Enter Village"
-                  options={villages}
-                  allowCustom
-                  value={formData.placementLocation.village}
-                  disabled={!formData.placementLocation.taluka}
-                  onChange={(val) => setFormData({ ...formData, placementLocation: { ...formData.placementLocation, village: val } })}
-                />
+
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+                <div>
+                  <SearchableDropdown 
+                    label={<>Select Taluka {isFetchingTalukas && <span className="text-blue-500 animate-pulse">(Fetching...)</span>}</>}
+                    placeholder="Select Taluka"
+                    options={talukasList}
+                    value={formData.placementLocation.taluka}
+                    disabled={!formData.placementLocation.district || isFetchingTalukas}
+                    onChange={(val) => setFormData({ ...formData, placementLocation: { ...formData.placementLocation, taluka: val, village: '' } })}
+                  />
+                </div>
+                <div>
+                  <SearchableDropdown 
+                    label={<>Select City / Village {isFetchingVillages && <span className="text-blue-500 animate-pulse">(Fetching...)</span>}</>}
+                    placeholder="Select Village"
+                    options={villagesList}
+                    value={formData.placementLocation.village}
+                    disabled={!formData.placementLocation.taluka || isFetchingVillages}
+                    onChange={(val) => setFormData({ ...formData, placementLocation: { ...formData.placementLocation, village: val } })}
+                  />
+                </div>
             </div>
           </div>
 
@@ -364,6 +380,9 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
   const [editTrainer, setEditTrainer] = useState(null);
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'grid'
   const [projectsList, setProjectsList] = useState([]);
+  const [managersList, setManagersList] = useState([]);
+  const [projectFilter, setProjectFilter] = useState('All');
+  const [managerFilter, setManagerFilter] = useState('All');
   const [loading, setLoading] = useState(true);
   const [successData, setSuccessData] = useState(null);
   const { showConfirm, showAlert } = useModal();
@@ -371,7 +390,21 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
   useEffect(() => {
     fetchTrainers();
     fetchProjects();
-  }, []);
+    if (currentRole === 'admin') {
+      fetchManagers();
+    }
+  }, [currentRole]);
+
+  const fetchManagers = async () => {
+    try {
+      const response = await API.get('/admin/managers');
+      if (response.data.success) {
+        setManagersList(response.data.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch managers', err);
+    }
+  };
 
   const fetchTrainers = async () => {
     setLoading(true);
@@ -460,7 +493,14 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
       (t.trainerId && t.trainerId.toLowerCase().includes(searchStr)) ||
       (t.mobile && t.mobile.includes(searchStr));
     const matchStatus = statusFilter === 'All' || t.status === statusFilter;
-    return matchSearch && matchStatus;
+    
+    const matchProject = projectFilter === 'All' || 
+       (t.projects && t.projects.some(p => (typeof p === 'object' ? p._id === projectFilter || p.name === projectFilter : p === projectFilter)));
+       
+    const matchManager = managerFilter === 'All' || 
+       (t.reportingManager === managerFilter || (t.reportingManager && t.reportingManager._id === managerFilter));
+
+    return matchSearch && matchStatus && matchProject && matchManager;
   });
 
   const handleSaveTrainer = async (t) => {
@@ -527,7 +567,7 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
 
       {/* Professional Filters - Unified Light Mode */}
       <div className="bg-white rounded-3xl sm:rounded-[2.5rem] border border-slate-200 p-6 sm:p-8 shadow-sm flex flex-col lg:flex-row gap-6">
-        <div className="relative flex-1 group">
+        <div className="relative flex-[2] group">
           <span className="absolute left-6 top-1/2 -translate-y-1/2 text-xl opacity-40 group-focus-within:opacity-100 transition-opacity">🔍</span>
           <input
             type="text"
@@ -537,15 +577,52 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
             className="w-full h-12 sm:h-14 pl-16 pr-6 bg-slate-50 border border-slate-200 rounded-[1.25rem] text-xs sm:text-sm font-bold text-slate-900 placeholder:text-slate-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-white transition-all shadow-sm shadow-indigo-500/5"
           />
         </div>
+
+        <div className="flex-1 relative">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-40">📁</span>
+          <select 
+            value={projectFilter} 
+            onChange={e => setProjectFilter(e.target.value)}
+            className="w-full h-12 sm:h-14 pl-12 pr-6 bg-slate-50 border border-slate-200 rounded-[1.25rem] text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-white transition-all shadow-sm shadow-indigo-500/5 cursor-pointer appearance-none truncate"
+          >
+            <option value="All">Filter: Project-Wise</option>
+            {projectsList.map(p => (
+              <option key={p._id} value={p._id}>{p.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {currentRole === 'admin' && (
+          <div className="flex-1 relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg opacity-40">👤</span>
+            <select 
+              value={managerFilter} 
+              onChange={e => setManagerFilter(e.target.value)}
+              className="w-full h-12 sm:h-14 pl-12 pr-6 bg-slate-50 border border-slate-200 rounded-[1.25rem] text-xs sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:bg-white transition-all shadow-sm shadow-indigo-500/5 cursor-pointer appearance-none truncate"
+            >
+              <option value="All">Filter: Manager-Wise</option>
+              {managersList.map(m => (
+                <option key={m._id} value={m._id}>{m.fullName}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Stats Card */}
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div className="bg-white rounded-[2rem] border border-indigo-100 text-indigo-600 bg-indigo-50 p-8 flex items-center gap-6 shadow-sm">
           <div className="w-20 h-20 rounded-2xl bg-white border border-indigo-100 flex items-center justify-center text-3xl shadow-sm">💼</div>
           <div>
             <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em] mb-1">Total Trainers</p>
             <p className="text-4xl font-black text-slate-900 tracking-tight">{trainersList.length}</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-[2rem] border border-amber-100 text-amber-600 bg-amber-50 p-8 flex items-center gap-6 shadow-sm">
+          <div className="w-20 h-20 rounded-2xl bg-white border border-amber-100 flex items-center justify-center text-3xl shadow-sm">⚠️</div>
+          <div>
+            <p className="text-[10px] font-black text-slate-700 uppercase tracking-[0.2em] mb-1">Pending Profiles</p>
+            <p className="text-4xl font-black text-slate-900 tracking-tight">{trainersList.filter(t => !t.profileComplete).length}</p>
           </div>
         </div>
       </div>
@@ -557,7 +634,7 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
             <table className="w-full text-left border-collapse min-w-[900px] sm:min-w-0">
               <thead>
                 <tr className="bg-slate-50/50 border-b border-slate-100">
-                  {['Trainer Name', 'Trainer ID', 'Mobile Number', 'Project Assigned', 'Status', 'Actions'].map(h => (
+                  {['Trainer Name', 'Trainer ID', 'Mobile Number', 'Project Assigned', 'Place of Posting', 'Status', 'Actions'].map(h => (
                     <th key={h} className="px-6 sm:px-8 py-6 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] text-slate-600">{h}</th>
                   ))}
                 </tr>
@@ -584,12 +661,37 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
                     </td>
                     <td className="px-6 sm:px-8 py-6 text-xs sm:text-sm font-bold text-slate-600">{t.mobile}</td>
                     <td className="px-6 sm:px-8 py-6">
-                      <div className="flex flex-wrap gap-1.5 max-w-[220px]">
-                        {t.projects && t.projects.length > 0 ? t.projects.map((p, idx) => (
-                          <span key={idx} className="px-3 py-1 bg-white border border-slate-200 text-slate-700 rounded-lg text-[9px] font-black uppercase tracking-tighter shadow-sm">
-                            {typeof p === 'object' ? p.name : p}
-                          </span>
-                        )) : <span className="text-slate-300 italic text-[9px] sm:text-[10px] font-bold tracking-widest uppercase">NOT ASSIGNED</span>}
+                      <div className="flex flex-col gap-1.5 max-w-[220px]">
+                        {t.projects && t.projects.length > 0 ? t.projects.map((p, idx) => {
+                          const projName = typeof p === 'object' ? p.name : p;
+                          const startDate = typeof p === 'object' && p.startDate ? new Date(p.startDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : null;
+                          return (
+                            <div key={idx} className="flex flex-col gap-0.5 p-2 bg-slate-50 border border-slate-100 rounded-lg">
+                              <span className="text-[10px] font-black uppercase text-slate-900 leading-tight">
+                                {projName}
+                              </span>
+                              {startDate && (
+                                <span className="text-[8px] font-bold text-indigo-500 uppercase tracking-tighter">
+                                  Started: {startDate}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        }) : <span className="text-slate-300 italic text-[9px] sm:text-[10px] font-bold tracking-widest uppercase">NOT ASSIGNED</span>}
+                      </div>
+                    </td>
+
+                    <td className="px-6 sm:px-8 py-6">
+                      <div className="flex flex-col gap-0.5">
+                        <p className="text-[10px] font-black text-slate-900 uppercase tracking-tighter">
+                          {t.placementLocation?.state || 'N/A'}
+                        </p>
+                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+                          {t.placementLocation?.district || 'TBD'} &gt; {t.placementLocation?.taluka || 'TBD'}
+                        </p>
+                        <p className="text-[8px] font-extrabold text-blue-600 uppercase tracking-tighter">
+                          📍 {t.placementLocation?.village || 'TBD'}
+                        </p>
                       </div>
                     </td>
 
@@ -606,23 +708,21 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
                           className="w-10 h-10 bg-slate-100 hover:bg-slate-900 hover:text-white text-slate-600 rounded-xl flex items-center justify-center transition-all shadow-sm"
                           title="View Intelligence"
                         >👁️</button>
+                        <button
+                          onClick={() => setEditTrainer(t)}
+                          className="w-10 h-10 bg-slate-100 hover:bg-emerald-500 hover:text-white text-slate-600 rounded-xl flex items-center justify-center transition-all shadow-sm"
+                          title="Edit"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        </button>
                         {currentRole === 'admin' && (
-                          <>
-                            <button
-                              onClick={() => onNavigate && onNavigate('trainer-detail', { trainerId: t._id, editMode: true })}
-                              className="w-10 h-10 bg-slate-100 hover:bg-emerald-500 hover:text-white text-slate-600 rounded-xl flex items-center justify-center transition-all shadow-sm"
-                              title="Edit"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                            </button>
-                            <button
-                              onClick={() => handleDeleteTrainer(t._id)}
-                              className="w-10 h-10 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-500 rounded-xl flex items-center justify-center transition-all shadow-sm border border-rose-100"
-                              title="Delete"
-                            >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                            </button>
-                          </>
+                          <button
+                            onClick={() => handleDeleteTrainer(t._id)}
+                            className="w-10 h-10 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-500 rounded-xl flex items-center justify-center transition-all shadow-sm border border-rose-100"
+                            title="Delete"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                          </button>
                         )}
                       </div>
                     </td>
@@ -677,10 +777,18 @@ const TrainerManagement = ({ onNavigate, currentRole }) => {
                     onClick={() => onNavigate && onNavigate('trainer-detail', { trainerId: t._id })}
                     className="flex-1 py-4 bg-slate-900 hover:bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl shadow-slate-900/10 transition-all active:scale-95"
                   >View Intelligence</button>
+                  <button
+                    onClick={() => setEditTrainer(t)}
+                    className="w-14 h-14 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-500 rounded-2xl flex items-center justify-center transition-all border border-emerald-100"
+                    title="Edit"
+                  >
+                    ✏️
+                  </button>
                   {currentRole === 'admin' && (
                     <button
                       onClick={() => handleDeleteTrainer(t._id)}
                       className="w-14 h-14 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-500 rounded-2xl flex items-center justify-center transition-all border border-rose-100"
+                      title="Delete"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                     </button>

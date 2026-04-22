@@ -8,15 +8,15 @@ const statusColors = {
 
 const AttendanceManagement = () => {
   const [attendanceData, setAttendanceData] = useState([]);
-  const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0]);
+  const [fromDate, setFromDate] = useState(new Date().toISOString().split('T')[0]);
+  const [toDate, setToDate] = useState(new Date().toISOString().split('T')[0]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [loading, setLoading] = useState(true);
-  const dateInputRef = useRef(null);
 
   useEffect(() => {
     fetchAttendance();
-  }, [dateFilter]);
+  }, [fromDate, toDate]);
 
   const fetchAttendance = async () => {
     setLoading(true);
@@ -44,7 +44,8 @@ const AttendanceManagement = () => {
   };
 
   const filtered = attendanceData.filter(record => {
-    const matchDate = record.date.startsWith(dateFilter);
+    const recordDate = record.date.split('T')[0];
+    const matchDate = recordDate >= fromDate && recordDate <= toDate;
     const matchSearch = record.trainerName.toLowerCase().includes(search.toLowerCase()) ||
       record.project.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'All' || record.status === statusFilter;
@@ -63,6 +64,26 @@ const AttendanceManagement = () => {
           <h3 className="text-2xl font-black text-black">Attendance Register</h3>
           <p className="text-sm text-slate-700 font-medium mt-1">View daily field attendance of all trainers</p>
         </div>
+        <button 
+          onClick={async () => {
+            try {
+              const res = await API.get(`/admin/reports/attendance-zip?fromDate=${fromDate}&toDate=${toDate}`, { responseType: 'blob' });
+              const url = window.URL.createObjectURL(new Blob([res.data]));
+              const link = document.createElement('a');
+              link.href = url;
+              link.setAttribute('download', `Attendance_Report_${fromDate}_to_${toDate}.zip`);
+              document.body.appendChild(link);
+              link.click();
+              link.remove();
+            } catch (error) {
+              console.error('Export failed', error);
+              alert('Export failed.');
+            }
+          }}
+          className="h-11 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-black text-white text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center gap-2"
+        >
+          <span>⬇️</span> Download Report
+        </button>
       </div>
 
       {/* Filters */}
@@ -79,27 +100,25 @@ const AttendanceManagement = () => {
         </div>
 
         <div className="flex gap-4 flex-wrap">
-          <div 
-            onClick={() => {
-              try {
-                dateInputRef.current?.showPicker();
-              } catch (e) {
-                dateInputRef.current?.click();
-              }
-            }}
-            className="relative flex items-center h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl overflow-hidden cursor-pointer"
-          >
-            <span className="text-sm font-bold text-slate-900 z-10 pointer-events-none tracking-widest">
-              {dateFilter.split('-').reverse().join('-')}
-            </span>
-            <span className="ml-3 text-slate-600 z-10 pointer-events-none">📅</span>
-            <input
-              ref={dateInputRef}
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            />
+          <div className="flex gap-2">
+            <div className="flex items-center h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl">
+              <span className="text-xs text-slate-500 font-bold mr-2 uppercase tracking-widest">From</span>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="bg-transparent text-[13px] font-bold text-slate-900 outline-none"
+              />
+            </div>
+            <div className="flex items-center h-11 px-3 bg-slate-50 border border-slate-200 rounded-xl">
+              <span className="text-xs text-slate-500 font-bold mr-2 uppercase tracking-widest">To</span>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="bg-transparent text-[13px] font-bold text-slate-900 outline-none"
+              />
+            </div>
           </div>
 
           <div className="flex bg-slate-100 rounded-xl p-1">

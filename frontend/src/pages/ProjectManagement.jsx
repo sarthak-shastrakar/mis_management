@@ -19,12 +19,19 @@ const progressColors = {
 };
 
 const calculateDuration = (start, end) => {
-  if (!start || !end) return 'N/A';
+  if (!start || !end) return 0;
   const s = new Date(start);
   const e = new Date(end);
   const diffTime = e - s;
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Inclusive
-  return diffDays > 0 ? `${diffDays} Days` : 'Invalid Range';
+  return diffDays > 0 ? diffDays : 0;
+};
+
+const calcDatePlusDays = (startDate, daysToAdd) => {
+  if (!startDate || isNaN(daysToAdd) || daysToAdd <= 0) return '';
+  const d = new Date(startDate);
+  d.setDate(d.getDate() + (daysToAdd - 1));
+  return d.toISOString().split('T')[0];
 };
 
 const ProjectManagement = ({ onNavigate, currentRole }) => {
@@ -34,25 +41,79 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+  const [talukas, setTalukas] = useState([]);
+  const [villages, setVillages] = useState([]);
+
   const startDateRef = useRef(null);
   const endDateRef = useRef(null);
   const { showConfirm, showAlert } = useModal();
+
+  const [customPrompt, setCustomPrompt] = useState({ isOpen: false, field: null, label: '', value: '' });
 
   // For Project Creation Form
   const [formData, setFormData] = useState({
     name: '',
     projectCategory: 'None',
+    projectId: '',
     workOrderNo: '',
     allocatedTarget: '',
-    trainingHours: '120',
-    totalProjectCost: '', // In Lakhs
+    trainingHours: '',
+    trainingStartDate: '',
+    trainingDays: '',
+    holidays: '0',
+    trainingHoursPerDay: '',
+    totalProjectCost: '',
     startDate: '',
     endDate: '',
     managerId: '',
     description: '',
+    projectAddress: '',
     location: { state: '', district: '', taluka: '', village: '' }
   });
+
+  const [talukasList, setTalukasList] = useState([]);
+  const [villagesList, setVillagesList] = useState([]);
+  const [isFetchingTalukas, setIsFetchingTalukas] = useState(false);
+  const [isFetchingVillages, setIsFetchingVillages] = useState(false);
+
+  const statesList = Object.keys(statesAndDistricts);
+  const districtsList = formData.location.state ? statesAndDistricts[formData.location.state] : [];
+
+  useEffect(() => {
+    if (formData.location.state && formData.location.district) {
+      setIsFetchingTalukas(true);
+      API.get(`/locations/talukas?state=${formData.location.state}&district=${formData.location.district}`)
+        .then(res => {
+          if (res.data && res.data.success) {
+            setTalukasList(res.data.data);
+          } else {
+            setTalukasList([]);
+          }
+        })
+        .catch(console.error)
+        .finally(() => setIsFetchingTalukas(false));
+    } else {
+      setTalukasList([]);
+    }
+  }, [formData.location.state, formData.location.district]);
+
+  useEffect(() => {
+    if (formData.location.state && formData.location.district && formData.location.taluka) {
+      setIsFetchingVillages(true);
+      API.get(`/locations/villages?state=${formData.location.state}&district=${formData.location.district}&taluka=${formData.location.taluka}`)
+        .then(res => {
+          if (res.data && res.data.success) {
+            setVillagesList(res.data.data);
+          } else {
+            setVillagesList([]);
+          }
+        })
+        .catch(console.error)
+        .finally(() => setIsFetchingVillages(false));
+    } else {
+      setVillagesList([]);
+    }
+  }, [formData.location.state, formData.location.district, formData.location.taluka]);
 
   const [editingId, setEditingId] = useState(null);
 
@@ -111,10 +172,13 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
       let response;
       const payload = {
         ...formData,
-        trainingHours: formData.trainingHours ? Number(formData.trainingHours) : undefined,
+        ...formData,
+        trainingHours: Number(formData.trainingDays || 0) * Number(formData.trainingHoursPerDay || 0),
+        trainingDays: formData.trainingDays ? Number(formData.trainingDays) : undefined,
+        holidays: formData.holidays ? Number(formData.holidays) : 0,
+        trainingHoursPerDay: formData.trainingHoursPerDay ? Number(formData.trainingHoursPerDay) : undefined,
         allocatedTarget: formData.allocatedTarget ? Number(formData.allocatedTarget) : undefined,
         totalProjectCost: formData.totalProjectCost ? Number(formData.totalProjectCost) : undefined,
-        trainingCostPerHour: formData.trainingCostPerHour ? Number(formData.trainingCostPerHour) : undefined,
         maxDemonstrators: formData.maxDemonstrators ? Number(formData.maxDemonstrators) : 1
       };
 
@@ -228,23 +292,19 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
     setFormData({
       name: '',
       projectCategory: 'None',
+      projectId: '',
       workOrderNo: '',
       allocatedTarget: '',
-      trainingHours: '120',
-      trainingCostPerHour: '38.5',
+      trainingHours: '',
+      trainingStartDate: '',
+      trainingDays: '',
+      holidays: '0',
+      trainingHoursPerDay: '',
       totalProjectCost: '',
       startDate: '',
       endDate: '',
       managerId: '',
       description: '',
-      installment1Status: 'None',
-      installment1Date: '',
-      assessmentFeesPaidBy: 'None',
-      assessmentStatus: 'None',
-      assessmentDate: '',
-      installment2Status: 'None',
-      installment2Date: '',
-      maxDemonstrators: '1',
       projectAddress: '',
       location: { state: '', district: '', taluka: '', village: '' }
     });
@@ -255,23 +315,19 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
     setFormData({
       name: prj.name,
       projectCategory: prj.projectCategory || 'None',
+      projectId: prj.projectId || '',
       workOrderNo: prj.workOrderNo,
       allocatedTarget: prj.allocatedTarget,
-      trainingHours: prj.trainingHours,
-      trainingCostPerHour: prj.trainingCostPerHour || '38.5',
+      trainingHours: prj.trainingHours || '',
+      trainingStartDate: prj.trainingStartDate ? prj.trainingStartDate.split('T')[0] : '',
+      trainingDays: prj.trainingDays || '',
+      holidays: prj.holidays || '0',
+      trainingHoursPerDay: prj.trainingHoursPerDay || '',
       totalProjectCost: prj.totalProjectCost,
       startDate: prj.startDate ? prj.startDate.split('T')[0] : '',
       endDate: prj.endDate ? prj.endDate.split('T')[0] : '',
       managerId: prj.managerPopulated?._id || prj.manager || '',
       description: prj.description || '',
-      installment1Status: prj.installment1Status || 'None',
-      installment1Date: prj.installment1Date ? prj.installment1Date.split('T')[0] : '',
-      assessmentFeesPaidBy: prj.assessmentFeesPaidBy || 'None',
-      assessmentStatus: prj.assessmentStatus || 'None',
-      assessmentDate: prj.assessmentDate ? prj.assessmentDate.split('T')[0] : '',
-      installment2Status: prj.installment2Status || 'None',
-      installment2Date: prj.installment2Date ? prj.installment2Date.split('T')[0] : '',
-      maxDemonstrators: prj.maxDemonstrators || '1',
       projectAddress: prj.projectAddress || '',
       location: prj.location || { state: '', district: '', taluka: '', village: '' }
     });
@@ -283,7 +339,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
     const matchSearch = p.name.toLowerCase().includes(searchStr) || (p.manager && p.manager.toLowerCase().includes(searchStr));
     const matchStatus = statusFilter === 'All' || p.status === statusFilter;
     return matchSearch && matchStatus;
-  });
+  }).sort((a, b) => (a.manager || '').localeCompare(b.manager || ''));
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -291,182 +347,276 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
       {showModal && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-hidden flex flex-col border border-white">
-            <div className="px-6 sm:px-10 py-6 sm:py-8 bg-gradient-to-r from-blue-600 to-indigo-700 text-white flex justify-between items-center shrink-0 shadow-lg">
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-black tracking-tight">{editingId ? 'Edit Project' : 'Add New Project'}</h2>
-                <p className="text-blue-100/80 font-bold text-[10px] sm:text-xs uppercase tracking-[0.2em] mt-1">Project Details</p>
-              </div>
-              <button type="button" onClick={() => setShowModal(false)} className="w-10 h-10 sm:w-12 sm:h-12 bg-white/10 hover:bg-white/20 rounded-2xl flex items-center justify-center transition-all">
-                <span className="text-xl sm:text-2xl">✕</span>
+            <div className="px-6 sm:px-8 py-4 bg-blue-600 text-white flex justify-between items-center shrink-0">
+              <h2 className="text-lg font-bold tracking-wide">{editingId ? 'Edit Project' : 'Add New Project'}</h2>
+              <button type="button" onClick={() => setShowModal(false)} className="w-8 h-8 hover:bg-white/20 rounded-full flex items-center justify-center transition-all">
+                <span className="text-xl leading-none">✕</span>
               </button>
             </div>
+            <div className="px-6 sm:px-8 py-4 border-b border-slate-100 bg-white shrink-0">
+              <h3 className="text-base font-bold text-blue-600">Project Details</h3>
+            </div>
 
-            <form onSubmit={handleCreateProject} className="flex-1 overflow-y-auto p-6 sm:p-10 space-y-8 sm:space-y-10 custom-scrollbar bg-slate-50/20">
-              {/* Section 1: Core Info */}
+            <form onSubmit={handleCreateProject} className="flex-1 overflow-y-auto p-6 sm:p-10 space-y-8 custom-scrollbar bg-slate-50/20">
+              {/* General Information */}
               <div className="space-y-6">
-                <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                  <span className="w-2 h-7 bg-blue-600 rounded-full shadow-lg shadow-blue-500/20"></span>
-                  <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">General Information</h3>
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="w-1.5 h-6 bg-blue-600 rounded-full shadow-lg shadow-blue-500/20"></span>
+                  <h3 className="text-lg font-black text-slate-900 tracking-tight">General Information</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="md:col-span-2">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Project Name</label>
-                    <input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 shadow-sm transition-all" placeholder="Enter Project Name" />
+                
+                {/* Row 1 */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Enter Project Name <span className="text-rose-500">*</span></label>
+                    <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm" placeholder="Enter Project Name" />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Category</label>
-                    <select value={formData.projectCategory} onChange={e => setFormData({ ...formData, projectCategory: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm focus:ring-4 focus:ring-blue-500/5">
-                      <option value="PMAY-G STT Mode">PMAY-G STT Mode</option>
-                      <option value="PMAY-G RPL Mode">PMAY-G RPL Mode</option>
-                      <option value="MoRTH RPL">MoRTH RPL</option>
-                      <option value="BoCW RPL">BoCW RPL</option>
-                      <option value="None">None</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Work Order No</label>
-                    <input value={formData.workOrderNo} onChange={e => setFormData({ ...formData, workOrderNo: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm" placeholder="e.g. WO-MSRLM-2026-001" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Section 2: Logistics & Finance */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                  <span className="w-2 h-7 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/20"></span>
-                  <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Project Details</h3>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                  <div className="col-span-1">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Target</label>
-                    <input type="number" value={formData.allocatedTarget} onChange={e => setFormData({ ...formData, allocatedTarget: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm" placeholder="000" />
-                  </div>
-                  <div className="col-span-1">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Hours</label>
-                    <select value={formData.trainingHours} onChange={e => setFormData({ ...formData, trainingHours: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm">
-                      {[360, 390, 72, 168, 120].map(h => <option key={h} value={h}>{h} Hours</option>)}
-                    </select>
-                  </div>
-                  <div className="sm:col-span-2 md:col-span-1">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Total Budget (Lakhs)</label>
-                    <input type="number" step="0.01" value={formData.totalProjectCost} onChange={e => setFormData({ ...formData, totalProjectCost: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm" placeholder="e.g. 45.50" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Start Date</label>
-                    <input 
-                      ref={startDateRef}
-                      type="date" 
-                      value={formData.startDate} 
-                      onChange={e => setFormData({ ...formData, startDate: e.target.value })} 
-                      onClick={() => {
-                        try { startDateRef.current?.showPicker(); }
-                        catch (e) { startDateRef.current?.click(); }
-                      }}
-                      className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm cursor-pointer" 
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Duration Presets</label>
-                    <div className="flex flex-wrap gap-2">
-                      {[9, 49, 53].map(d => (
-                        <button
-                          key={d}
-                          type="button"
-                          onClick={() => handleDurationPreset(d)}
-                          className="px-4 py-2 bg-slate-100 hover:bg-blue-600 hover:text-white rounded-xl text-xs font-black transition-all border border-slate-200"
-                        >
-                          {d} Days
-                        </button>
-                      ))}
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Select Category of Project <span className="text-rose-500">*</span></label>
+                    <div className="flex flex-col gap-1.5">
+                      <select required value={formData.projectCategory} onChange={e => setFormData({ ...formData, projectCategory: e.target.value })} className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 shadow-sm focus:ring-2 focus:ring-blue-500/20">
+                        <option value="None">Select Category</option>
+                        <option value="PMAY-G STT Mode">PMAY-G STT Mode</option>
+                        <option value="PMAY-G RPL Mode">PMAY-G RPL Mode</option>
+                        <option value="MoRTH RPL">MoRTH RPL</option>
+                        <option value="BoCW RPL">BoCW RPL</option>
+                        {formData.projectCategory !== 'None' && !['PMAY-G STT Mode', 'PMAY-G RPL Mode', 'MoRTH RPL', 'BoCW RPL'].includes(formData.projectCategory) && (
+                          <option value={formData.projectCategory}>{formData.projectCategory}</option>
+                        )}
+                      </select>
                       <button
                         type="button"
-                        onClick={() => setFormData({ ...formData, endDate: '' })}
-                        className="px-4 py-2 bg-slate-100 hover:bg-rose-600 hover:text-white rounded-xl text-xs font-black transition-all border border-slate-200"
+                        onClick={() => setCustomPrompt({ isOpen: true, field: 'projectCategory', label: 'Enter Custom Category Name:', value: '' })}
+                        className="text-[10px] font-black text-blue-600 hover:text-blue-800 self-start flex items-center gap-1"
                       >
-                        Custom
+                        <span>+</span> Create New Category
                       </button>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">End Date</label>
-                    <input 
-                      ref={endDateRef}
-                      type="date" 
-                      value={formData.endDate} 
-                      onChange={e => setFormData({ ...formData, endDate: e.target.value })}
-                      onClick={() => {
-                        try { endDateRef.current?.showPicker(); }
-                        catch (e) { endDateRef.current?.click(); }
-                      }}
-                      className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm cursor-pointer" 
-                    />
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Input Project ID <span className="text-rose-500">*</span></label>
+                    <input required value={formData.projectId} onChange={e => setFormData({ ...formData, projectId: e.target.value })} className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-sm" placeholder="Enter Project ID" />
                   </div>
-                  <div className="flex flex-col justify-center">
-                    <label className="block text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2 ml-1">Current Duration</label>
-                    <div className="h-14 px-6 bg-blue-50 border border-blue-100 rounded-2xl flex items-center">
-                      <span className="text-sm font-black text-blue-700">{calculateDuration(formData.startDate, formData.endDate)}</span>
+                </div>
+
+                {/* Row 2 */}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Select Overall Project Start Date <span className="text-rose-500">*</span></label>
+                    <input required type="date" value={formData.startDate} onChange={e => setFormData({ ...formData, startDate: e.target.value })} className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 shadow-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Select Overall Project End Date <span className="text-rose-500">*</span></label>
+                    <input required type="date" value={formData.endDate} onChange={e => setFormData({ ...formData, endDate: e.target.value })} className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 shadow-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-500 leading-tight mb-2 h-7 flex items-end">Calculate Total Estimated Days for Complete Project Complication</label>
+                    <div className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center shadow-sm">
+                      <span className="text-sm font-bold text-slate-500">{formData.startDate && formData.endDate ? calculateDuration(formData.startDate, formData.endDate) : '0'}</span>
                     </div>
                   </div>
-                  {currentRole === 'admin' && (
-                    <div className="col-span-1 sm:col-span-2 md:col-span-1">
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Manager</label>
-                      <select value={formData.managerId} onChange={e => setFormData({ ...formData, managerId: e.target.value })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[11px] sm:text-xs font-black text-slate-900 shadow-sm uppercase tracking-widest">
-                        <option value="">Select Manager</option>
-                        {managersList.map(m => <option key={m._id} value={m._id}>{m.fullName}</option>)}
-                      </select>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Total Project Target <span className="text-rose-500">*</span></label>
+                    <input required type="number" value={formData.allocatedTarget} onChange={e => setFormData({ ...formData, allocatedTarget: e.target.value })} className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 shadow-sm" placeholder="Enter Target" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Input Work Order No.</label>
+                    <input value={formData.workOrderNo} onChange={e => setFormData({ ...formData, workOrderNo: e.target.value })} className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 shadow-sm" placeholder="Enter Work Order No." />
+                  </div>
+                </div>
+
+                {/* Row 3 */}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Select Training Start Date <span className="text-rose-500">*</span></label>
+                    <input required type="date" value={formData.trainingStartDate} onChange={e => setFormData({ ...formData, trainingStartDate: e.target.value })} className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 shadow-sm" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Total Number of Training Days <span className="text-rose-500">*</span></label>
+                    <input required type="number" value={formData.trainingDays} onChange={e => setFormData({ ...formData, trainingDays: e.target.value })} className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 shadow-sm" placeholder="Enter Days" />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Total Number of Holidays</label>
+                    <input type="number" value={formData.holidays} onChange={e => setFormData({ ...formData, holidays: e.target.value })} className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 shadow-sm" placeholder="Enter Holidays" />
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-500 leading-tight mb-2 h-7 flex items-end">Auto Calculated Training End Date</label>
+                    <div className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center shadow-sm">
+                      <span className="text-sm font-bold text-slate-500">
+                        {formData.trainingStartDate && formData.trainingDays ? calcDatePlusDays(formData.trainingStartDate, Number(formData.trainingDays) + Number(formData.holidays || 0)) : 'dd-mm-yyyy'}
+                      </span>
                     </div>
-                  )}
+                  </div>
+                  <div>
+                    <label className="block text-[9px] font-bold text-slate-500 leading-tight mb-2 h-7 flex items-end">Total Training Days including Holidays</label>
+                    <div className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center shadow-sm">
+                      <span className="text-sm font-bold text-slate-500">{Number(formData.trainingDays || 0) + Number(formData.holidays || 0)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 4 */}
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+                  <div className="md:col-span-1">
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Input Training Hours Per Day <span className="text-rose-500">*</span></label>
+                    <input required type="number" value={formData.trainingHoursPerDay} onChange={e => setFormData({ ...formData, trainingHoursPerDay: e.target.value })} className="w-full h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 shadow-sm" placeholder="Enter Hours" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-[9px] font-bold text-slate-500 leading-tight mb-2 h-7 flex items-end">Total Training Hours</label>
+                    <div className="w-full h-12 px-4 bg-slate-50 border border-slate-200 rounded-xl flex items-center shadow-sm">
+                      <span className="text-sm font-bold text-slate-500">{Number(formData.trainingDays || 0) * Number(formData.trainingHoursPerDay || 0)}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Section 3: Location Information */}
-              <div className="space-y-6 pb-10">
-                <div className="flex items-center gap-3 mb-4 sm:mb-6">
-                  <span className="w-2 h-7 bg-amber-500 rounded-full shadow-lg shadow-amber-500/20"></span>
-                  <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Location Information</h3>
+              {/* Location Information */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="w-1.5 h-6 bg-emerald-500 rounded-full shadow-lg shadow-emerald-500/20"></span>
+                  <h3 className="text-lg font-black text-slate-900 tracking-tight">Location Information</h3>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <SearchableDropdown 
-                    label="State"
-                    placeholder="Select State"
-                    options={states}
-                    value={formData.location.state}
-                    onChange={(val) => setFormData({ 
-                      ...formData, 
-                      location: { ...formData.location, state: val, district: '', taluka: '' } 
-                    })}
-                  />
-                  <SearchableDropdown 
-                    label="District"
-                    placeholder="Select District"
-                    options={districts}
-                    value={formData.location.district}
-                    disabled={!formData.location.state}
-                    onChange={(val) => setFormData({ 
-                      ...formData, 
-                      location: { ...formData.location, district: val } 
-                    })}
-                  />
+                
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Taluka / Block</label>
-                    <input value={formData.location.taluka} onChange={e => setFormData({ ...formData, location: { ...formData.location, taluka: e.target.value } })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm" placeholder="Enter Taluka" />
+                    <SearchableDropdown
+                      label={<>Select State <span className="text-rose-500">*</span></>}
+                      placeholder="Select State"
+                      options={statesList}
+                      value={formData.location.state}
+                      onChange={(val) => setFormData({
+                        ...formData,
+                        location: { ...formData.location, state: val, district: '', taluka: '', village: '' }
+                      })}
+                    />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Village / Town</label>
-                    <input value={formData.location.village} onChange={e => setFormData({ ...formData, location: { ...formData.location, village: e.target.value } })} className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm" placeholder="Enter Village" />
+                    <SearchableDropdown
+                      label={<>Select District / City <span className="text-rose-500">*</span></>}
+                      placeholder="Select District"
+                      options={districtsList}
+                      value={formData.location.district}
+                      disabled={!formData.location.state}
+                      onChange={(val) => setFormData({
+                        ...formData,
+                        location: { ...formData.location, district: val, taluka: '', village: '' }
+                      })}
+                    />
                   </div>
-                  <div className="sm:col-span-2">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Site Address / Remarks</label>
-                    <textarea value={formData.projectAddress} onChange={e => setFormData({ ...formData, projectAddress: e.target.value })} className="w-full p-6 bg-white border border-slate-200 rounded-2xl text-[13px] sm:text-sm font-bold text-slate-900 shadow-sm focus:ring-4 focus:ring-blue-500/5 min-h-[100px]" placeholder="Detailed site address or specific location instructions..." />
+                  <div>
+                    <SearchableDropdown
+                      label={<>Select Taluka {isFetchingTalukas && <span className="text-blue-500 animate-pulse">(Fetching...)</span>}</>}
+                      placeholder="Select Taluka"
+                      options={talukasList}
+                      value={formData.location.taluka}
+                      disabled={!formData.location.district || isFetchingTalukas}
+                      onChange={(val) => setFormData({
+                        ...formData,
+                        location: { ...formData.location, taluka: val, village: '' }
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <SearchableDropdown
+                      label={<>Select Village / City {isFetchingVillages && <span className="text-blue-500 animate-pulse">(Fetching...)</span>}</>}
+                      placeholder="Select Village"
+                      options={villagesList}
+                      value={formData.location.village}
+                      disabled={!formData.location.taluka || isFetchingVillages}
+                      onChange={(val) => setFormData({
+                        ...formData,
+                        location: { ...formData.location, village: val }
+                      })}
+                    />
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Input Site Address (Optional)</label>
+                  <textarea value={formData.projectAddress} onChange={e => setFormData({ ...formData, projectAddress: e.target.value })} className="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 shadow-sm focus:ring-2 focus:ring-blue-500/20 min-h-[80px]" placeholder="Enter Site Address" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Input Remarks</label>
+                  <textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full p-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 shadow-sm focus:ring-2 focus:ring-blue-500/20 min-h-[80px]" placeholder="Enter Remarks" />
+                </div>
+
+                {currentRole === 'admin' && (
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Select Manager <span className="text-rose-500">*</span></label>
+                    <select required value={formData.managerId} onChange={e => setFormData({ ...formData, managerId: e.target.value })} className="w-full md:w-1/4 h-12 px-4 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-900 shadow-sm focus:ring-2 focus:ring-blue-500/20">
+                      <option value="">Select Manager</option>
+                      {[...managersList].sort((a, b) => a.fullName.localeCompare(b.fullName)).map(m => <option key={m._id} value={m._id}>{m.fullName}</option>)}
+                    </select>
+                  </div>
+                )}
               </div>
             </form>
 
-            <div className="px-10 py-8 bg-slate-50 border-t border-slate-100 flex gap-6 shrink-0">
-               <button type="button" onClick={() => setShowModal(false)} className="flex-1 h-14 rounded-2xl bg-white border border-slate-200 font-black text-slate-500 text-[10px] uppercase tracking-[0.2em] hover:bg-slate-50 transition-all">Cancel</button>
-              <button onClick={handleCreateProject} className="flex-2 h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 font-black text-white text-[10px] uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/30 transition-all hover:scale-[1.01] active:scale-95">
-                 {editingId ? 'Update' : 'Add'}
+            <div className="px-10 py-6 bg-white border-t border-slate-100 flex justify-end gap-4 shrink-0">
+              <button type="button" onClick={() => setShowModal(false)} className="w-32 h-12 rounded-xl bg-white border border-slate-300 font-bold text-slate-700 text-xs hover:bg-slate-50 transition-all">Cancel</button>
+              <button onClick={handleCreateProject} className="w-32 h-12 rounded-xl bg-blue-600 hover:bg-blue-700 font-bold text-white text-xs shadow-lg shadow-blue-500/30 transition-all active:scale-95">
+                {editingId ? 'Update' : 'Add'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Input Modal */}
+      {customPrompt.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col border border-slate-100 animate-in zoom-in-95 duration-200">
+            <div className="bg-slate-900 text-white p-6 flex justify-between items-center shadow-md shrink-0">
+              <h3 className="text-lg font-black tracking-tight flex items-center gap-2">
+                <span className="w-2 h-6 bg-blue-500 rounded-full"></span>
+                Custom Field Entry
+              </h3>
+              <button
+                onClick={() => setCustomPrompt({ isOpen: false, field: null, label: '', value: '' })}
+                className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 transition-all flex items-center justify-center text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 bg-slate-50 flex-1">
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">
+                {customPrompt.label}
+              </label>
+              <input
+                autoFocus
+                type={customPrompt.field === 'trainingHours' ? 'number' : 'text'}
+                value={customPrompt.value}
+                onChange={(e) => setCustomPrompt({ ...customPrompt, value: e.target.value })}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (customPrompt.value) {
+                      setFormData({ ...formData, [customPrompt.field]: customPrompt.value });
+                      setCustomPrompt({ isOpen: false, field: null, label: '', value: '' });
+                    }
+                  }
+                }}
+                className="w-full h-14 px-6 bg-white border border-slate-200 rounded-2xl text-sm font-bold text-slate-900 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 shadow-sm transition-all"
+                placeholder="Enter custom value..."
+              />
+            </div>
+            <div className="px-6 py-5 bg-white border-t border-slate-100 flex gap-4 shrink-0">
+              <button
+                onClick={() => setCustomPrompt({ isOpen: false, field: null, label: '', value: '' })}
+                className="flex-[1] h-12 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 font-black text-slate-500 text-[10px] uppercase tracking-widest transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (customPrompt.value) {
+                    setFormData({ ...formData, [customPrompt.field]: customPrompt.value });
+                    setCustomPrompt({ isOpen: false, field: null, label: '', value: '' });
+                  }
+                }}
+                className="flex-[2] h-12 rounded-xl bg-blue-600 hover:bg-blue-700 font-black text-white text-[10px] uppercase tracking-[0.2em] transition-all shadow-lg shadow-blue-500/20 active:scale-95"
+              >
+                Confirm Match
               </button>
             </div>
           </div>
@@ -490,9 +640,9 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
           <table className="w-full text-left border-collapse min-w-[700px] sm:min-w-0">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100">
-                 {['Project Name', 'Duration', 'Manager Assign', 'Status', 'Actions'].map(h => (
-                   <th key={h} className="px-6 sm:px-10 py-5 sm:py-7 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{h}</th>
-                 ))}
+                {['Project Name', 'Duration', 'Manager Assign', 'Status', 'Actions'].map(h => (
+                  <th key={h} className="px-6 sm:px-10 py-5 sm:py-7 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -501,7 +651,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                   <td colSpan="5" className="py-24 text-center">
                     <div className="flex flex-col items-center gap-4">
                       <div className="w-10 h-10 border-4 border-slate-100 border-t-blue-600 rounded-full animate-spin"></div>
-                       <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Loading projects...</p>
+                      <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Loading projects...</p>
                     </div>
                   </td>
                 </tr>
@@ -547,10 +697,10 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
                       {currentRole === 'admin' && (
                         <>
                           <button onClick={() => handleEditOpen(prj)} className="w-11 h-11 bg-slate-100 text-slate-600 rounded-xl flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all shadow-sm" title="Modify Record">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
                           </button>
                           <button onClick={() => handleDeleteProject(prj._id)} className="w-11 h-11 bg-rose-50 text-rose-500 rounded-xl flex items-center justify-center hover:bg-rose-600 hover:text-white transition-all shadow-sm border border-rose-100" title="Delete">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>
                           </button>
                         </>
                       )}
@@ -568,7 +718,7 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-[150] flex items-center justify-center p-4">
           <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-xl flex flex-col border border-white overflow-hidden animate-in zoom-in-95 duration-300">
             <div className="px-10 py-8 bg-indigo-600 text-white flex justify-between items-center">
-               <div>
+              <div>
                 <h3 className="text-2xl font-black italic tracking-tighter">Assign Trainers</h3>
                 <p className="text-indigo-100 text-[10px] font-black uppercase tracking-widest mt-1">Assign trainers to this project</p>
               </div>
@@ -577,17 +727,17 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
 
             <div className="p-10 bg-slate-50/50 flex-1 min-h-[400px]">
               <div className="mb-6">
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 ml-1">Select Trainers ({selectedTrainers.length} Selected)</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 ml-1">Select Trainers ({selectedTrainers.length} Selected)</p>
                 <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar">
                   {isAssigning ? (
                     <div className="py-20 text-center space-y-4">
                       <div className="w-8 h-8 border-4 border-indigo-100 border-t-indigo-600 rounded-full animate-spin mx-auto"></div>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Loading trainers...</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Loading trainers...</p>
                     </div>
                   ) : allTrainers.length === 0 ? (
                     <div className="py-20 text-center bg-white rounded-3xl border-2 border-dashed border-slate-100">
                       <p className="text-2xl mb-2">👥</p>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No trainers found</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">No trainers found</p>
                     </div>
                   ) : allTrainers.map(t => {
                     const isSelected = selectedTrainers.includes(t._id);
@@ -615,13 +765,13 @@ const ProjectManagement = ({ onNavigate, currentRole }) => {
             </div>
 
             <div className="px-10 py-8 bg-white border-t border-slate-100 flex gap-4">
-               <button onClick={() => setShowAssignModal(false)} className="flex-1 h-14 rounded-2xl font-black text-slate-400 text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all">Cancel</button>
+              <button onClick={() => setShowAssignModal(false)} className="flex-1 h-14 rounded-2xl font-black text-slate-400 text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all">Cancel</button>
               <button
                 onClick={handleAssignSave}
                 disabled={isAssigning}
                 className="flex-[2] h-14 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:bg-black transition-all active:scale-95"
               >
-                 Save Assignments
+                Save Assignments
               </button>
             </div>
           </div>

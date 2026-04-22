@@ -57,26 +57,7 @@ const Sidebar = ({ currentRole, activePage, setActivePage, onLogout, isOpen, onC
           lg:translate-x-0
         `}
       >
-        {/* ── Logo ───────────────────────────────────────────────── */}
-        <div className="flex-shrink-0 flex items-center gap-3 px-5 py-5 border-b border-slate-100 h-[68px]">
-          <div className="w-9 h-9 flex-shrink-0 bg-blue-600 rounded-lg flex items-center justify-center text-white font-black text-lg shadow-md shadow-blue-500/30">
-            {logoLetter}
-          </div>
-          <div className="min-w-0 flex-1">
-            <h1 className="text-[15px] font-black text-slate-900 leading-none truncate">{portalName}</h1>
-            <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest mt-0.5">MIS System</p>
-          </div>
-          {/* Close btn — mobile only */}
-          <button
-            onClick={onClose}
-            className="flex-shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors lg:hidden"
-            aria-label="Close sidebar"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+
 
         {/* ── Navigation ─────────────────────────────────────────── */}
         <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">

@@ -7,7 +7,8 @@ const SearchableDropdown = ({
   onChange, 
   placeholder = "Select...", 
   disabled = false,
-  error = null
+  error = null,
+  allowCustom = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,6 +74,21 @@ const SearchableDropdown = ({
           </div>
           
           <div className="max-h-60 overflow-y-auto custom-scrollbar py-2">
+            {allowCustom && searchTerm && !options.some(o => o.toLowerCase() === searchTerm.toLowerCase()) && (
+              <div 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSelect(searchTerm);
+                }}
+                className="px-6 py-3.5 text-xs font-black text-blue-600 bg-blue-50/50 hover:bg-blue-50 transition-colors cursor-pointer flex items-center gap-3 border-b border-blue-100/50"
+              >
+                <span className="w-6 h-6 bg-blue-600 text-white rounded-lg flex items-center justify-center text-[10px]">＋</span>
+                <div>
+                  <p className="tracking-tight">Use "{searchTerm}"</p>
+                  <p className="text-[8px] font-bold text-blue-400 uppercase tracking-widest mt-0.5">Click to use custom value</p>
+                </div>
+              </div>
+            )}
             {filteredOptions.length > 0 ? (
               filteredOptions.map((opt, idx) => (
                 <div 

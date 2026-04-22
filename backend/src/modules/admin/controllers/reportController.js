@@ -5,6 +5,7 @@ const axios = require('axios');
 const Trainer = require('../../trainer/models/trainerModel');
 const Project = require('../../project/models/projectModel');
 const Attendance = require('../../attendance/models/attendanceModel');
+const Beneficiary = require('../../project/models/beneficiaryModel');
 const { cloudinary } = require('../../../utils/cloudinary');
 
 // ─────────────────────────────────────────────────────────────
@@ -72,6 +73,8 @@ exports.exportStaffPerformance = async (req, res) => {
   }
 };
 
+
+
 // ─────────────────────────────────────────────────────────────
 // @desc    Download Project Photos in ZIP
 // @route   GET /api/v1/admin/reports/project-photos/:projectId
@@ -100,9 +103,9 @@ exports.downloadProjectPhotos = async (req, res) => {
     let attQuery = { projectId: projectId };
     if (date) {
       const d = new Date(date);
-      attQuery.date = { 
-        $gte: new Date(d.setHours(0,0,0,0)), 
-        $lte: new Date(d.setHours(23,59,59,999)) 
+      attQuery.date = {
+        $gte: new Date(d.setHours(0, 0, 0, 0)),
+        $lte: new Date(d.setHours(23, 59, 59, 999))
       };
     }
     if (trainerId) attQuery.trainerId = trainerId;
@@ -115,7 +118,7 @@ exports.downloadProjectPhotos = async (req, res) => {
           const url = att.photos[i];
           const trainerName = att.trainerId?.fullName?.replace(/\s+/g, '_') || 'Unknown';
           const fileName = `Presence_${trainerName}_${att.date.toISOString().split('T')[0]}_img${i + 1}.jpg`;
-          
+
           try {
             const response = await axios.get(url, { responseType: 'arraybuffer' });
             archive.append(Buffer.from(response.data), { name: `Attendance/${trainerName}/${fileName}` });
@@ -140,7 +143,7 @@ exports.downloadProjectPhotos = async (req, res) => {
 exports.exportPhotoSummaryReport = async (req, res) => {
   try {
     const { date, projectId } = req.query;
-    
+
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Photo Upload Summary');
 
@@ -162,15 +165,15 @@ exports.exportPhotoSummaryReport = async (req, res) => {
     }
     if (projectId) {
       if (req.user.role === 'viewer' && !req.user.assignedProjects.includes(projectId)) {
-         return res.status(403).json({ success: false, message: 'Not authorized for this project' });
+        return res.status(403).json({ success: false, message: 'Not authorized for this project' });
       }
       attQuery.projectId = projectId;
     }
     if (date) {
       const d = new Date(date);
-      attQuery.date = { 
-        $gte: new Date(d.setHours(0,0,0,0)), 
-        $lte: new Date(d.setHours(23,59,59,999)) 
+      attQuery.date = {
+        $gte: new Date(d.setHours(0, 0, 0, 0)),
+        $lte: new Date(d.setHours(23, 59, 59, 999))
       };
     }
 
@@ -244,7 +247,7 @@ exports.exportProjectSummary = async (req, res) => {
     doc.text(`1st Installment: ${project.installment1Status}`);
     doc.text(`Assessment Status: ${project.assessmentStatus}`);
     doc.text(`2nd Installment: ${project.installment2Status}`);
-    
+
     doc.moveDown();
     doc.text(`Start Date: ${project.startDate.toDateString()}`);
     doc.text(`Target Completion: ${project.endDate.toDateString()}`);
@@ -252,5 +255,214 @@ exports.exportProjectSummary = async (req, res) => {
     doc.end();
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// @desc    Export Project Status to Excel
+// @route   GET /api/v1/admin/reports/project-status-excel
+// @access  Private (Admin)
+// ─────────────────────────────────────────────────────────────
+exports.exportProjectStatusExcel = async (req, res) => {
+  try {
+    const { projectId, startDate, endDate } = req.query;
+
+    let projQuery = {};
+    if (projectId && projectId !== 'all') projQuery._id = projectId;
+
+    const projects = await Project.find(projQuery).populate('manager', 'fullName');
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Project Status Report');
+
+    worksheet.columns = [
+      { header: 'Project Name', key: 'name', width: 25 },
+      { header: 'Work Order No', key: 'workOrder', width: 20 },
+      { header: 'Start Date', key: 'start', width: 15 },
+      { header: 'End Date', key: 'end', width: 15 },
+      { header: 'Manager', key: 'manager', width: 20 },
+      { header: 'State', key: 'state', width: 15 },
+      { header: 'District', key: 'district', width: 15 },
+      { header: 'Taluka', key: 'taluka', width: 15 },
+      { header: 'Town/Village', key: 'village', width: 15 },
+      { header: 'Total Cost', key: 'cost', width: 15 },
+      { header: 'Progress (%)', key: 'progress', width: 15 },
+    ];
+
+    projects.forEach(p => {
+      worksheet.addRow({
+        name: p.name,
+        workOrder: p.workOrderNo,
+        start: p.startDate?.toISOString().split('T')[0],
+        end: p.endDate?.toISOString().split('T')[0],
+        manager: p.manager?.fullName || 'N/A',
+        state: p.location?.state,
+        district: p.location?.district,
+        taluka: p.location?.taluka,
+        village: p.location?.village,
+        cost: p.totalProjectCost,
+        progress: `${p.progressStatus}%`,
+      });
+    });
+
+    worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
+    worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } };
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=Project_Status_Report.xlsx');
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// @desc    Generate Photographic PDF Album
+// @route   GET /api/v1/admin/reports/photo-album-pdf
+// @access  Private (Admin)
+// ─────────────────────────────────────────────────────────────
+exports.generatePhotoAlbumPDF = async (req, res) => {
+  try {
+    const { projectId, date } = req.query;
+    if (!projectId) return res.status(400).json({ success: false, message: 'Please provide projectId' });
+
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ success: false, message: 'Project not found' });
+
+    let query = { projectId };
+    if (date && date !== 'all') {
+      const d = new Date(date);
+      query.date = {
+        $gte: new Date(d.setHours(0, 0, 0, 0)),
+        $lte: new Date(d.setHours(23, 59, 59, 999))
+      };
+    }
+
+    const records = await Attendance.find(query).populate('trainerId', 'fullName trainerId');
+
+    const doc = new PDFDocument({ margin: 50 });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=Photo_Album_${project.name.replace(/\s+/g, '_')}.pdf`);
+    doc.pipe(res);
+
+    // Title Page
+    doc.fontSize(24).text('PROJECT PHOTOGRAPHIC REPORT', { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(16).text(`Project: ${project.name}`, { align: 'center' });
+    doc.text(`Work Order: ${project.workOrderNo}`, { align: 'center' });
+    doc.text(`Date Range: ${date || 'All Time'}`, { align: 'center' });
+    doc.moveDown(2);
+    doc.fontSize(10).text(`Generated on: ${new Date().toLocaleString()}`, { align: 'right' });
+    doc.addPage();
+
+    // Grouping by Date
+    const grouped = records.reduce((acc, rec) => {
+      const dStr = rec.date.toISOString().split('T')[0];
+      if (!acc[dStr]) acc[dStr] = [];
+      acc[dStr].push(rec);
+      return acc;
+    }, {});
+
+    for (const [dStr, dayRecords] of Object.entries(grouped)) {
+      doc.fontSize(18).fillColor('#1e293b').text(`DATE: ${dStr}`, { underline: true });
+      doc.moveDown();
+
+      for (const rec of dayRecords) {
+        doc.fontSize(12).fillColor('#334155').text(`Trainer: ${rec.trainerId?.fullName} (${rec.trainerId?.trainerId})`);
+        doc.fontSize(10).text(`Location: ${rec.location?.latitude}, ${rec.location?.longitude}`);
+        doc.moveDown(0.5);
+
+        if (rec.photos && rec.photos.length > 0) {
+          for (const url of rec.photos) {
+            try {
+              const response = await axios.get(url, { responseType: 'arraybuffer' });
+              const img = Buffer.from(response.data);
+              // Simple grid logic - 2 images per row
+              doc.image(img, { fit: [250, 250], align: 'center' });
+              doc.moveDown();
+            } catch (e) {
+              doc.text(`[Image Load Error: ${url}]`, { color: 'red' });
+            }
+
+            if (doc.y > 600) doc.addPage();
+          }
+        }
+        doc.moveDown(2);
+        if (doc.y > 600) doc.addPage();
+      }
+    }
+
+    doc.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ─────────────────────────────────────────────────────────────
+// @desc    Export Attendance to ZIP (Date-wise Photos)
+// @route   GET /api/v1/admin/reports/attendance-zip
+// @access  Private (Admin/Viewer)
+// ─────────────────────────────────────────────────────────────
+exports.exportAttendanceZip = async (req, res) => {
+  try {
+    const { fromDate, toDate } = req.query;
+    
+    let dateFilter = {};
+    if (fromDate && toDate) {
+       dateFilter.date = { $gte: fromDate, $lte: toDate };
+    } else if (fromDate) {
+       dateFilter.date = { $gte: fromDate };
+    } else if (toDate) {
+       dateFilter.date = { $lte: toDate };
+    }
+
+    const attendanceRecords = await Attendance.find(dateFilter)
+      .populate('trainerId', 'fullName trainerId')
+      .sort({ date: -1 });
+
+    const archive = archiver('zip', { zlib: { level: 9 } });
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename=Attendance_Photos_${fromDate || 'All'}_to_${toDate || 'All'}.zip`);
+    
+    archive.pipe(res);
+
+    const fetchImage = async (url) => {
+      try {
+        const response = await axios({ method: 'GET', url, responseType: 'arraybuffer' });
+        return Buffer.from(response.data, 'binary');
+      } catch (err) {
+        return null;
+      }
+    };
+
+    for (const record of attendanceRecords) {
+      const dateStr = record.date ? record.date.toISOString().split('T')[0] : 'Unknown_Date';
+      const trainerName = record.trainerId?.fullName?.replace(/[^a-zA-Z0-9]/g, '_') || 'Unknown_Trainer';
+
+      if (record.photos && record.photos.length > 0) {
+        for (let i = 0; i < record.photos.length; i++) {
+          const imgBuffer = await fetchImage(record.photos[i]);
+          if (imgBuffer) {
+             const authType = record.photos[i].includes('?');
+             const cleanUrl = authType ? record.photos[i].split('?')[0] : record.photos[i];
+             const ext = cleanUrl.split('.').pop() || 'jpg';
+             const fileName = `Presence_${trainerName}_${dateStr}_img${i + 1}.${ext}`;
+             archive.append(imgBuffer, { name: `${dateStr}/${trainerName}/${fileName}` });
+          }
+        }
+      }
+    }
+
+    await archive.finalize();
+
+  } catch (err) {
+    console.error('Error generating Attendance ZIP:', err);
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, message: err.message });
+    }
   }
 };

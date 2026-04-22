@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import API from '../api/api';
 
-const StatCard = ({ title, value, icon, color, change }) => (
-  <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-100 p-5 sm:p-6 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 group">
+const StatCard = ({ title, value, icon, color, change, onClick }) => (
+  <div 
+    onClick={onClick}
+    className={`bg-white rounded-2xl sm:rounded-3xl border border-slate-100 p-5 sm:p-6 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 group ${onClick ? 'cursor-pointer active:scale-95' : ''}`}
+  >
     <div className="flex items-start justify-between mb-4">
       <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center text-xl sm:text-2xl ${color}`}>
         {icon}
@@ -45,9 +48,9 @@ const AdminDashboard = ({ onNavigate }) => {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-        <StatCard title="Total Projects"  value={stats.totalProjects}  icon="📂" color="bg-blue-50 text-blue-600"    change="+Live" />
-        <StatCard title="Active Managers" value={stats.activeManagers} icon="👔" color="bg-purple-50 text-purple-600" change="+Live" />
-        <StatCard title="Field Trainers"  value={stats.fieldTrainers}  icon="👥" color="bg-emerald-50 text-emerald-600" change="+Live" />
+        <StatCard title="Total Projects"  value={stats.totalProjects}  icon="📂" color="bg-blue-50 text-blue-600"    change="+Live" onClick={() => onNavigate('projects')} />
+        <StatCard title="Active Managers" value={stats.activeManagers} icon="👔" color="bg-purple-50 text-purple-600" change="+Live" onClick={() => onNavigate('managers')} />
+        <StatCard title="Field Trainers"  value={stats.fieldTrainers}  icon="👥" color="bg-emerald-50 text-emerald-600" change="+Live" onClick={() => onNavigate('trainers')} />
       </div>
 
       {/* Projects Table */}

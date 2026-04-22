@@ -40,7 +40,10 @@ const ManagerManagement = ({ currentRole }) => {
     try {
       const response = await API.get('/admin/managers');
       if (response.data.success) {
-        setManagersList(response.data.data);
+        const sortedManagers = response.data.data.sort((a, b) => 
+          (a.fullName || '').localeCompare(b.fullName || '')
+        );
+        setManagersList(sortedManagers);
       }
     } catch (err) {
       console.error('Failed to fetch managers', err);

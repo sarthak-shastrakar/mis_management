@@ -44,6 +44,9 @@ const {
   downloadProjectPhotos, 
   exportProjectSummary,
   exportPhotoSummaryReport,
+  exportProjectStatusExcel,
+  generatePhotoAlbumPDF,
+  exportAttendanceZip,
 } = require("../controllers/reportController");
 const { protect, adminOnly, viewAccess } = require("../../../middlewares/authMiddleware");
 
@@ -135,7 +138,10 @@ router.patch("/trainers/:id/status", protect, adminOnly, toggleTrainerStatus);
 router.get("/reports/staff-performance", protect, viewAccess, exportStaffPerformance);
 router.get("/reports/project-photos/:projectId", protect, viewAccess, downloadProjectPhotos);
 router.get("/reports/project-summary/:id", protect, exportProjectSummary);
+router.get("/reports/project-status-excel", protect, viewAccess, exportProjectStatusExcel);
+router.get("/reports/photo-album-pdf", protect, viewAccess, generatePhotoAlbumPDF);
 router.get("/reports/photo-summary", protect, viewAccess, exportPhotoSummaryReport);
+router.get("/reports/attendance-zip", protect, viewAccess, exportAttendanceZip);
 
 const { getAllEvidence } = require("../../attendance/controllers/evidenceController");
 router.get("/evidence", protect, viewAccess, getAllEvidence);
