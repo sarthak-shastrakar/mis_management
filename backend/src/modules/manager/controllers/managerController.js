@@ -724,14 +724,15 @@ exports.deleteProject = async (req, res, next) => {
 exports.getProjectDetails = async (req, res, next) => {
   try {
     const Project = require('../../project/models/projectModel');
+    const Trainer = require('../../trainer/models/trainerModel');
     
     // Robust Project Resolution
-    const project = await Project.findOne({
-      $or: [
-        { _id: mongoose.Types.ObjectId.isValid(req.params.id) ? req.params.id : null },
-        { projectId: req.params.id }
-      ].filter(q => Object.values(q)[0] !== null)
-    });
+    let query = { projectId: req.params.id };
+    if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+      query = { $or: [{ _id: req.params.id }, { projectId: req.params.id }] };
+    }
+
+    const project = await Project.findOne(query).populate('manager', 'fullName managerId emailAddress');
 
     if (!project) {
       return res.status(404).json({ success: false, message: 'Project not found' });
@@ -740,20 +741,38 @@ exports.getProjectDetails = async (req, res, next) => {
     // Security: check if this project is assigned to the manager (fetch fresh from DB)
     const Manager = require('../models/managerModel');
     const managerDoc = await Manager.findById(req.user.id).select('assignedProjects');
+    
+    // Check if project is in manager's assigned list
     const isAssigned = managerDoc && managerDoc.assignedProjects &&
-      managerDoc.assignedProjects.some(pid => pid.toString() === project._id.toString());
-    const isOwner = project.manager && project.manager.toString() === req.user.id;
+      managerDoc.assignedProjects.some(pid => pid && pid.toString() === project._id.toString());
+      
+    // Check if manager is directly the owner
+    const projectManagerId = project.manager ? (project.manager._id || project.manager).toString() : null;
+    const isOwner = projectManagerId === req.user.id.toString();
 
     if (!isOwner && !isAssigned) {
       return res.status(401).json({ success: false, message: 'Not authorized to view this project' });
     }
 
+    // Enhance payload with trainers count for the UI
+    const trainersCount = await Trainer.countDocuments({ assignedProjects: project._id });
+
+    // Format response properly
+    const projectData = {
+      ...project._doc ? project._doc : project,
+      id: project.projectId || project._id.toString().slice(-6).toUpperCase(),
+      managerName: project.manager ? project.manager.fullName : 'Not Assigned',
+      trainersCount: trainersCount,
+      trainers: trainersCount,
+    };
+
     res.status(200).json({
       success: true,
-      data: project
+      data: projectData
     });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error('Error in getProjectDetails:', err);
+    res.status(500).json({ success: false, message: 'Internal server error while fetching project details' });
   }
 };
 
