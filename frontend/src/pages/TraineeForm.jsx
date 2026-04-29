@@ -121,11 +121,11 @@ const TraineeForm = ({ mode, traineeData, currentRole, onBack }) => {
 
       let res;
       if (mode === 'create') {
-        res = await axios.post('http://localhost:5005/api/v1/trainee/create', data, {
+        res = await axios.post('/api/v1/trainee/create', data, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } else if (mode === 'edit') {
-        res = await axios.put(`http://localhost:5005/api/v1/trainee/${traineeData._id}`, data, {
+        res = await axios.put(`/api/v1/trainee/${traineeData._id}`, data, {
           headers: { Authorization: `Bearer ${token}` }
         });
       }

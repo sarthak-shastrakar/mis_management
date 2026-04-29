@@ -20,8 +20,8 @@ const TraineeManagement = ({ currentRole }) => {
       setIsLoading(true);
       const token = localStorage.getItem('token');
       const endpoint = currentRole === 'manager' 
-        ? 'http://localhost:5005/api/v1/trainee/manager/list'
-        : 'http://localhost:5005/api/v1/trainee/my-list';
+        ? '/api/v1/trainee/manager/list'
+        : '/api/v1/trainee/my-list';
         
       const res = await axios.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
@@ -61,7 +61,7 @@ const TraineeManagement = ({ currentRole }) => {
   const executeDelete = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.delete(`http://localhost:5005/api/v1/trainee/${id}`, {
+      const res = await axios.delete(`/api/v1/trainee/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useModal } from '../context/ModalContext';
 
-const API = 'http://localhost:5005/api/v1/beneficiary';
+const API = '/api/v1/beneficiary';
 
 const statusBadge = (status) => {
   const styles = {
