@@ -13,6 +13,7 @@ const Sidebar = ({ currentRole, activePage, setActivePage, onLogout, isOpen, onC
     { id: 'dashboard', label: 'My Dashboard', icon: '🏠' },
     { id: 'mark-attendance', label: 'Mark Attendance', icon: '📷' },
     { id: 'evidence', label: 'Work Evidence', icon: '🚀' },
+    { id: 'trainees', label: 'My Trainees', icon: '👷‍♂️' },
     { id: 'my-history', label: 'My History', icon: '📜' },
     { id: 'profile', label: 'My Profile', icon: '👤' },
   ];
@@ -25,8 +26,11 @@ const Sidebar = ({ currentRole, activePage, setActivePage, onLogout, isOpen, onC
     ...(currentRole === 'admin' ? [{ id: 'expenses', label: 'Expenses', icon: '💸' }] : []),
     ...(currentRole === 'admin' || currentRole === 'viewer' ? [{ id: 'reports', label: 'Reports', icon: '📈' }] : []),
     ...(currentRole === 'admin' ? [{ id: 'users', label: 'User Management', icon: '👤' }] : []),
+    ...(currentRole === 'admin' ? [{ id: 'beneficiaries', label: 'Beneficiaries', icon: '🏠' }] : []),
     { id: 'evidence', label: 'Evidence Feed', icon: '📽️' },
     ...(currentRole !== 'trainer' && currentRole !== 'viewer' ? [{ id: 'trainers', label: 'Trainers', icon: '👥' }] : []),
+    ...(currentRole === 'manager' ? [{ id: 'trainees', label: 'Trainees (Masons)', icon: '👷‍♂️' }] : []),
+    ...(currentRole === 'manager' ? [{ id: 'beneficiary-requests', label: 'Beneficiary Requests', icon: '📎' }] : []),
     { id: 'attendance', label: 'Attendance', icon: '📅' },
     ...(currentRole !== 'admin' ? [{ id: 'profile', label: 'My Profile', icon: '👤' }] : []),
   ];

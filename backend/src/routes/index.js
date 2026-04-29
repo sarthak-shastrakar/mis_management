@@ -6,6 +6,8 @@ const projectRoutes = require('../modules/project/routes/projectRoutes');
 const locationRoutes = require('../modules/location/routes/locationRoutes');
 const attendanceRoutes = require('../modules/attendance/routes/attendanceRoutes');
 const viewerRoutes = require('../modules/viewer/routes/viewerRoutes');
+const traineeRoutes = require('../modules/trainee/routes/traineeRoutes');
+const beneficiaryRoutes = require('../modules/beneficiary/routes/beneficiaryRoutes');
 
 const router = express.Router();
 
@@ -16,5 +18,7 @@ router.use('/projects', projectRoutes);
 router.use('/locations', locationRoutes);
 router.use('/attendance', attendanceRoutes);
 router.use('/viewer', viewerRoutes);
+router.use('/trainee', traineeRoutes);
+router.use('/beneficiary', beneficiaryRoutes);
 
 module.exports = router;

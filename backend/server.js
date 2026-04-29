@@ -3,6 +3,7 @@ const app = require('./src/app');
 const connectDB = require('./src/config/db');
 
 // Connect to MongoDB
+console.log('--- DEBUG MONGO_URI ---', process.env.MONGO_URI);
 connectDB();
 
 // Initialize Cron Jobs
